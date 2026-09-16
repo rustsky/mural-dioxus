@@ -16,7 +16,7 @@ Requirements: macOS 13+, current stable Rust, and the Dioxus CLI (`cargo install
 
 ```sh
 cargo test                     # core learning, archive and API tests
-./scripts/build-macos.sh       # dist/Mural.app and dist/Mural-<version>-<arch>.dmg
+./scripts/build-macos.sh       # dist/Mural.app, the .dmg and the source archive
 ```
 
 The script signs ad-hoc by default. Set `SIGN_IDENTITY="Developer ID Application: …"` to sign
@@ -62,7 +62,8 @@ speaks. Models download on first use per language (about 340–800 MB) into
 speech** is the alternative: WebKit speech recognition (needs Dictation turned on) and system voices.
 
 sherpa-onnx is linked statically and includes espeak-ng (GPL-3.0) for Kokoro and Piper
-pronunciation, so binaries built with it must be distributed under GPL-compatible terms.
+pronunciation, which is why this port is licensed under the GPL (see below). Model licences and
+credits, including the CC-BY-4.0 attribution for Parakeet, are in `THIRD_PARTY_NOTICES.md`.
 
 Not ported: managed accounts, hosted minutes and purchases (disabled in the iPhone build too),
 and simulator-only verification harnesses.
@@ -78,5 +79,16 @@ None of these exist in release builds. `MURAL_TRACE=1` logs voice bridge traffic
 
 ## License
 
-MIT, like the original project. The Mural name and logo identify the original project; the
-software license does not grant trademark rights.
+GPL-3.0-or-later (`LICENSE`). The voice engine statically links GPL-3.0 code (espeak-ng,
+piper-phonemize), so the app as a whole is distributed under the GPL.
+
+The original [Chuloo/mural](https://github.com/Chuloo/mural) code is © 2026 Hackmamba under the MIT
+License (`LICENSE-MIT`); that notice is kept for the parts derived from it. Third-party components,
+voice models and Rust crates are listed in `THIRD_PARTY_NOTICES.md` and `THIRD_PARTY_RUST.txt`
+(regenerate the latter with `scripts/rust-licenses.sh`); the app shows them in Settings →
+Licences and open-source notices.
+
+When you give the app to anyone, give them the source too: `scripts/build-macos.sh` writes
+`dist/Mural-<version>-source.tar.gz` next to the disk image for that purpose.
+
+The Mural name and logo identify the original project; no licence grants trademark rights.

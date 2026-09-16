@@ -189,7 +189,8 @@ pub fn SettingsSheet() -> Element {
                         div { class: "form-row footnote", "Voice: GPT-Live-1 · Teacher: {teacher_label}" }
                         div { class: "form-row", ExternalLink { label: "OpenAI data controls", url: "https://developers.openai.com/api/docs/guides/your-data" } }
                         div { class: "form-row footnote", "Audio and selected text go to OpenAI while you practise. Requests disable provider storage where supported; abuse-monitoring retention may still apply. Raw audio is not saved by Mural." }
-                        div { class: "form-row", button { class: "action", onclick: move |_| app.open_sheet(Sheet::Notices), "Open-source notices" } }
+                        div { class: "form-row footnote", "Mural is free software under the GNU General Public License, version 3 or later, and comes with absolutely no warranty. You may share and change it under that licence." }
+                        div { class: "form-row", button { class: "action", onclick: move |_| app.open_sheet(Sheet::Notices), "Licences and open-source notices" } }
                     }
                 }
             }
@@ -211,9 +212,15 @@ pub fn SettingsSheet() -> Element {
 #[component]
 pub fn NoticesSheet() -> Element {
     rsx! {
-        SheetFrame { title: "Open-source notices", wide: true,
+        SheetFrame { title: "Licences and open-source notices", wide: true,
             pre { class: "footnote selectable", style: "white-space: pre-wrap; font-family: ui-monospace, monospace; margin: 0",
-                {concat!(include_str!("../../assets/ThirdPartyNotices.txt"), "\n\n", include_str!("../../assets/RustNotices.txt"))}
+                {concat!(
+                    include_str!("../../THIRD_PARTY_NOTICES.md"),
+                    "\n\n---\nLICENSE-MIT (original Mural project)\n\n", include_str!("../../LICENSE-MIT"),
+                    "\n\n---\nNotices carried over from the original Mural apps\n\n", include_str!("../../assets/ThirdPartyNotices.txt"),
+                    "\n\n---\n", include_str!("../../THIRD_PARTY_RUST.txt"),
+                    "\n\n---\n", include_str!("../../LICENSE"),
+                )}
             }
         }
     }

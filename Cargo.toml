@@ -3,7 +3,7 @@ name = "mural"
 version = "0.1.0"
 edition = "2021"
 description = "Mural for macOS: learn a language through conversation (Dioxus port)"
-license = "MIT"
+license = "GPL-3.0-or-later"
 
 [dependencies]
 dioxus = { version = "0.7", features = ["desktop"] }

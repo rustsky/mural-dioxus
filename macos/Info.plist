@@ -30,6 +30,8 @@
 	<string>13.0</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>NSHumanReadableCopyright</key>
+	<string>GPL-3.0-or-later. Includes MIT-licensed code © 2026 Hackmamba. No warranty.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Mural listens while you practise speaking. Your voice goes to the voice service you chose in Settings.</string>
 	<key>NSRequiresAquaSystemAppearance</key>
