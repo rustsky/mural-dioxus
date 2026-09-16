@@ -17,6 +17,7 @@ use crate::engine::{langdetect, meaning_cache_key, teaching, AI_CONSENT_REQUIRED
 use crate::services::api::{self, ApiError, ApiResult, Usage};
 use crate::services::credentials::{OLLAMA, OPENAI};
 use crate::services::provider;
+use crate::services::voice;
 use crate::services::store::LearningStore;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -87,6 +88,10 @@ pub struct Conv {
     local_notes: Vec<String>,
     local_turn: Option<Task>,
     local_turn_again: bool,
+    natural_voice: bool,
+    speech_task: Option<Task>,
+    prepare_task: Option<Task>,
+    pub preparing: Option<String>,
     // Coordinator tasks
     connection_task: Option<Task>,
     assessment_task: Option<Task>,
@@ -115,6 +120,7 @@ impl Default for Conv {
             attempt: None, instructions: String::new(), channel_open: false, started: false, transport_closing: false,
             recovery_task: None, ready_task: None,
             local_voice: false, local_notes: vec![], local_turn: None, local_turn_again: false,
+            natural_voice: false, speech_task: None, prepare_task: None, preparing: None,
             connection_task: None, assessment_task: None, delegation_tasks: HashMap::new(), close_task: None,
             duration_task: None, save_task: None, reset_task: None, reset_deadline: None,
             activity: ConversationActivity::new(0.0), pace: ConversationPace::default(),
@@ -143,6 +149,7 @@ impl Conv {
         }
         match self.state {
             ConnectionState::Idle => "Ready when you are",
+            ConnectionState::Connecting if self.preparing.is_some() => return self.preparing.clone().unwrap_or_default(),
             ConnectionState::Connecting => "Getting comfortable…",
             ConnectionState::Active if self.output_level > 0.02 => "Mural is speaking",
             ConnectionState::Active if self.input_level > 0.02 => "I’m listening",
@@ -196,11 +203,24 @@ enum BridgeMessage {
     Ice { attempt: String, state: String },
     Levels { input: f64, output: f64 },
     Local { attempt: String, event: String, #[serde(default)] text: String },
+    Pcm { attempt: String, data: String },
 }
 
 const NETWORK_LOST: &str = "The network connection was lost. Click the microphone to start a new conversation.";
 const TIME_LIMIT_NOTICE: &str = "You’ve reached your conversation time limit.";
 const QUIET_NOTICE: &str = "Mural ended this quiet session to avoid running up usage.";
+
+fn decode_pcm(data: &str) -> Option<Vec<f32>> {
+    use base64::Engine;
+    let bytes = base64::engine::general_purpose::STANDARD.decode(data).ok()?;
+    Some(bytes.chunks_exact(2).map(|b| i16::from_le_bytes([b[0], b[1]]) as f32 / 32768.0).collect())
+}
+
+fn encode_pcm(samples: &[f32]) -> String {
+    use base64::Engine;
+    let bytes: Vec<u8> = samples.iter().flat_map(|s| ((s.clamp(-1.0, 1.0) * 32767.0) as i16).to_le_bytes()).collect();
+    base64::engine::general_purpose::STANDARD.encode(bytes)
+}
 
 fn tracing() -> bool {
     static TRACE: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
@@ -242,12 +262,20 @@ impl Mural {
         let phrases: Vec<String> = if fake {
             std::env::var("MURAL_FAKE_SPEECH").unwrap_or_default().split('|').filter(|p| !p.is_empty()).map(String::from).collect()
         } else { vec![] };
-        let _ = eval.send(json!({"cmd": "config", "fakeMicrophone": fake, "fakeSpeech": phrases, "trace": tracing()}));
+        // Debug builds: WAV files stand in for the learner's voice in natural-voice conversations.
+        let clips: Vec<String> = if fake {
+            std::env::var("MURAL_FAKE_SPEECH_WAV").unwrap_or_default().split('|').filter_map(|path| {
+                let wave = sherpa_onnx::Wave::read(path)?;
+                let samples = sherpa_onnx::LinearResampler::create(wave.sample_rate(), voice::SAMPLE_RATE)?.resample(wave.samples(), true);
+                Some(encode_pcm(&samples))
+            }).collect()
+        } else { vec![] };
+        let _ = eval.send(json!({"cmd": "config", "fakeMicrophone": fake, "fakeSpeech": phrases, "fakeAudio": clips, "trace": tracing()}));
         spawn_forever(async move {
             loop {
                 match eval.recv::<Value>().await {
                     Ok(value) => {
-                        if tracing() && value["kind"] != "levels" {
+                        if tracing() && value["kind"] != "levels" && value["kind"] != "pcm" {
                             eprintln!("{:.1} bridge <- {}", uptime(), prefix(&value.to_string(), 300));
                         }
                         match serde_json::from_value::<BridgeMessage>(value) {
@@ -263,7 +291,7 @@ impl Mural {
     }
 
     fn bridge_send(self, value: Value) {
-        if tracing() && value["cmd"] != "send" { eprintln!("{:.1} bridge -> {}", uptime(), prefix(&value.to_string(), 200)); }
+        if tracing() && value["cmd"] != "send" && value["cmd"] != "play" { eprintln!("{:.1} bridge -> {}", uptime(), prefix(&value.to_string(), 200)); }
         if let Some(eval) = *self.bridge.peek() { let _ = eval.send(value); }
     }
 
@@ -307,6 +335,7 @@ impl Mural {
                     "speech" => "Allow speech recognition in System Settings → Privacy & Security → Speech Recognition → Mural, then start again.",
                     "speech-disabled" => "Speech recognition needs Dictation. Turn it on in System Settings → Keyboard → Dictation (Siri can stay off), then start again.",
                     "speech-unavailable" => "Speech recognition stopped working. Check that Dictation is on in System Settings → Keyboard, then start again.",
+                    "speech-natural" => "The natural voice couldn’t use the microphone. Check your audio input and try again.",
                     "speech-unsupported" => "Speech recognition isn’t available on this Mac. Turn on Siri or Dictation in System Settings, or type your replies.",
                     "speech-network" => "Speech recognition couldn’t reach Apple’s service. Check your connection, or turn on on-device Dictation in System Settings.",
                     "timeout" => "The voice connection took too long. Please try again.",
@@ -362,6 +391,21 @@ impl Mural {
                     _ => {}
                 }
             }
+            BridgeMessage::Pcm { attempt, data } => {
+                if !self.current_attempt(&attempt) || !conv.peek().natural_voice { return; }
+                let Some(samples) = decode_pcm(&data) else { return };
+                spawn_forever(async move {
+                    let heard = match voice::hear(samples).await {
+                        Ok(heard) => heard,
+                        Err(error) => { eprintln!("voice: {error}"); return; }
+                    };
+                    if tracing() && !heard.is_empty() { eprintln!("{:.1} heard {heard:?}", uptime()); }
+                    for text in heard {
+                        if !self.current_attempt(&attempt) { return; }
+                        self.local_heard(&text);
+                    }
+                });
+            }
             BridgeMessage::Levels { input, output } => {
                 let mut c = conv.write_unchecked();
                 if (c.input_level - input).abs() < 0.004 && (c.output_level - output).abs() < 0.004 { return; }
@@ -394,6 +438,7 @@ impl Mural {
     }
 
     fn transport_connect(self, instructions: String, local: bool) {
+        let natural = local && provider::current().voice == provider::VoiceStyle::Natural && voice::supported(self.language().id);
         self.transport_disconnect();
         let attempt = new_id();
         {
@@ -404,9 +449,12 @@ impl Mural {
             c.started = false;
             c.transport_closing = false;
             c.local_voice = local;
+            c.natural_voice = natural;
         }
-        if local {
-            self.bridge_send(json!({"cmd": "local_start", "attempt": attempt, "lang": self.language().locale}));
+        if natural {
+            self.prepare_natural_voice(attempt);
+        } else if local {
+            self.bridge_send(json!({"cmd": "local_start", "attempt": attempt, "lang": self.language().locale, "engine": "system"}));
         } else {
             self.bridge_send(json!({"cmd": "connect", "attempt": attempt}));
         }
@@ -437,7 +485,9 @@ impl Mural {
             c.channel_open = false;
             c.transport_closing = true;
             if let Some(t) = c.ready_task.take() { t.cancel(); }
-            if let Some(t) = c.local_turn.take() { t.cancel(); }
+            for t in [c.local_turn.take(), c.speech_task.take(), c.prepare_task.take()].into_iter().flatten() { t.cancel(); }
+            c.natural_voice = false;
+            c.preparing = None;
             c.local_notes.clear();
             c.local_turn_again = false;
             c.local_voice = false;
@@ -928,7 +978,74 @@ impl Mural {
         let Some(attempt) = attempt else { return };
         if !active || text.trim().is_empty() { return; }
         self.local_transcript(Speaker::Assistant, text.trim());
-        self.bridge_send(json!({"cmd": "speak", "attempt": attempt, "text": text.trim()}));
+        if self.conv.peek().natural_voice {
+            self.speak_natural(attempt, text.trim().to_string());
+        } else {
+            self.bridge_send(json!({"cmd": "speak", "attempt": attempt, "text": text.trim()}));
+        }
+    }
+
+    /// Downloads (first time) and loads the on-device voice, then opens the microphone.
+    fn prepare_natural_voice(self, attempt: String) {
+        let language_id = self.language().id;
+        let task = spawn_forever(async move {
+            let conv = self.conv;
+            let megabytes = voice::missing_megabytes(language_id);
+            if megabytes > 0 {
+                conv.write_unchecked().preparing = Some(format!("Downloading voices… 0% of {megabytes} MB"));
+                let progress = move |step: voice::Progress| {
+                    let text = match step {
+                        voice::Progress::Downloading(fraction) => format!("Downloading voices… {}% of {megabytes} MB", (fraction * 100.0).floor() as i64),
+                        voice::Progress::Unpacking => "Unpacking voices…".to_string(),
+                    };
+                    let mut c = conv.write_unchecked();
+                    if c.preparing.as_ref() != Some(&text) { c.preparing = Some(text); }
+                };
+                if let Err(error) = voice::install(language_id, progress).await {
+                    if self.current_attempt(&attempt) { self.connection_failed(error); }
+                    return;
+                }
+            }
+            if !self.current_attempt(&attempt) { return; }
+            conv.write_unchecked().preparing = Some("Warming up the voice…".into());
+            let result = voice::prepare(language_id).await;
+            if !self.current_attempt(&attempt) { return; }
+            {
+                let mut c = conv.write_unchecked();
+                c.preparing = None;
+                c.prepare_task = None;
+            }
+            match result {
+                Ok(()) => self.bridge_send(json!({"cmd": "local_start", "attempt": attempt, "lang": self.language().locale, "engine": "natural"})),
+                Err(error) => self.connection_failed(error),
+            }
+        });
+        self.conv.write_unchecked().prepare_task = Some(task);
+    }
+
+    /// Streams the reply to the page sentence by sentence; listening pauses until playback ends.
+    fn speak_natural(self, attempt: String, text: String) {
+        let previous = self.conv.write_unchecked().speech_task.take();
+        voice::reset_listening();
+        self.bridge_send(json!({"cmd": "play_begin", "attempt": attempt}));
+        let task = spawn_forever(async move {
+            // A newer reply replaces one that is still being generated.
+            if let Some(previous) = previous { previous.cancel(); }
+            let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+            let generation = voice::speak(text, 0.95, tx);
+            let forward = async {
+                while let Some((samples, rate)) = rx.recv().await {
+                    self.bridge_send(json!({"cmd": "play", "attempt": attempt, "rate": rate, "data": encode_pcm(&samples)}));
+                }
+            };
+            let (result, _) = tokio::join!(generation, forward);
+            if let Err(error) = result {
+                self.conv.write_unchecked().notice = Some(error);
+            }
+            self.bridge_send(json!({"cmd": "play_end", "attempt": attempt}));
+            self.conv.write_unchecked().speech_task = None;
+        });
+        self.conv.write_unchecked().speech_task = Some(task);
     }
 
     /// Asks the teacher for Mural's next spoken reply. One turn runs at a time; a request made
@@ -945,17 +1062,23 @@ impl Mural {
                 let Some(session) = c.session.clone() else { c.local_turn = None; return };
                 let mut messages = vec![json!({"role": "system", "content": c.instructions})];
                 let passages = session.passages();
-                for passage in passages.iter().skip(passages.len().saturating_sub(30)) {
+                // Recent turns only: long histories slow small local models and overflow their context.
+                for passage in passages.iter().skip(passages.len().saturating_sub(16)) {
                     let role = if passage.speaker == Speaker::User { "user" } else { "assistant" };
                     messages.push(json!({"role": role, "content": prefix(&passage.text(), 1200)}));
                 }
                 let notes: Vec<String> = c.local_notes.drain(..).collect();
                 let notes: Vec<&String> = notes.iter().skip(notes.len().saturating_sub(6)).collect();
                 if !notes.is_empty() {
-                    // Small models return nothing unless the conversation ends on a user message.
+                    // Small models return nothing unless the conversation ends on the learner's words,
+                    // so notes go just before the learner's latest message.
                     let joined = notes.iter().map(|n| n.as_str()).collect::<Vec<_>>().join("\n");
                     let learner_last = messages.last().map(|m| m["role"] == "user").unwrap_or(false);
-                    messages.push(json!({"role": if learner_last { "system" } else { "user" }, "content": joined}));
+                    if learner_last {
+                        messages.insert(messages.len() - 1, json!({"role": "system", "content": joined}));
+                    } else {
+                        messages.push(json!({"role": "user", "content": joined}));
+                    }
                 }
                 (messages, session.id)
             };

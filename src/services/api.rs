@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::OnceLock;
 use std::time::Duration;
 
@@ -192,8 +193,26 @@ async fn ollama_search(query: &str) -> Result<Vec<(SourceLink, String)>, ApiErro
     }).collect())
 }
 
+/// Spoken replies in progress. A local Ollama server answers one request at a time, so background
+/// teaching requests wait for these rather than making the learner wait for them.
+static VOICE_TURNS: AtomicUsize = AtomicUsize::new(0);
+
+struct VoiceTurn;
+impl VoiceTurn {
+    fn begin() -> Self { VOICE_TURNS.fetch_add(1, Ordering::SeqCst); VoiceTurn }
+}
+impl Drop for VoiceTurn {
+    fn drop(&mut self) { VOICE_TURNS.fetch_sub(1, Ordering::SeqCst); }
+}
+
 async fn ollama_respond(settings: &ProviderSettings, instructions: &str, input: &str, schema: Option<Value>, search: bool) -> Result<ApiResult, ApiError> {
     let key = ollama_key(settings)?;
+    if settings.teacher == Teacher::OllamaLocal {
+        for _ in 0..600 {
+            if VOICE_TURNS.load(Ordering::SeqCst) == 0 { break; }
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    }
     let mut usage = Usage::default();
     let mut sources = vec![];
     let mut system = instructions.to_string();
@@ -215,24 +234,44 @@ async fn ollama_respond(settings: &ProviderSettings, instructions: &str, input: 
         }
     }
     let messages = vec![json!({"role": "system", "content": system}), json!({"role": "user", "content": user})];
-    let mut result = ollama_chat(settings, key.as_deref(), messages, schema).await?;
+    let mut result = ollama_chat(settings, key.as_deref(), messages, schema, None).await?;
     result.usage.searches = usage.searches;
     result.sources = sources;
     Ok(result)
 }
 
+/// Sampling for a spoken reply: short, and more varied when retrying an empty answer.
+#[derive(Clone, Copy)]
+struct Spoken { retry: bool }
+
 /// One spoken turn for the local voice loop: the voice instructions plus the conversation so far.
+/// An empty answer is retried once with more varied sampling.
 pub async fn converse(messages: Vec<Value>) -> Result<ApiResult, ApiError> {
     let settings = provider::current();
     if !settings.teacher.is_ollama() { return Err(ApiError::MissingKey); }
     let key = ollama_key(&settings)?;
-    ollama_chat(&settings, key.as_deref(), messages, None).await
+    let _turn = VoiceTurn::begin();
+    match ollama_chat(&settings, key.as_deref(), messages.clone(), None, Some(Spoken { retry: false })).await {
+        Err(ApiError::Incomplete) => ollama_chat(&settings, key.as_deref(), messages, None, Some(Spoken { retry: true })).await,
+        other => other,
+    }
 }
 
-async fn ollama_chat(settings: &ProviderSettings, key: Option<&str>, messages: Vec<Value>, schema: Option<Value>) -> Result<ApiResult, ApiError> {
+/// Context window for a model on this computer. Every request uses the same value, because
+/// Ollama reloads the model whenever it changes; the default 4096 tokens cuts off long conversations.
+const LOCAL_CONTEXT: i64 = 8192;
+
+async fn ollama_chat(settings: &ProviderSettings, key: Option<&str>, messages: Vec<Value>, schema: Option<Value>, spoken: Option<Spoken>) -> Result<ApiResult, ApiError> {
     let model = settings.model().to_string();
     let mut body = json!({"model": model, "stream": false, "messages": messages});
     if let Some(schema) = schema { body["format"] = schema; }
+    let mut options = serde_json::Map::new();
+    if settings.teacher == Teacher::OllamaLocal { options.insert("num_ctx".into(), json!(LOCAL_CONTEXT)); }
+    if let Some(spoken) = spoken {
+        options.insert("num_predict".into(), json!(if model.starts_with("gpt-oss") { 1024 } else { 220 }));
+        if spoken.retry { options.insert("temperature".into(), json!(1.0)); }
+    }
+    if !options.is_empty() { body["options"] = Value::Object(options); }
     // gpt-oss only accepts reasoning levels; other models answer directly.
     body["think"] = if model.starts_with("gpt-oss") { json!("low") } else { json!(false) };
     let url = format!("{}/api/chat", settings.host());
@@ -244,6 +283,10 @@ async fn ollama_chat(settings: &ProviderSettings, key: Option<&str>, messages: V
     }
     if !(200..300).contains(&status) { return Err(ApiError::Ollama { status, model }); }
     let json: Value = serde_json::from_slice(&bytes).map_err(|_| ApiError::InvalidResponse)?;
+    if std::env::var("MURAL_TRACE").is_ok() {
+        eprintln!("ollama {}: prompt {} tokens, reply {} tokens, {} chars, done_reason {}", if spoken.is_some() { "voice" } else { "teaching" },
+            json["prompt_eval_count"], json["eval_count"], json["message"]["content"].as_str().map(str::len).unwrap_or(0), json["done_reason"]);
+    }
     parse_ollama(&json)
 }
 

@@ -7,7 +7,8 @@ use crate::engine::languages::{self, MEANING_LANGUAGES};
 use crate::engine::models::Archive;
 use crate::services::api;
 use crate::services::credentials::{OLLAMA, OPENAI};
-use crate::services::provider::{self, Teacher};
+use crate::services::provider::{self, Teacher, VoiceStyle};
+use crate::services::voice;
 
 #[component]
 pub fn SettingsSheet() -> Element {
@@ -220,6 +221,9 @@ pub fn NoticesSheet() -> Element {
 
 #[component]
 fn TeacherSection(running: bool) -> Element {
+    let app = use_context::<Mural>();
+    let language_id = app.store.read().language().id;
+    let mut models_changed = use_signal(|| 0u32);
     let mut settings = use_signal(provider::current);
     let mut key = use_signal(String::new);
     let mut has_key = use_signal(|| OLLAMA.has_key());
@@ -306,6 +310,43 @@ fn TeacherSection(running: bool) -> Element {
                         }
                     }
                 }
+                if teacher.is_ollama() {
+                    label { class: "form-row",
+                        span { class: "label", "Voice" }
+                        select { disabled: running, aria_label: "Voice",
+                            onchange: move |e| {
+                                let style = if e.value() == "system" { VoiceStyle::System } else { VoiceStyle::Natural };
+                                apply(Box::new(move |s| s.voice = style));
+                            },
+                            option { value: "natural", selected: current.voice == VoiceStyle::Natural, "Natural (on this computer)" }
+                            option { value: "system", selected: current.voice == VoiceStyle::System, "System speech" }
+                        }
+                    }
+                    if current.voice == VoiceStyle::Natural {
+                        {
+                            let _ = models_changed();
+                            let missing = voice::missing_megabytes(language_id);
+                            rsx! {
+                                div { class: "form-row footnote secondary",
+                                    if !voice::supported(language_id) { "This language uses system speech." }
+                                    else if missing > 0 { "The first conversation downloads about {missing} MB of voice models for this language." }
+                                    else { "Voice models for this language are ready." }
+                                }
+                                if voice::directory().exists() {
+                                    div { class: "form-row",
+                                        button { class: "action danger", disabled: running,
+                                            onclick: move |_| {
+                                                if let Err(e) = voice::remove_all() { message.set(Some(e)); }
+                                                models_changed += 1;
+                                            },
+                                            "Delete downloaded voice models"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 if teacher == Teacher::OllamaCloud || (teacher == Teacher::OllamaLocal && has_key()) {
                     if has_key() {
                         div { class: "form-row", Icon { name: "checkmark.shield", size: 16 } span { class: "label", "Your Ollama key is saved on this Mac" }
@@ -340,7 +381,8 @@ fn TeacherSection(running: bool) -> Element {
             }
             div { class: "section-footer",
                 "Meanings, word tracking, lookups, typed replies and topic searches go to {destination}. "
-                if teacher.is_ollama() { "Voice uses this Mac’s speech recognition and voices, and Mural’s replies come from {destination}. Apple may process speech unless on-device Dictation is available. For more natural voices, download Premium voices in System Settings → Accessibility → Spoken Content. " }
+                if teacher.is_ollama() && current.voice == VoiceStyle::Natural { "Natural voice listens and speaks with open models (Parakeet or Omnilingual, Kokoro or Piper) that run entirely on this computer; Mural’s replies come from {destination}. " }
+                if teacher.is_ollama() && current.voice == VoiceStyle::System { "System speech uses this Mac’s speech recognition (Dictation must be on) and voices; Mural’s replies come from {destination}. " }
                 else { "Live voice uses OpenAI. " }
                 if teacher == Teacher::OllamaCloud { "Ollama’s free plan has usage limits. " }
                 if teacher == Teacher::OllamaLocal { "Local models keep text on this Mac but may be slower, and topic search needs an Ollama key. " }

@@ -6,7 +6,9 @@ language app, built with [Dioxus](https://dioxuslabs.com) 0.7. It follows the iP
 backup format. Backups exported here import on iPhone and Android, and the other way round.
 
 Mural uses your own OpenAI API key (GPT-Live-1 for voice, GPT-5.6 Luna for teaching). The key is
-stored in the macOS login Keychain and sent only to OpenAI.
+stored in the macOS login Keychain and sent only to OpenAI. Alternatively, choose an Ollama teacher
+(a model on this Mac, or Ollama Cloud with a free key); conversations then use the on-device voice
+described below and need no OpenAI key.
 
 ## Build
 
@@ -39,6 +41,29 @@ Rust keeps the API key and makes every HTTP request; the webview only exchanges 
 Mandarin pinyin uses the same system dictionary as the iPhone app (`CFStringTokenizer`), and
 off-language detection uses Apple's NaturalLanguage framework.
 
+### On-device voice (Ollama teachers)
+
+With an Ollama teacher, the **Natural** voice (default) runs open models through
+[sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), which works the same on macOS and Windows:
+
+| Step | Model | Languages |
+| --- | --- | --- |
+| End of turn | Silero VAD | all |
+| Listening | NVIDIA Parakeet TDT 0.6B v3 (int8) | de, en, es, fr, it, pt |
+| Listening | Meta Omnilingual ASR 300M CTC (int8) | nb, zh |
+| Speaking | Kokoro-82M v1.0 | en, es, fr, it, pt, zh |
+| Speaking | Piper (thorsten-high, talesyntese-medium) | de, nb |
+
+The webview captures the microphone with echo cancellation and streams 16 kHz PCM to Rust
+(`src/services/voice.rs`), which transcribes each utterance, asks the teacher for a reply, and
+streams the synthesized audio back sentence by sentence. The microphone is ignored while Mural
+speaks. Models download on first use per language (about 340–800 MB) into
+`~/Library/Application Support/Mural/voice-models` and can be deleted in Settings. **System
+speech** is the alternative: WebKit speech recognition (needs Dictation turned on) and system voices.
+
+sherpa-onnx is linked statically and includes espeak-ng (GPL-3.0) for Kokoro and Piper
+pronunciation, so binaries built with it must be distributed under GPL-compatible terms.
+
 Not ported: managed accounts, hosted minutes and purchases (disabled in the iPhone build too),
 and simulator-only verification harnesses.
 
@@ -47,7 +72,9 @@ and simulator-only verification harnesses.
 Debug builds accept `--preview` (in-memory record), `--preview-seed` (sample Spanish data), and
 `MURAL_AUTOMATION=<dir>` for scripted checks without screen-recording access (see
 `src/app/automation.rs`). `MURAL_FAKE_MICROPHONE=1` and `MURAL_DEBUG_API_KEY` exercise the voice
-request path without a microphone prompt or Keychain access. None of these exist in release builds.
+request path without a microphone prompt or Keychain access; with it, `MURAL_FAKE_SPEECH="a|b"`
+(system speech) or `MURAL_FAKE_SPEECH_WAV="a.wav|b.wav"` (natural voice) stand in for the learner.
+None of these exist in release builds. `MURAL_TRACE=1` logs voice bridge traffic to stderr in any build.
 
 ## License
 

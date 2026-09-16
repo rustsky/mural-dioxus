@@ -4,7 +4,7 @@
 // speech loop used with an Ollama teacher, and animations.
 const post = (message) => { try { dioxus.send(message); } catch (_) {} };
 
-const config = { fakeMicrophone: false, fakeSpeech: [], trace: false };
+const config = { fakeMicrophone: false, fakeSpeech: [], fakeAudio: [], trace: false };
 const live = { attempt: null, pc: null, dc: null, stream: null, track: null, audio: null, ctx: null, meter: null, muted: false };
 
 function stopStream(stream) {
@@ -155,7 +155,8 @@ class FakeRecognition {
 }
 const NativeRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const Recognition = function () { return config.fakeMicrophone ? new FakeRecognition() : new NativeRecognition(); };
-const local = { attempt: null, lang: "en", recognition: null, speaking: 0, utterances: [], muted: false, stream: null, ctx: null, meter: null, voice: null, networkErrors: 0, quickEnds: 0, restart: null };
+const local = { attempt: null, lang: "en", recognition: null, speaking: 0, utterances: [], muted: false, stream: null, ctx: null, meter: null, voice: null, networkErrors: 0, quickEnds: 0, restart: null,
+  engine: "system", capture: null, player: null };
 
 function pickVoice(lang) {
   if (!window.speechSynthesis) return null;
@@ -175,11 +176,13 @@ function stopListening() {
 
 function localTeardown() {
   stopListening();
+  stopPlayback();
+  if (local.capture) { local.capture.onaudioprocess = null; try { local.capture.disconnect(); } catch (_) {} }
   if (local.meter) clearInterval(local.meter);
   if (window.speechSynthesis) speechSynthesis.cancel();
   stopStream(local.stream);
   if (local.ctx) { try { local.ctx.close(); } catch (_) {} }
-  Object.assign(local, { attempt: null, speaking: 0, utterances: [], muted: false, stream: null, ctx: null, meter: null, networkErrors: 0, quickEnds: 0 });
+  Object.assign(local, { attempt: null, speaking: 0, utterances: [], muted: false, stream: null, ctx: null, meter: null, networkErrors: 0, quickEnds: 0, capture: null, player: null });
 }
 
 function localFail(attempt, code) {
@@ -193,7 +196,7 @@ const trace = (attempt, text) => { if (config.trace) post({ kind: "local", attem
 function listen(attempt, delay = 0) {
   clearTimeout(local.restart);
   if (delay) { local.restart = setTimeout(() => listen(attempt), delay); return; }
-  if (local.attempt !== attempt || local.speaking || local.muted || local.recognition) return;
+  if (local.attempt !== attempt || local.engine === "natural" || local.speaking || local.muted || local.recognition) return;
   const r = new Recognition();
   r.lang = local.lang;
   r.continuous = false;
@@ -284,12 +287,138 @@ function speak(attempt, text) {
   speechSynthesis.speak(u);
 }
 
-async function localStart(attempt, lang) {
+// ---- Natural voice: the page streams 16 kHz microphone audio to Rust and plays the audio Rust generates. ----
+function base64Pcm(int16) {
+  const bytes = new Uint8Array(int16.buffer, int16.byteOffset, int16.byteLength);
+  let text = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) text += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(text);
+}
+
+function pcmFloat(base64) {
+  const raw = atob(base64);
+  const out = new Float32Array(raw.length >> 1);
+  for (let i = 0; i < out.length; i++) {
+    const v = raw.charCodeAt(2 * i) | (raw.charCodeAt(2 * i + 1) << 8);
+    out[i] = (v >= 0x8000 ? v - 0x10000 : v) / 32768;
+  }
+  return out;
+}
+
+function startCapture(attempt, stream) {
+  const ctx = local.ctx;
+  const node = ctx.createScriptProcessor(4096, 1, 1);
+  const ratio = ctx.sampleRate / 16000;
+  let offset = 0;
+  node.onaudioprocess = (event) => {
+    if (local.attempt !== attempt) return;
+    const input = event.inputBuffer.getChannelData(0);
+    // Nothing is sent while Mural speaks or the learner is muted, so it never hears itself.
+    if (local.muted || local.speaking || config.fakeMicrophone) { offset = 0; return; }
+    const out = new Int16Array(Math.ceil((input.length - offset) / ratio));
+    let n = 0;
+    let t = offset;
+    for (; t < input.length && n < out.length; t += ratio) {
+      // Averaging each window is a simple anti-aliasing filter before decimation.
+      const from = Math.floor(t), to = Math.min(input.length, Math.max(from + 1, Math.floor(t + ratio)));
+      let sum = 0;
+      for (let i = from; i < to; i++) sum += input[i];
+      out[n++] = Math.max(-1, Math.min(1, sum / (to - from))) * 32767;
+    }
+    offset = t - input.length;
+    if (n) post({ kind: "pcm", attempt, data: base64Pcm(out.subarray(0, n)) });
+  };
+  const silent = ctx.createGain();
+  silent.gain.value = 0;
+  ctx.createMediaStreamSource(stream).connect(node);
+  node.connect(silent).connect(ctx.destination);
+  local.capture = node;
+}
+
+// Debug builds only: prerecorded 16 kHz clips stand in for the learner, one per listening turn.
+function playFakeAudio(attempt) {
+  const clip = config.fakeAudio.shift();
+  if (!clip) return;
+  const samples = pcmFloat(clip);
+  const silence = new Int16Array(1600);
+  const chunks = [];
+  for (let i = 0; i < samples.length; i += 1600) {
+    chunks.push(Int16Array.from(samples.subarray(i, i + 1600), (v) => v * 32767));
+  }
+  for (let i = 0; i < 20; i++) chunks.push(silence);
+  let index = 0;
+  const timer = setInterval(() => {
+    if (local.attempt !== attempt || index >= chunks.length) { clearInterval(timer); return; }
+    post({ kind: "pcm", attempt, data: base64Pcm(chunks[index++]) });
+  }, 100);
+}
+
+function stopPlayback() {
+  const player = local.player;
+  if (!player) return;
+  player.sources.forEach((s) => { s.onended = null; try { s.stop(); } catch (_) {} });
+  player.sources = [];
+  player.ended = true;
+  clearTimeout(player.resume);
+}
+
+function playBegin(attempt) {
+  if (local.attempt !== attempt || !local.player) return;
+  stopPlayback();
+  Object.assign(local.player, { ended: false, next: 0 });
+  local.speaking = 1;
+  trace(attempt, "play begin");
+}
+
+function playChunk(attempt, rate, data) {
+  const player = local.player;
+  if (local.attempt !== attempt || !player || player.ended) return;
+  const ctx = local.ctx;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const samples = pcmFloat(data);
+  if (!samples.length) return;
+  const buffer = ctx.createBuffer(1, samples.length, rate);
+  buffer.copyToChannel(samples, 0);
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  source.connect(player.gain);
+  const at = Math.max(ctx.currentTime + 0.05, player.next);
+  source.start(at);
+  player.next = at + buffer.duration;
+  player.sources.push(source);
+  source.onended = () => {
+    player.sources = player.sources.filter((s) => s !== source);
+    playSettled(attempt);
+  };
+}
+
+function playEnd(attempt) {
+  if (local.attempt !== attempt || !local.player) return;
+  local.player.ended = true;
+  playSettled(attempt);
+}
+
+function playSettled(attempt) {
+  const player = local.player;
+  if (!player || !player.ended || player.sources.length) return;
+  clearTimeout(player.resume);
+  // A short pause lets the room's echo fade before listening resumes.
+  player.resume = setTimeout(() => {
+    if (local.attempt !== attempt || player.sources.length) return;
+    local.speaking = 0;
+    trace(attempt, "play end");
+    if (config.fakeMicrophone) playFakeAudio(attempt);
+  }, 400);
+}
+
+async function localStart(attempt, lang, engine) {
   teardown();
   localTeardown();
   local.attempt = attempt;
   local.lang = lang;
-  if (!NativeRecognition || !window.speechSynthesis) return localFail(attempt, "speech-unsupported");
+  local.engine = engine;
+  const natural = engine === "natural";
+  if (!natural && (!NativeRecognition || !window.speechSynthesis)) return localFail(attempt, "speech-unsupported");
   let stream;
   if (config.fakeMicrophone) {
     const ctx = new AudioContext();
@@ -306,15 +435,38 @@ async function localStart(attempt, lang) {
   if (local.attempt !== attempt) { stopStream(stream); return; }
   local.stream = stream;
   local.ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (local.ctx.state === "suspended") local.ctx.resume().catch(() => {});
   const inputLevel = analyser(local.ctx, stream);
-  local.voice = pickVoice(lang);
-  speechSynthesis.onvoiceschanged = () => { local.voice = pickVoice(local.lang); };
+  let outputLevel = () => 0;
+  if (natural) {
+    try {
+      startCapture(attempt, stream);
+    } catch (_) {
+      return localFail(attempt, "speech-natural");
+    }
+    const gain = local.ctx.createGain();
+    gain.connect(local.ctx.destination);
+    local.player = { gain, sources: [], next: 0, ended: true, resume: null };
+    const meter = local.ctx.createAnalyser();
+    meter.fftSize = 512;
+    gain.connect(meter);
+    const data = new Float32Array(meter.fftSize);
+    outputLevel = () => {
+      meter.getFloatTimeDomainData(data);
+      let sum = 0;
+      for (let i = 0; i < data.length; i++) sum += data[i] * data[i];
+      return Math.sqrt(sum / data.length);
+    };
+  } else {
+    local.voice = pickVoice(lang);
+    speechSynthesis.onvoiceschanged = () => { local.voice = pickVoice(local.lang); };
+    // Speech synthesis has no audio stream to measure, so the orb gets a gentle pulse instead.
+    outputLevel = () => (local.speaking > 0 && speechSynthesis.speaking ? 0.04 + 0.03 * Math.abs(Math.sin(Date.now() / 170)) : 0);
+  }
   let lastIn = 0, lastOut = 0;
   local.meter = setInterval(() => {
-    const speaking = local.speaking > 0 && speechSynthesis.speaking;
     const input = local.muted || local.speaking ? 0 : Math.min(1, inputLevel() * 8);
-    // Speech synthesis has no audio stream to measure, so the orb gets a gentle pulse instead.
-    const output = speaking ? 0.3 + 0.25 * Math.abs(Math.sin(Date.now() / 170)) : 0;
+    const output = Math.min(1, outputLevel() * 8);
     lastIn = lastIn * 0.35 + input * 0.65;
     lastOut = lastOut * 0.35 + output * 0.65;
     post({ kind: "levels", input: lastIn, output: lastOut });
@@ -325,7 +477,7 @@ async function localStart(attempt, lang) {
 
 function localMute(muted) {
   local.muted = muted;
-  if (!local.attempt) return;
+  if (!local.attempt || local.engine === "natural") return;
   if (muted) stopListening();
   else listen(local.attempt);
 }
@@ -398,9 +550,12 @@ while (true) {
     case "send": sendEvent(command.attempt, command.data); break;
     case "mute": mute(!!command.muted); break;
     case "disconnect": teardown(); localTeardown(); break;
-    case "local_start": localStart(command.attempt, command.lang || "en"); break;
+    case "local_start": localStart(command.attempt, command.lang || "en", command.engine || "system"); break;
+    case "play_begin": playBegin(command.attempt); break;
+    case "play": playChunk(command.attempt, command.rate, command.data); break;
+    case "play_end": playEnd(command.attempt); break;
     case "speak": speak(command.attempt, String(command.text || "")); break;
     case "listen": listen(command.attempt); break;
-    case "config": Object.assign(config, { fakeMicrophone: !!command.fakeMicrophone, fakeSpeech: command.fakeSpeech || [], trace: !!command.trace }); break;
+    case "config": Object.assign(config, { fakeMicrophone: !!command.fakeMicrophone, fakeSpeech: command.fakeSpeech || [], fakeAudio: command.fakeAudio || [], trace: !!command.trace }); break;
   }
 }

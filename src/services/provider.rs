@@ -34,6 +34,17 @@ impl Teacher {
     }
 }
 
+/// How an Ollama conversation listens and speaks.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum VoiceStyle {
+    /// Downloaded models running on this computer.
+    #[default]
+    Natural,
+    /// The operating system's speech recognition and voices.
+    System,
+}
+
 pub const OLLAMA_CLOUD_HOST: &str = "https://ollama.com";
 pub const OLLAMA_LOCAL_HOST: &str = "http://localhost:11434";
 
@@ -43,6 +54,7 @@ pub struct ProviderSettings {
     pub teacher: Teacher,
     pub cloud_model: String,
     pub local_model: String,
+    pub voice: VoiceStyle,
 }
 
 impl Default for ProviderSettings {
@@ -51,6 +63,7 @@ impl Default for ProviderSettings {
             teacher: Teacher::OpenAi,
             cloud_model: Teacher::OllamaCloud.default_model().into(),
             local_model: Teacher::OllamaLocal.default_model().into(),
+            voice: VoiceStyle::Natural,
         }
     }
 }
@@ -103,5 +116,6 @@ mod tests {
         assert_eq!(s.host(), OLLAMA_CLOUD_HOST);
         assert_eq!(Teacher::from_id("ollamaLocal"), Some(Teacher::OllamaLocal));
         assert_eq!(ProviderSettings::default().model(), "gpt-5.6-luna");
+        assert_eq!(s.voice, VoiceStyle::Natural);
     }
 }
