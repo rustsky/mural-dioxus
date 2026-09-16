@@ -153,6 +153,9 @@ pub fn AiConsentSheet() -> Element {
                     span { style: "color: var(--orange)", Icon { name: "waveform.bubble", size: 34, weight: 1.2 } }
                     h1 { "Before we talk." }
                     div { style: "font-size: 15px; line-height: 1.45", "{AI_CONSENT_SUMMARY}" }
+                    if crate::services::provider::current().teacher.is_ollama() {
+                        div { class: "sub", "Meanings and teaching text go to Ollama, as chosen in Settings → Teacher." }
+                    }
                     div { class: "sub secondary", "Your learning record is stored on this Mac. Mural does not save raw audio. You can keep browsing your saved words and conversations without agreeing." }
                     ExternalLink { label: "Privacy policy", url: "https://mural.chat/privacy/", class: "sub" }
                     button { class: "pill-button center", onclick: move |_| app.accept_ai_consent(), "Agree and continue" }

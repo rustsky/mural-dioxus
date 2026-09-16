@@ -116,7 +116,10 @@ pub fn CurrentTopicSheet() -> Element {
                     Icon { name: "waveform", size: 18 } "Talk about this"
                 }
             }
-            div { class: "footnote secondary", "Search uses your OpenAI API account. Sources stay attached to the topic." }
+            div { class: "footnote secondary",
+                if crate::services::provider::current().teacher.is_ollama() { "Search uses your Ollama account. Sources stay attached to the topic." }
+                else { "Search uses your OpenAI API account. Sources stay attached to the topic." }
+            }
         }
     }
 }

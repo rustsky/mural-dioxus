@@ -2,21 +2,39 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleDevelopmentRegion</key><string>en</string>
-	<key>CFBundleDisplayName</key><string>Mural</string>
-	<key>CFBundleExecutable</key><string>mural</string>
-	<key>CFBundleIconFile</key><string>icon.icns</string>
-	<key>CFBundleIdentifier</key><string>chat.mural.desktop</string>
-	<key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
-	<key>CFBundleName</key><string>Mural</string>
-	<key>CFBundlePackageType</key><string>APPL</string>
-	<key>CFBundleShortVersionString</key><string>0.1.0</string>
-	<key>CFBundleVersion</key><string>1</string>
-	<key>LSApplicationCategoryType</key><string>public.app-category.education</string>
-	<key>LSMinimumSystemVersion</key><string>13.0</string>
-	<key>NSHighResolutionCapable</key><true/>
-	<key>NSMicrophoneUsageDescription</key><string>Mural listens while you practise speaking. Your voice is sent to OpenAI during a conversation.</string>
-	<key>NSRequiresAquaSystemAppearance</key><true/>
-	<key>ITSAppUsesNonExemptEncryption</key><false/>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Mural</string>
+	<key>CFBundleExecutable</key>
+	<string>mural</string>
+	<key>CFBundleIconFile</key>
+	<string>icon.icns</string>
+	<key>CFBundleIdentifier</key>
+	<string>chat.mural.desktop</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Mural</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.education</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>13.0</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Mural listens while you practise speaking. Your voice goes to the voice service you chose in Settings.</string>
+	<key>NSRequiresAquaSystemAppearance</key>
+	<true/>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>With an Ollama teacher, Mural turns your speech into text using this Mac’s speech recognition.</string>
 </dict>
 </plist>
