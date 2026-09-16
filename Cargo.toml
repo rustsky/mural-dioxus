@@ -1,0 +1,36 @@
+[package]
+name = "mural"
+version = "0.1.0"
+edition = "2021"
+description = "Mural for macOS: learn a language through conversation (Dioxus port)"
+license = "MIT"
+
+[dependencies]
+dioxus = { version = "0.7", features = ["desktop"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+tokio = { version = "1", features = ["time", "sync"] }
+rfd = "0.15"
+open = "5"
+dirs = "6"
+unicode-general-category = "1"
+unicode-normalization = "0.1"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+security-framework = "3"
+core-foundation = "0.10"
+core-foundation-sys = "0.8"
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", features = ["NSString", "NSDictionary", "NSValue", "NSLocale", "NSArray", "NSData", "NSKeyValueCoding", "NSUserDefaults"] }
+objc2-web-kit = { version = "0.3", features = ["WKWebView", "WKWebViewConfiguration", "WKPreferences", "WKSnapshotConfiguration", "block2", "objc2-app-kit"] }
+objc2-app-kit = { version = "0.3", features = ["NSImage"] }
+block2 = "0.6"
+objc2-natural-language = { version = "0.3", features = ["NLLanguage", "NLLanguageRecognizer"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+strip = true

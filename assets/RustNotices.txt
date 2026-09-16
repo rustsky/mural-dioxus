@@ -1,0 +1,5 @@
+Mural for macOS is built with Rust crates including Dioxus, Tao and Wry (MIT OR Apache-2.0),
+Tokio (MIT), Reqwest, Serde, serde_json, uuid, chrono, rfd, open, dirs (MIT OR Apache-2.0),
+rustls (Apache-2.0 OR ISC OR MIT), security-framework and core-foundation (MIT OR Apache-2.0),
+objc2 and its framework bindings (MIT), unicode-normalization and unicode-general-category
+(MIT OR Apache-2.0). Each component retains its own license; see the crate sources for full terms.
