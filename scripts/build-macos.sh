@@ -16,10 +16,6 @@ ARCH=$(lipo -archs "$APP/Contents/MacOS/mural" | tr ' ' '-')
 rm -rf dist && mkdir -p dist
 cp -R "$APP" dist/Mural.app
 xattr -cr dist/Mural.app
-# Licence texts and credits travel inside the app (Settings → Licences opens them).
-for file in LICENSE LICENSE-MIT THIRD_PARTY_NOTICES.md THIRD_PARTY_RUST.txt; do
-    cp "$file" dist/Mural.app/Contents/Resources/
-done
 
 if [ "$IDENTITY" = "-" ]; then
     codesign --force --sign - --identifier chat.mural.desktop --entitlements macos/Mural.entitlements dist/Mural.app

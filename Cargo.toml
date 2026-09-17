@@ -34,6 +34,14 @@ objc2-app-kit = { version = "0.3", features = ["NSImage"] }
 block2 = "0.6"
 objc2-natural-language = { version = "0.3", features = ["NLLanguage", "NLLanguageRecognizer"] }
 
+[target.'cfg(windows)'.dependencies]
+keyring = { version = "3", features = ["windows-native"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+keyring = { version = "3", features = ["async-secret-service", "async-io", "crypto-rust"] }
+# Same version wry uses; needed to allow microphone access in WebKitGTK.
+webkit2gtk = { version = "2.0.1", features = ["v2_40"] }
+
 [profile.release]
 opt-level = 3
 lto = "thin"

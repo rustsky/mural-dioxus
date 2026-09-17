@@ -7,6 +7,7 @@ mod onboarding;
 mod settings;
 mod state;
 mod talk;
+mod webview;
 
 use dioxus::desktop::tao::event::{Event as TaoEvent, WindowEvent};
 use dioxus::desktop::use_wry_event_handler;
@@ -41,6 +42,7 @@ pub fn App() -> Element {
 fn Main(store: Signal<Option<crate::services::store::LearningStore>>) -> Element {
     let app = use_hook(|| Mural::new(store.write().take().expect("store")));
     use_context_provider(|| app);
+    use_hook(webview::prepare);
     use_hook(|| app.attach_bridge());
     #[cfg(debug_assertions)]
     use_hook(|| { automation::start(app); app.prepare_preview(); });
