@@ -9,8 +9,21 @@ icon = ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/i
 short_description = "The language app you eventually delete."
 copyright = "GPL-3.0-or-later; includes MIT-licensed code © 2026 Hackmamba"
 category = "Education"
+# Licence texts and credits are installed next to the app on every platform.
+resources = ["LICENSE", "LICENSE-MIT", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_RUST.txt"]
 
 [bundle.macos]
 minimum_system_version = "13.0"
 info_plist_path = "macos/Info.plist"
 entitlements = "macos/Mural.entitlements"
+
+[bundle.windows]
+icon_path = "icons/icon.ico"
+# Windows 10/11 already include WebView2; older systems download it during setup.
+webview_install_mode = { DownloadBootstrapper = { silent = true } }
+
+[bundle.windows.nsis]
+license = "LICENSE"
+installer_icon = "icons/icon.ico"
+install_mode = "CurrentUser"
+start_menu_folder = "Mural"
