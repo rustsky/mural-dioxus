@@ -34,6 +34,13 @@ by the sherpa-onnx 1.13.8 release.
 | KISS FFT | BSD-3-Clause | https://github.com/mborgerding/kissfft |
 | simple-sentencepiece | Apache-2.0 | https://github.com/pkufool/simple-sentencepiece |
 
+The Linux AppImage additionally contains system libraries from the build machine (Ubuntu 24.04),
+among them WebKitGTK, GTK 3, GLib and GStreamer with its base, good and bad plugin sets, which are
+licensed under the LGPL-2.1-or-later (some GStreamer plugins under other open-source licences).
+They are separate shared libraries inside the AppImage and can be replaced; their sources are
+available from Ubuntu (https://launchpad.net/ubuntu). The Windows installer is built with NSIS
+(zlib licence).
+
 Rust crates compiled into the app, with their licences, are listed in `THIRD_PARTY_RUST.txt`
 (generated from `Cargo.lock` by `scripts/rust-licenses.sh`). Their licence texts are in each
 crate's source, available from https://crates.io.

@@ -10,16 +10,14 @@ IDENTITY=${SIGN_IDENTITY:--}
 
 ./scripts/rust-licenses.sh
 dx bundle --release --package-types macos
-APP=target/dx/mural/bundle/macos/bundle/macos/Mural.app
+# The layout under bundle/macos has moved between dx versions, so search for the bundle.
+APP=$(find target/dx/mural/bundle/macos -maxdepth 4 -type d -name Mural.app | head -1)
+[ -n "$APP" ] || { echo "no Mural.app under target/dx/mural/bundle/macos" >&2; exit 1; }
 ARCH=$(lipo -archs "$APP/Contents/MacOS/mural" | tr ' ' '-')
 
 rm -rf dist && mkdir -p dist
 cp -R "$APP" dist/Mural.app
 xattr -cr dist/Mural.app
-# Licence texts and credits travel inside the app (Settings → Licences opens them).
-for file in LICENSE LICENSE-MIT THIRD_PARTY_NOTICES.md THIRD_PARTY_RUST.txt; do
-    cp "$file" dist/Mural.app/Contents/Resources/
-done
 
 if [ "$IDENTITY" = "-" ]; then
     codesign --force --sign - --identifier chat.mural.desktop --entitlements macos/Mural.entitlements dist/Mural.app
