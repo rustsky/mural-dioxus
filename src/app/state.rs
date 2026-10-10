@@ -90,7 +90,7 @@ pub struct Conv {
     transport_closing: bool,
     recovery_task: Option<Task>,
     ready_task: Option<Task>,
-    // Local voice (Ollama teacher): speech recognition → teacher → speech synthesis on this Mac
+    // Local voice (Ollama teacher): speech recognition → teacher → speech synthesis on this computer
     local_voice: bool,
     local_notes: Vec<String>,
     local_turn: Option<Task>,
@@ -346,7 +346,7 @@ impl Mural {
                     "speech-disabled" => "Speech recognition needs Dictation. Turn it on in System Settings → Keyboard → Dictation (Siri can stay off), then start again.",
                     "speech-unavailable" => "Speech recognition stopped working. Check that Dictation is on in System Settings → Keyboard, then start again.",
                     "speech-natural" => "The natural voice couldn’t use the microphone. Check your audio input and try again.",
-                    "speech-unsupported" => "Speech recognition isn’t available on this Mac. Turn on Siri or Dictation in System Settings, or type your replies.",
+                    "speech-unsupported" => "Speech recognition isn’t available on this computer. On a Mac, turn on Dictation in System Settings, or type your replies.",
                     "speech-network" => "Speech recognition couldn’t reach Apple’s service. Check your connection, or turn on on-device Dictation in System Settings.",
                     "timeout" => "The voice connection took too long. Please try again.",
                     "unsupported" => "Voice needs microphone access, which is only available when Mural runs as an app bundle. Open Mural.app and try again.",
@@ -472,7 +472,7 @@ impl Mural {
 
     fn transport_close(self) {
         if self.conv.peek().local_voice {
-            // Nothing is billed on this Mac, so the session closes with zero voice time.
+            // Nothing is billed on this computer, so the session closes with zero voice time.
             self.bridge_send(json!({"cmd": "mute", "muted": true}));
             let reason = self.conv.peek().session.as_ref().and_then(|s| s.end_reason.clone());
             spawn_forever(async move {
@@ -984,7 +984,7 @@ impl Mural {
                     if c.state != ConnectionState::Active { return; }
                     (session.started_at, c.working || !c.delegation_tasks.is_empty(), c.is_muted, c.local_voice)
                 };
-                // A model on this Mac costs nothing, so its conversations never end on their own.
+                // A model on this computer costs nothing, so its conversations never end on their own.
                 let unlimited = local && provider::current().teacher == provider::Teacher::OllamaLocal;
                 let minutes = self.store.peek().preferences().session_minutes;
                 if !unlimited && Date::now().since(started_at) > (minutes * 60) as f64 {

@@ -42,7 +42,7 @@ impl std::fmt::Display for ApiError {
             ApiError::Network => write!(f, "Mural couldn’t reach {}. Check your connection and try again.", teacher_name()),
             ApiError::Provider(p) => write!(f, "{p}"),
             ApiError::OllamaMissingKey => f.write_str("Add your Ollama API key in Settings → Teacher, or choose another teacher."),
-            ApiError::OllamaNotRunning => f.write_str("Ollama isn’t running on this Mac. Open the Ollama app and try again."),
+            ApiError::OllamaNotRunning => f.write_str("Ollama isn’t running on this computer. Start Ollama and try again."),
             ApiError::Ollama { status, model } => match status {
                 401 | 403 => f.write_str("Your Ollama key wasn’t accepted. Check it in Settings → Teacher."),
                 404 => write!(f, "Ollama doesn’t have the model “{model}”. Choose another model in Settings → Teacher."),

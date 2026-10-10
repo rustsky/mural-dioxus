@@ -156,7 +156,7 @@ pub fn AiConsentSheet() -> Element {
                     if crate::services::provider::current().teacher.is_ollama() {
                         div { class: "sub", "Meanings and teaching text go to Ollama, as chosen in Settings → Teacher." }
                     }
-                    div { class: "sub secondary", "Your learning record is stored on this Mac. Mural does not save raw audio. You can keep browsing your saved words and conversations without agreeing." }
+                    div { class: "sub secondary", "Your learning record is stored on this computer. Mural does not save raw audio. You can keep browsing your saved words and conversations without agreeing." }
                     ExternalLink { label: "Privacy policy", url: "https://mural.chat/privacy/", class: "sub" }
                     button { class: "pill-button center", onclick: move |_| app.accept_ai_consent(), "Agree and continue" }
                     button { class: "sub", onclick: move |_| app.decline_ai_consent(), "Not now" }

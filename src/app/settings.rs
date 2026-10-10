@@ -10,6 +10,8 @@ use crate::services::credentials::{OLLAMA, OPENAI};
 use crate::services::provider::{self, Teacher, VoiceStyle};
 use crate::services::voice;
 
+const PLATFORM: &str = if cfg!(target_os = "macos") { "macOS" } else if cfg!(windows) { "Windows" } else { "Linux" };
+
 #[component]
 pub fn SettingsSheet() -> Element {
     let app = use_context::<Mural>();
@@ -18,6 +20,7 @@ pub fn SettingsSheet() -> Element {
     let mut message = use_signal(|| None::<String>);
     let mut deleting = use_signal(|| false);
     let mut showing_key = use_signal(|| !OPENAI.has_key());
+    let mut showing_legal = use_signal(|| false);
     let mut held = use_signal(|| provider::current().push_to_talk);
     let running = app.conv.read().is_running();
     let store = app.store.read();
@@ -57,7 +60,7 @@ pub fn SettingsSheet() -> Element {
             trailing: Some(("Done".to_string(), EventHandler::new(move |_| { key.set(String::new()); app.close_sheet(); }))),
             div { class: "form",
                 section {
-                    div { class: "section-title", "Just your pace" }
+                    div { class: "section-title", "Conversations" }
                     div { class: "group",
                         label { class: "form-row",
                             span { class: "label", "Learning language" }
@@ -69,7 +72,10 @@ pub fn SettingsSheet() -> Element {
                             }
                         }
                         div { class: "form-row",
-                            span { class: "label", "Meaning subtitles" }
+                            div { class: "stack",
+                                span { class: "label", "Meaning subtitles" }
+                                span { class: "desc", "Show what Mural just said in your own language." }
+                            }
                             button { class: if prefs.meaning_visible { "switch on" } else { "switch" }, role: "switch",
                                 aria_checked: "{prefs.meaning_visible}", aria_label: "Meaning subtitles",
                                 onclick: move |_| app.toggle_meaning(),
@@ -85,45 +91,63 @@ pub fn SettingsSheet() -> Element {
                             }
                         }
                         div { class: "form-row",
-                            span { class: "label", "Hold to speak" }
+                            div { class: "stack",
+                                span { class: "label", "Things you enjoy" }
+                                textarea { rows: 2, placeholder: "Design, space, long walks\u{2026}", value: "{prefs.interests}",
+                                    oninput: move |e| {
+                                        let value: String = e.value().chars().take(500).collect();
+                                        app.store.write_unchecked().update_preferences(|p| p.interests = value);
+                                    },
+                                }
+                            }
+                        }
+                    }
+                    div { class: "section-footer",
+                        if running { "End this conversation to switch languages. Each language keeps its own words and progress, and Mural corrects gently as you talk." }
+                        else { "Each language keeps its own words and progress. Mural finds your pace through conversation and corrects gently as you talk." }
+                    }
+                }
+                section {
+                    div { class: "section-title", "Speaking" }
+                    div { class: "group",
+                        div { class: "form-row",
+                            div { class: "stack",
+                                span { class: "label", "Hold to speak" }
+                                span { class: "desc", "Mural normally decides when your turn has ended. Hold the microphone instead, and pause as long as you like." }
+                            }
                             button { class: if held() { "switch on" } else { "switch" }, role: "switch",
                                 disabled: running, aria_checked: "{held}", aria_label: "Hold to speak",
                                 onclick: move |_| held.set(app.toggle_push_to_talk()),
                             }
                         }
-                        div { class: "form-row hint",
-                            span { class: "value", "Mural normally decides when your turn has ended. Hold the microphone instead, and take as long as you like." }
-                        }
-                        div { class: "form-row", span { class: "label", "Corrections" } span { class: "value", "Gently, as we talk" } }
-                        div { class: "form-row",
-                            textarea { rows: 2, placeholder: "A few things you enjoy", value: "{prefs.interests}",
-                                oninput: move |e| {
-                                    let value: String = e.value().chars().take(500).collect();
-                                    app.store.write_unchecked().update_preferences(|p| p.interests = value);
+                        label { class: "form-row",
+                            span { class: "label", "Conversation limit" }
+                            select { onchange: move |e| {
+                                    if let Ok(v) = e.value().parse::<i64>() { app.store.write_unchecked().update_preferences(|p| p.session_minutes = v); }
                                 },
+                                for m in [5i64, 10, 15, 20, 30, 60] {
+                                    option { key: "{m}", value: "{m}", selected: m == prefs.session_minutes, "{m} minutes" }
+                                }
                             }
                         }
                     }
                     div { class: "section-footer",
-                        if running { "End this conversation to switch languages. Each language keeps its own words and progress." }
-                        else { "Each language keeps its own words and progress. Mural finds your pace through conversation." }
+                        if provider::current().teacher == Teacher::OllamaLocal { "With Ollama on this computer, conversations have no time limit and don\u{2019}t end when you go quiet. End them yourself." }
+                        else { "The limit is local, not a billing cap. A quiet conversation ends on its own." }
                     }
                 }
                 TeacherSection { running }
                 section {
-                    div { class: "section-title", "Advanced" }
+                    div { class: "section-title", "OpenAI key" }
                     div { class: "group",
                         div { class: "form-row",
                             button { class: "disclosure", aria_expanded: "{showing_key()}", onclick: move |_| showing_key.toggle(),
                                 Icon { name: "key", size: 16 }
-                                span { class: "label", "Use your own OpenAI API key" }
+                                span { class: "label", if has_key() { "Your key is saved" } else { "Use your own OpenAI API key" } }
                                 Icon { name: if showing_key() { "chevron.up" } else { "chevron.down" }, size: 14 }
                             }
                         }
                         if showing_key() {
-                            if has_key() {
-                                div { class: "form-row", Icon { name: "checkmark.shield", size: 16 } span { "Your key is saved on this Mac" } }
-                            }
                             div { class: "form-row",
                                 input { r#type: "password", autocomplete: "off", spellcheck: false,
                                     placeholder: if has_key() { "Replace OpenAI key" } else { "OpenAI API key" },
@@ -148,34 +172,23 @@ pub fn SettingsSheet() -> Element {
                                     }
                                 }
                             }
-                            div { class: "form-row footnote secondary", "Your OpenAI account pays for usage. The key stays in this Mac’s Keychain and is sent only to OpenAI." }
                         }
                         if let Some(m) = message() { div { class: "form-row footnote secondary", "{m}" } }
                     }
-                    if !has_key() { div { class: "section-footer", "OpenAI live voice uses this key. With an Ollama teacher, voice runs on this Mac and needs no OpenAI key." } }
+                    div { class: "section-footer",
+                        if has_key() { "Your OpenAI account pays for usage. The key stays in this computer\u{2019}s keychain and is sent only to OpenAI." }
+                        else { "OpenAI live voice uses this key. With an Ollama teacher, voice runs on this computer and needs none." }
+                    }
                 }
                 section {
-                    div { class: "section-title", "Keep it comfortable" }
+                    div { class: "section-title", "Usage" }
                     div { class: "group",
-                        label { class: "form-row",
-                            span { class: "label", "Conversation limit" }
-                            select { onchange: move |e| {
-                                    if let Ok(v) = e.value().parse::<i64>() { app.store.write_unchecked().update_preferences(|p| p.session_minutes = v); }
-                                },
-                                for m in [5i64, 10, 15, 20, 30, 60] {
-                                    option { key: "{m}", value: "{m}", selected: m == prefs.session_minutes, "{m} minutes" }
-                                }
-                            }
-                        }
-                        if provider::current().teacher == Teacher::OllamaLocal {
-                            div { class: "form-row footnote secondary", "With Ollama on this Mac, conversations have no time limit and don’t end when you go quiet. End them yourself." }
-                        }
                         div { class: "form-row", span { class: "label", "Recorded voice time" } span { class: "value", "{voice_time}" } }
                         div { class: "form-row", span { class: "label", "Voice estimate" } span { class: "value", "{estimate}" } }
                         div { class: "form-row", span { class: "label", "Search calls recorded" } span { class: "value", "{searches}" } }
                         div { class: "form-row", ExternalLink { label: "OpenAI usage and billing", url: "https://platform.openai.com/usage" } }
                     }
-                    div { class: "section-footer", "Voice estimate uses $0.05/min as of 11 September 2026. Translation, teaching and search cost extra. Interrupted requests can be billed without a usage record here. Your OpenAI dashboard is authoritative. The time limit is local, not a billing cap." }
+                    div { class: "section-footer", "Estimated at $0.05/min as of 11 September 2026. Teaching, translation and search cost extra, and interrupted requests can be billed without appearing here. Your OpenAI dashboard is authoritative." }
                 }
                 section {
                     div { class: "section-title", "Your words belong to you" }
@@ -184,23 +197,28 @@ pub fn SettingsSheet() -> Element {
                         div { class: "form-row", button { class: "action row", disabled: running, onclick: import, Icon { name: "square.and.arrow.down", size: 16 } "Import learning backup" } }
                         div { class: "form-row", button { class: "action danger", disabled: running, onclick: move |_| deleting.set(true), "Delete all conversations and learning" } }
                     }
-                    div { class: "section-footer", "Backups include transcripts and learning evidence, never your API key. Import adds conversations with new IDs. Existing conversations stay unchanged. There is no cloud sync." }
+                    div { class: "section-footer", "Backups hold transcripts and learning evidence, never your API key. Importing adds conversations with new IDs and leaves existing ones alone. There is no cloud sync." }
                 }
                 section {
-                    div { class: "section-title", "Help and privacy" }
+                    div { class: "section-title", "About" }
                     div { class: "group",
+                        div { class: "form-row", span { class: "label", "Version" } span { class: "value", "{env!(\"CARGO_PKG_VERSION\")} · {PLATFORM}" } }
+                        div { class: "form-row", span { class: "label", "Voice and teacher" } span { class: "value", "GPT-Live-1 · {teacher_label}" } }
                         div { class: "form-row", ExternalLink { label: "Privacy policy", url: "https://mural.chat/privacy/" } }
                         div { class: "form-row", ExternalLink { label: "Terms of use", url: "https://mural.chat/terms/" } }
                         div { class: "form-row", ExternalLink { label: "Contact support", url: "https://mural.chat/support/" } }
-                    }
-                }
-                section {
-                    div { class: "group",
-                        div { class: "form-row footnote", "Mural {env!(\"CARGO_PKG_VERSION\")} · macOS build" }
-                        div { class: "form-row footnote", "Voice: GPT-Live-1 · Teacher: {teacher_label}" }
-                        div { class: "form-row", ExternalLink { label: "OpenAI data controls", url: "https://developers.openai.com/api/docs/guides/your-data" } }
-                        div { class: "form-row footnote", "Audio and selected text go to OpenAI while you practise. Requests disable provider storage where supported; abuse-monitoring retention may still apply. Raw audio is not saved by Mural." }
-                        div { class: "form-row footnote", "Mural is free software under the GNU General Public License, version 3 or later, and comes with absolutely no warranty. You may share and change it under that licence." }
+                        div { class: "form-row",
+                            button { class: "disclosure", aria_expanded: "{showing_legal()}", onclick: move |_| showing_legal.toggle(),
+                                Icon { name: "checkmark.shield", size: 16 }
+                                span { class: "label", "How your data and licence work" }
+                                Icon { name: if showing_legal() { "chevron.up" } else { "chevron.down" }, size: 14 }
+                            }
+                        }
+                        if showing_legal() {
+                            div { class: "form-row footnote", "Audio and selected text go to OpenAI while you practise. Requests disable provider storage where supported; abuse-monitoring retention may still apply. Mural never saves raw audio." }
+                            div { class: "form-row", ExternalLink { label: "OpenAI data controls", url: "https://developers.openai.com/api/docs/guides/your-data" } }
+                            div { class: "form-row footnote", "Mural is free software under the GNU General Public License, version 3 or later, and comes with absolutely no warranty. You may share and change it under that licence." }
+                        }
                         div { class: "form-row", button { class: "action", onclick: move |_| app.open_sheet(Sheet::Notices), "Licences and open-source notices" } }
                     }
                 }
@@ -208,7 +226,7 @@ pub fn SettingsSheet() -> Element {
         }
         if deleting() {
             Dialog {
-                title: "Delete all learning data on this Mac?",
+                title: "Delete all learning data on this computer?",
                 message: "This removes conversations, vocabulary and progress. Export a backup first if you want to keep them. Your API key and preferences remain.",
                 buttons: vec![DialogButton { label: "Delete all learning data".into(), role: "destructive", action: EventHandler::new(move |_| {
                     app.delete_learning_data();
@@ -264,7 +282,7 @@ fn TeacherSection(running: bool) -> Element {
         loading.set(true);
         spawn(async move {
             match api::ollama_models(teacher).await {
-                Ok(list) => { message.set(if list.is_empty() { Some("No models found. On this Mac, run “ollama pull llama3.2” first. Pick a model that fits in this Mac’s memory.".into()) } else { None }); models.set(list); }
+                Ok(list) => { message.set(if list.is_empty() { Some("No models found. Run “ollama pull llama3.2” first, and pick a model that fits in this computer’s memory.".into()) } else { None }); models.set(list); }
                 Err(e) => { models.set(vec![]); message.set(Some(e.to_string())); }
             }
             loading.set(false);
@@ -273,14 +291,14 @@ fn TeacherSection(running: bool) -> Element {
     let mut save_key = move || {
         let value = key.read().clone();
         match OLLAMA.save(&value) {
-            Ok(()) => { key.set(String::new()); has_key.set(true); message.set(Some("Ollama key saved to this Mac’s Keychain.".into())); }
+            Ok(()) => { key.set(String::new()); has_key.set(true); message.set(Some("Ollama key saved to this computer’s keychain.".into())); }
             Err(e) => message.set(Some(e.to_string())),
         }
     };
     let destination = match teacher {
         Teacher::OpenAi => "OpenAI",
         Teacher::OllamaCloud => "Ollama Cloud",
-        Teacher::OllamaLocal => "the Ollama server on this Mac",
+        Teacher::OllamaLocal => "the Ollama server on this computer",
     };
 
     rsx! {
@@ -367,7 +385,7 @@ fn TeacherSection(running: bool) -> Element {
                 }
                 if teacher == Teacher::OllamaCloud || (teacher == Teacher::OllamaLocal && has_key()) {
                     if has_key() {
-                        div { class: "form-row", Icon { name: "checkmark.shield", size: 16 } span { class: "label", "Your Ollama key is saved on this Mac" }
+                        div { class: "form-row", Icon { name: "checkmark.shield", size: 16 } span { class: "label", "Your Ollama key is saved on this computer" }
                             button { class: "action danger", disabled: running,
                                 onclick: move |_| match OLLAMA.delete() {
                                     Ok(()) => { has_key.set(false); message.set(Some("Your Ollama key has been removed.".into())); }
@@ -391,7 +409,7 @@ fn TeacherSection(running: bool) -> Element {
                         if teacher == Teacher::OllamaCloud {
                             ExternalLink { label: "Create a free Ollama API key", url: "https://ollama.com/settings/keys" }
                         } else {
-                            ExternalLink { label: "Download Ollama for Mac", url: "https://ollama.com/download" }
+                            ExternalLink { label: "Download Ollama", url: "https://ollama.com/download" }
                         }
                     }
                 }
@@ -400,10 +418,10 @@ fn TeacherSection(running: bool) -> Element {
             div { class: "section-footer",
                 "Meanings, word tracking, lookups, typed replies and topic searches go to {destination}. "
                 if teacher.is_ollama() && current.voice == VoiceStyle::Natural { "Natural voice listens and speaks with open models (Parakeet or Omnilingual, Kokoro or Piper) that run entirely on this computer; Mural’s replies come from {destination}. " }
-                if teacher.is_ollama() && current.voice == VoiceStyle::System { "System speech uses this Mac’s speech recognition (Dictation must be on) and voices; Mural’s replies come from {destination}. " }
+                if teacher.is_ollama() && current.voice == VoiceStyle::System { "System speech uses this computer’s speech recognition (Dictation must be on) and voices; Mural’s replies come from {destination}. " }
                 else { "Live voice uses OpenAI. " }
                 if teacher == Teacher::OllamaCloud { "Ollama’s free plan has usage limits. " }
-                if teacher == Teacher::OllamaLocal { "Local models keep text on this Mac but may be slower, and topic search needs an Ollama key. " }
+                if teacher == Teacher::OllamaLocal { "Local models keep text on this computer but may be slower, and topic search needs an Ollama key. " }
                 if teacher.is_ollama() { "Smaller models record fewer words; the app keeps only evidence it can verify." }
             }
         }

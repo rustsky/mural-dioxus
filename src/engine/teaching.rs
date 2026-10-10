@@ -138,7 +138,7 @@ pub fn delegation(language: &LanguageModule) -> String {
         n = language.name, w = language.writing_guidance)
 }
 
-/// Extra rules when the conversation runs on this Mac's speech recognition and synthesis.
+/// Extra rules when the conversation runs on this computer's speech recognition and synthesis.
 pub fn local_voice(language: &LanguageModule) -> String {
     format!("This conversation runs turn by turn. The learner's words come from speech recognition and may contain recognition errors; follow the likely meaning. Everything you write is read aloud by a speech synthesizer, so write only what you say: plain {n}, one to three short sentences, no emoji, markdown, lists, stage directions, phonetic spellings or translations. You cannot look anything up during this conversation; if asked about current events or facts you are unsure of, say so briefly in {n}. Messages marked APP NOTE come from the app, not the learner: follow them silently and never mention them.",
         n = language.name)

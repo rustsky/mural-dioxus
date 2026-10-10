@@ -1,4 +1,4 @@
-//! Which service answers teaching requests. Stored on this Mac only, outside the learning backup.
+//! Which service answers teaching requests. Stored on this computer only, outside the learning backup.
 use std::sync::RwLock;
 
 use serde::{Deserialize, Serialize};
@@ -25,7 +25,7 @@ impl Teacher {
         match self {
             Teacher::OpenAi => "OpenAI · GPT-5.6 Luna",
             Teacher::OllamaCloud => "Ollama Cloud · free account",
-            Teacher::OllamaLocal => "Ollama on this Mac",
+            Teacher::OllamaLocal => "Ollama on this computer",
         }
     }
     pub fn is_ollama(self) -> bool { self != Teacher::OpenAi }
