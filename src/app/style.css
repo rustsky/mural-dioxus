@@ -108,7 +108,12 @@ a { color: inherit; }
 .phrase-mark.settled .icon { color: #3f7d4e; }
 .phrase-mark.settled { font-weight: 500; }
 .caption2.good { color: #3f7d4e; }
+.band-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+.band-head { display: flex; align-items: center; gap: 9px; padding: 0 2px; }
+.band-badge { font-family: var(--rounded); font-weight: 600; font-size: 10.5px; letter-spacing: .6px;
+  padding: 3px 7px; border-radius: 6px; background: rgba(255,186,122,0.3); color: #8a5a32; }
 .drill { align-items: stretch; }
+.drill-meta { display: flex; align-items: center; gap: 8px; justify-content: center; }
 .drill-card { background: white; border-radius: 18px; padding: 22px 20px; display: flex; flex-direction: column; gap: 8px; text-align: center; }
 .drill-phrase { font-family: var(--rounded); font-weight: 500; font-size: 28px; line-height: 1.25; letter-spacing: -0.4px; }
 .drill-controls { display: flex; gap: 10px; justify-content: center; }

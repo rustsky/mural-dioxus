@@ -8,7 +8,7 @@ use dioxus::prelude::*;
 use super::components::PageHeading;
 use super::icons::Icon;
 use super::state::{Mural, Tab};
-use crate::engine::phrases::{self, Phrase};
+use crate::engine::phrases::{self, Band, Phrase};
 use crate::engine::shadow::Verdict;
 use crate::engine::text::contains_ci;
 use crate::engine::time::Date;
@@ -48,6 +48,7 @@ fn PhraseList() -> Element {
     let app = use_context::<Mural>();
     let mut search = use_signal(String::new);
     let mut category = use_signal(|| "All".to_string());
+    let mut band = use_signal(|| None::<Band>);
     let language = app.store.read().language();
     let meaning_visible = app.store.read().preferences().meaning_visible;
     let record = shadow_store::current();
@@ -55,15 +56,21 @@ fn PhraseList() -> Element {
 
     let query = search.read().clone();
     let chosen = category();
+    let chosen_band = band();
     let mut list: Vec<&Phrase> = phrases::all(language.id).iter().filter(|p| {
         (chosen == "All" || p.category == chosen)
+            && chosen_band.map(|b| p.cefr == b).unwrap_or(true)
             && (query.is_empty() || contains_ci(&p.text, &query) || contains_ci(&p.meaning, &query))
     }).collect();
-    // Due first, then the ones never tried, so the list opens on what is worth saying today.
+    // Within a band, due first, then the ones never tried.
     list.sort_by_key(|p| {
         let progress = record.get(&p.id);
-        (!progress.is_due(now), progress.attempts > 0, p.level)
+        (p.cefr, !progress.is_due(now), progress.attempts > 0, p.level)
     });
+    let grouped: Vec<(Band, Vec<&Phrase>)> = phrases::bands(language.id).into_iter()
+        .map(|b| (b, list.iter().copied().filter(|p| p.cefr == b).collect::<Vec<_>>()))
+        .filter(|(_, rows)| !rows.is_empty())
+        .collect();
 
     let shown: Vec<String> = list.iter().map(|p| p.id.clone()).collect();
     let practised = record.practised();
@@ -87,6 +94,17 @@ fn PhraseList() -> Element {
                 Icon { name: "sparkles", size: 16 } "Something I haven’t tried"
             }
             div { class: "chips",
+                button { class: if chosen_band.is_none() { "chip selected" } else { "chip" },
+                    onclick: move |_| band.set(None), "All levels"
+                }
+                for b in phrases::bands(language.id) {
+                    button { key: "{b.label()}", class: if chosen_band == Some(b) { "chip selected" } else { "chip" },
+                        aria_pressed: "{chosen_band == Some(b)}", title: "{b.gist()}",
+                        onclick: move |_| band.set(Some(b)), "{b.label()}"
+                    }
+                }
+            }
+            div { class: "chips",
                 button { class: if chosen == "All" { "chip selected" } else { "chip" },
                     onclick: move |_| category.set("All".into()), "All"
                 }
@@ -100,25 +118,33 @@ fn PhraseList() -> Element {
             if list.is_empty() {
                 div { class: "sub secondary", "No phrase matches that. Try another word, in {language.name} or English." }
             } else {
-                div {
-                    for phrase in list {
-                        {
-                            let progress = record.get(&phrase.id);
-                            let id = phrase.id.clone();
-                            rsx! {
-                                button { key: "{phrase.id}", class: "phrase-row",
-                                    onclick: move |_| app.shadow_open(id.clone()),
-                                    div { class: "phrase-text",
-                                        span { class: "said", "{phrase.text}" }
-                                        if meaning_visible { span { class: "sub secondary", "{phrase.meaning}" } }
-                                    }
-                                    div { class: if progress.is_settled() { "phrase-mark settled" } else { "phrase-mark" },
-                                        if progress.attempts == 0 {
-                                            span { class: "caption2 secondary", "New" }
-                                        } else {
-                                            // A tick says it has been said; the figure is the best it has gone.
-                                            if progress.best > 0.0 { span { class: "caption2 secondary", "{(progress.best * 100.0).round()}%" } }
-                                            Icon { name: "checkmark.circle.fill", size: 17 }
+                for (b, rows) in grouped {
+                    div { key: "{b.label()}", class: "band-group",
+                        div { class: "band-head",
+                            span { class: "band-badge", "{b.label()}" }
+                            span { class: "caption2 secondary", "{b.gist()}" }
+                            span { class: "spacer" }
+                            span { class: "caption2 secondary", "{rows.len()}" }
+                        }
+                        for phrase in rows {
+                            {
+                                let progress = record.get(&phrase.id);
+                                let id = phrase.id.clone();
+                                rsx! {
+                                    button { key: "{phrase.id}", class: "phrase-row",
+                                        onclick: move |_| app.shadow_open(id.clone()),
+                                        div { class: "phrase-text",
+                                            span { class: "said", "{phrase.text}" }
+                                            if meaning_visible { span { class: "sub secondary", "{phrase.meaning}" } }
+                                        }
+                                        div { class: if progress.is_settled() { "phrase-mark settled" } else { "phrase-mark" },
+                                            if progress.attempts == 0 {
+                                                span { class: "caption2 secondary", "New" }
+                                            } else {
+                                                // A tick says it has been said; the figure is the best it has gone.
+                                                if progress.best > 0.0 { span { class: "caption2 secondary", "{(progress.best * 100.0).round()}%" } }
+                                                Icon { name: "checkmark.circle.fill", size: 17 }
+                                            }
                                         }
                                     }
                                 }
@@ -163,7 +189,10 @@ fn Drill() -> Element {
             div { class: "drill-card",
                 div { class: "drill-phrase selectable", "{phrase.text}" }
                 if meaning_visible { div { class: "meaning", "{phrase.meaning}" } }
-                div { class: "caption2 secondary", "{phrase.category} · tried {progress.attempts} times" }
+                div { class: "drill-meta",
+                    span { class: "band-badge", "{phrase.cefr.label()}" }
+                    span { class: "caption2 secondary", "{phrase.category} · tried {progress.attempts} times" }
+                }
             }
 
             if let Some(step) = preparing {

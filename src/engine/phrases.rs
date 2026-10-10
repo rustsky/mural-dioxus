@@ -7,6 +7,29 @@ use std::sync::OnceLock;
 
 use serde::Deserialize;
 
+/// How demanding a phrase is, in the levels learners already know from a course. It describes the
+/// phrase, never the learner: Mural judges ability from conversation and makes no CEFR claim.
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd)]
+pub enum Band { A1, A2, B1, B2, C1 }
+
+impl Band {
+    pub const ALL: [Band; 5] = [Band::A1, Band::A2, Band::B1, Band::B2, Band::C1];
+
+    pub fn label(self) -> &'static str {
+        match self { Band::A1 => "A1", Band::A2 => "A2", Band::B1 => "B1", Band::B2 => "B2", Band::C1 => "C1" }
+    }
+    /// What a learner at this band can do with the phrases in it.
+    pub fn gist(self) -> &'static str {
+        match self {
+            Band::A1 => "First words and set phrases",
+            Band::A2 => "Everyday errands and simple exchanges",
+            Band::B1 => "Connected talk, plans and reasons",
+            Band::B2 => "Nuance, opinions and careful wording",
+            Band::C1 => "Idiom, register and lightness of touch",
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct Phrase {
     pub id: String,
@@ -16,6 +39,7 @@ pub struct Phrase {
     pub category: String,
     /// The same internal 0–5 challenge scale the teaching prompts use.
     pub level: i64,
+    pub cefr: Band,
 }
 
 #[derive(Debug, Deserialize)]
@@ -41,6 +65,11 @@ pub fn all(language_id: &str) -> &'static [Phrase] {
 }
 
 pub fn available(language_id: &str) -> bool { !all(language_id).is_empty() }
+
+/// The bands that actually have phrases, lowest first.
+pub fn bands(language_id: &str) -> Vec<Band> {
+    Band::ALL.into_iter().filter(|b| all(language_id).iter().any(|p| p.cefr == *b)).collect()
+}
 
 pub fn find<'a>(language_id: &str, id: &str) -> Option<&'a Phrase> {
     all(language_id).iter().find(|p| p.id == id)
@@ -90,6 +119,26 @@ mod tests {
             assert!((0..=5).contains(&p.level), "{} has level {}", p.id, p.level);
             // Shadowing is for phrases a learner can hold in their head and say in one breath.
             assert!(p.text.chars().count() <= 60, "{} is too long to shadow: {}", p.id, p.text);
+        }
+    }
+
+    #[test]
+    fn every_band_has_phrases_and_they_rise_in_order() {
+        assert_eq!(bands("de"), Band::ALL.to_vec());
+        for band in Band::ALL {
+            let count = all("de").iter().filter(|p| p.cefr == band).count();
+            assert!(count >= 15, "{} has only {count} phrases", band.label());
+        }
+        assert!(Band::A1 < Band::C1);
+        assert!(bands("nb").is_empty());
+    }
+
+    #[test]
+    fn a_phrases_band_matches_its_teaching_level() {
+        // The two scales are written side by side, so they must not drift apart.
+        for p in all("de") {
+            let expected = match p.level { 0 | 1 => Band::A1, 2 => Band::A2, 3 => Band::B1, 4 => Band::B2, _ => Band::C1 };
+            assert_eq!(p.cefr, expected, "{} is level {} but band {}", p.id, p.level, p.cefr.label());
         }
     }
 
