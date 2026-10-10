@@ -29,7 +29,13 @@ pub fn SettingsSheet() -> Element {
     let total_voice = store.archive.sessions.iter().fold(0.0, |sum, s| sum + s.voice_seconds);
     let searches: i64 = store.archive.sessions.iter().map(|s| s.search_calls).sum();
     drop(store);
-    let teacher_label = { let p = provider::current(); if p.teacher.is_ollama() { format!("{} on Ollama", p.model()) } else { "GPT-5.6 Luna".into() } };
+    // Reading the revision subscribes this sheet to teacher changes.
+    let _ = crate::app::state::PROVIDER_REVISION();
+    let uses_openai = provider::current().teacher == Teacher::OpenAi;
+    // An Ollama teacher needs no OpenAI key, but one already saved must stay removable.
+    let show_openai_key = uses_openai || has_key();
+    // Voice time and its cost only accrue with OpenAI live voice; past conversations still count.
+    let show_usage = uses_openai || total_voice > 0.0 || searches > 0;
     let voice_time = format!("{} min {} sec", (total_voice / 60.0) as i64, total_voice as i64 % 60);
     let estimate = format!("${:.2} USD", total_voice / 60.0 * 0.05);
 
@@ -137,8 +143,9 @@ pub fn SettingsSheet() -> Element {
                     }
                 }
                 TeacherSection { running }
+                if show_openai_key {
                 section {
-                    div { class: "section-title", "OpenAI key" }
+                    div { class: "section-title", if uses_openai { "OpenAI key" } else { "Saved OpenAI key" } }
                     div { class: "group",
                         div { class: "form-row",
                             button { class: "disclosure", aria_expanded: "{showing_key()}", onclick: move |_| showing_key.toggle(),
@@ -176,10 +183,13 @@ pub fn SettingsSheet() -> Element {
                         if let Some(m) = message() { div { class: "form-row footnote secondary", "{m}" } }
                     }
                     div { class: "section-footer",
-                        if has_key() { "Your OpenAI account pays for usage. The key stays in this computer\u{2019}s keychain and is sent only to OpenAI." }
-                        else { "OpenAI live voice uses this key. With an Ollama teacher, voice runs on this computer and needs none." }
+                        if !uses_openai { "Your teacher is Ollama, so this key is unused. It stays in this computer\u{2019}s keychain until you remove it." }
+                        else if has_key() { "Your OpenAI account pays for usage. The key stays in this computer\u{2019}s keychain and is sent only to OpenAI." }
+                        else { "Live voice and teaching use this key." }
                     }
                 }
+                }
+                if show_usage {
                 section {
                     div { class: "section-title", "Usage" }
                     div { class: "group",
@@ -189,6 +199,7 @@ pub fn SettingsSheet() -> Element {
                         div { class: "form-row", ExternalLink { label: "OpenAI usage and billing", url: "https://platform.openai.com/usage" } }
                     }
                     div { class: "section-footer", "Estimated at $0.05/min as of 11 September 2026. Teaching, translation and search cost extra, and interrupted requests can be billed without appearing here. Your OpenAI dashboard is authoritative." }
+                }
                 }
                 section {
                     div { class: "section-title", "Your words belong to you" }
@@ -203,7 +214,6 @@ pub fn SettingsSheet() -> Element {
                     div { class: "section-title", "About" }
                     div { class: "group",
                         div { class: "form-row", span { class: "label", "Version" } span { class: "value", "{env!(\"CARGO_PKG_VERSION\")} · {PLATFORM}" } }
-                        div { class: "form-row", span { class: "label", "Voice and teacher" } span { class: "value", "GPT-Live-1 · {teacher_label}" } }
                         div { class: "form-row", ExternalLink { label: "Privacy policy", url: "https://mural.chat/privacy/" } }
                         div { class: "form-row", ExternalLink { label: "Terms of use", url: "https://mural.chat/terms/" } }
                         div { class: "form-row", ExternalLink { label: "Contact support", url: "https://mural.chat/support/" } }
@@ -271,7 +281,7 @@ fn TeacherSection(running: bool) -> Element {
     let model = current.model().to_string();
 
     let mut apply = move |change: Box<dyn FnOnce(&mut provider::ProviderSettings)>| {
-        match provider::update(change) {
+        match crate::app::state::update_provider(change) {
             Ok(updated) => settings.set(updated),
             Err(e) => message.set(Some(e)),
         }
@@ -416,13 +426,13 @@ fn TeacherSection(running: bool) -> Element {
                 if let Some(m) = message() { div { class: "form-row footnote secondary", "{m}" } }
             }
             div { class: "section-footer",
-                "Meanings, word tracking, lookups, typed replies and topic searches go to {destination}. "
-                if teacher.is_ollama() && current.voice == VoiceStyle::Natural { "Natural voice listens and speaks with open models (Parakeet or Omnilingual, Kokoro or Piper) that run entirely on this computer; Mural’s replies come from {destination}. " }
-                if teacher.is_ollama() && current.voice == VoiceStyle::System { "System speech uses this computer’s speech recognition (Dictation must be on) and voices; Mural’s replies come from {destination}. " }
+                "Meanings, lookups, typed replies and topic searches go to {destination}. "
+                if teacher.is_ollama() && current.voice == VoiceStyle::Natural { "Natural voice listens and speaks with open models on this computer. " }
+                if teacher.is_ollama() && current.voice == VoiceStyle::System { "System speech uses this computer’s own recognition and voices, so Dictation must be on. " }
                 else { "Live voice uses OpenAI. " }
                 if teacher == Teacher::OllamaCloud { "Ollama’s free plan has usage limits. " }
-                if teacher == Teacher::OllamaLocal { "Local models keep text on this computer but may be slower, and topic search needs an Ollama key. " }
-                if teacher.is_ollama() { "Smaller models record fewer words; the app keeps only evidence it can verify." }
+                if teacher == Teacher::OllamaLocal { "Local models may be slower, and topic search needs an Ollama key. " }
+                if teacher.is_ollama() { "Smaller models log fewer words." }
             }
         }
     }

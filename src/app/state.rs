@@ -239,6 +239,17 @@ fn tracing() -> bool {
 
 async fn sleep(seconds: f64) { tokio::time::sleep(Duration::from_secs_f64(seconds)).await }
 
+/// Bumped whenever the teacher settings change. Views that branch on them read this first, so
+/// they re-render when the teacher does.
+pub static PROVIDER_REVISION: GlobalSignal<u32> = Signal::global(|| 0);
+
+/// Saves teacher settings and lets every view that depends on them know.
+pub fn update_provider(change: impl FnOnce(&mut provider::ProviderSettings)) -> Result<provider::ProviderSettings, String> {
+    let saved = provider::update(change);
+    if saved.is_ok() { *PROVIDER_REVISION.write() += 1; }
+    saved
+}
+
 /// The app's single controller: a copyable handle over reactive state, like ConversationCoordinator on iPhone.
 #[derive(Clone, Copy, PartialEq)]
 pub struct Mural {
@@ -740,7 +751,7 @@ impl Mural {
     pub fn toggle_push_to_talk(self) -> bool {
         if self.conv.peek().is_running() { return provider::current().push_to_talk; }
         let held = !provider::current().push_to_talk;
-        match provider::update(|s| s.push_to_talk = held) {
+        match update_provider(|s| s.push_to_talk = held) {
             Ok(updated) => updated.push_to_talk,
             Err(error) => {
                 self.conv.write_unchecked().notice = Some(error);
