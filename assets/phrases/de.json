@@ -1,0 +1,1560 @@
+{
+ "language": "de",
+ "version": 1,
+ "phrases": [
+  {
+   "id": "de-0001",
+   "text": "Guten Morgen!",
+   "meaning": "Good morning!",
+   "category": "Greetings",
+   "level": 0
+  },
+  {
+   "id": "de-0002",
+   "text": "Guten Tag!",
+   "meaning": "Hello (during the day)",
+   "category": "Greetings",
+   "level": 0
+  },
+  {
+   "id": "de-0003",
+   "text": "Guten Abend!",
+   "meaning": "Good evening!",
+   "category": "Greetings",
+   "level": 0
+  },
+  {
+   "id": "de-0004",
+   "text": "Hallo, wie geht's?",
+   "meaning": "Hi, how are you?",
+   "category": "Greetings",
+   "level": 0
+  },
+  {
+   "id": "de-0005",
+   "text": "Wie geht es dir?",
+   "meaning": "How are you? (informal)",
+   "category": "Greetings",
+   "level": 0
+  },
+  {
+   "id": "de-0006",
+   "text": "Wie geht es Ihnen?",
+   "meaning": "How are you? (formal)",
+   "category": "Greetings",
+   "level": 0
+  },
+  {
+   "id": "de-0007",
+   "text": "Mir geht es gut, danke.",
+   "meaning": "I'm well, thanks.",
+   "category": "Greetings",
+   "level": 0
+  },
+  {
+   "id": "de-0008",
+   "text": "Und dir?",
+   "meaning": "And you?",
+   "category": "Greetings",
+   "level": 0
+  },
+  {
+   "id": "de-0009",
+   "text": "Schön, dich zu sehen.",
+   "meaning": "Good to see you.",
+   "category": "Greetings",
+   "level": 1
+  },
+  {
+   "id": "de-0010",
+   "text": "Lange nicht gesehen!",
+   "meaning": "Long time no see!",
+   "category": "Greetings",
+   "level": 1
+  },
+  {
+   "id": "de-0011",
+   "text": "Bis später!",
+   "meaning": "See you later!",
+   "category": "Greetings",
+   "level": 0
+  },
+  {
+   "id": "de-0012",
+   "text": "Bis morgen!",
+   "meaning": "See you tomorrow!",
+   "category": "Greetings",
+   "level": 0
+  },
+  {
+   "id": "de-0013",
+   "text": "Tschüss!",
+   "meaning": "Bye!",
+   "category": "Greetings",
+   "level": 0
+  },
+  {
+   "id": "de-0014",
+   "text": "Auf Wiedersehen!",
+   "meaning": "Goodbye (formal)",
+   "category": "Greetings",
+   "level": 0
+  },
+  {
+   "id": "de-0015",
+   "text": "Gute Nacht!",
+   "meaning": "Good night!",
+   "category": "Greetings",
+   "level": 0
+  },
+  {
+   "id": "de-0016",
+   "text": "Mach's gut!",
+   "meaning": "Take care!",
+   "category": "Greetings",
+   "level": 1
+  },
+  {
+   "id": "de-0017",
+   "text": "Schönes Wochenende!",
+   "meaning": "Have a nice weekend!",
+   "category": "Greetings",
+   "level": 1
+  },
+  {
+   "id": "de-0018",
+   "text": "Willkommen!",
+   "meaning": "Welcome!",
+   "category": "Greetings",
+   "level": 0
+  },
+  {
+   "id": "de-0019",
+   "text": "Ich heiße Anna.",
+   "meaning": "My name is Anna.",
+   "category": "Introductions",
+   "level": 0
+  },
+  {
+   "id": "de-0020",
+   "text": "Wie heißt du?",
+   "meaning": "What's your name?",
+   "category": "Introductions",
+   "level": 0
+  },
+  {
+   "id": "de-0021",
+   "text": "Freut mich.",
+   "meaning": "Nice to meet you.",
+   "category": "Introductions",
+   "level": 0
+  },
+  {
+   "id": "de-0022",
+   "text": "Ich komme aus Norwegen.",
+   "meaning": "I'm from Norway.",
+   "category": "Introductions",
+   "level": 0
+  },
+  {
+   "id": "de-0023",
+   "text": "Woher kommst du?",
+   "meaning": "Where are you from?",
+   "category": "Introductions",
+   "level": 0
+  },
+  {
+   "id": "de-0024",
+   "text": "Ich wohne in Berlin.",
+   "meaning": "I live in Berlin.",
+   "category": "Introductions",
+   "level": 0
+  },
+  {
+   "id": "de-0025",
+   "text": "Wo wohnst du?",
+   "meaning": "Where do you live?",
+   "category": "Introductions",
+   "level": 0
+  },
+  {
+   "id": "de-0026",
+   "text": "Ich bin dreißig Jahre alt.",
+   "meaning": "I'm thirty years old.",
+   "category": "Introductions",
+   "level": 1
+  },
+  {
+   "id": "de-0027",
+   "text": "Ich lerne Deutsch.",
+   "meaning": "I'm learning German.",
+   "category": "Introductions",
+   "level": 0
+  },
+  {
+   "id": "de-0028",
+   "text": "Ich spreche noch nicht gut Deutsch.",
+   "meaning": "I don't speak German well yet.",
+   "category": "Introductions",
+   "level": 1
+  },
+  {
+   "id": "de-0029",
+   "text": "Sprichst du Englisch?",
+   "meaning": "Do you speak English?",
+   "category": "Introductions",
+   "level": 0
+  },
+  {
+   "id": "de-0030",
+   "text": "Was machst du beruflich?",
+   "meaning": "What do you do for a living?",
+   "category": "Introductions",
+   "level": 1
+  },
+  {
+   "id": "de-0031",
+   "text": "Entschuldigung!",
+   "meaning": "Excuse me!",
+   "category": "Getting by",
+   "level": 0
+  },
+  {
+   "id": "de-0032",
+   "text": "Wie bitte?",
+   "meaning": "Sorry, what?",
+   "category": "Getting by",
+   "level": 0
+  },
+  {
+   "id": "de-0033",
+   "text": "Kannst du das wiederholen?",
+   "meaning": "Can you repeat that?",
+   "category": "Getting by",
+   "level": 1
+  },
+  {
+   "id": "de-0034",
+   "text": "Kannst du langsamer sprechen?",
+   "meaning": "Can you speak more slowly?",
+   "category": "Getting by",
+   "level": 1
+  },
+  {
+   "id": "de-0035",
+   "text": "Was bedeutet das?",
+   "meaning": "What does that mean?",
+   "category": "Getting by",
+   "level": 1
+  },
+  {
+   "id": "de-0036",
+   "text": "Wie sagt man das auf Deutsch?",
+   "meaning": "How do you say that in German?",
+   "category": "Getting by",
+   "level": 1
+  },
+  {
+   "id": "de-0037",
+   "text": "Ich verstehe nicht.",
+   "meaning": "I don't understand.",
+   "category": "Getting by",
+   "level": 0
+  },
+  {
+   "id": "de-0038",
+   "text": "Ich verstehe.",
+   "meaning": "I understand.",
+   "category": "Getting by",
+   "level": 0
+  },
+  {
+   "id": "de-0039",
+   "text": "Ich weiß nicht.",
+   "meaning": "I don't know.",
+   "category": "Getting by",
+   "level": 0
+  },
+  {
+   "id": "de-0040",
+   "text": "Keine Ahnung.",
+   "meaning": "No idea.",
+   "category": "Getting by",
+   "level": 0
+  },
+  {
+   "id": "de-0041",
+   "text": "Moment, bitte.",
+   "meaning": "One moment, please.",
+   "category": "Getting by",
+   "level": 0
+  },
+  {
+   "id": "de-0042",
+   "text": "Kannst du mir helfen?",
+   "meaning": "Can you help me?",
+   "category": "Getting by",
+   "level": 1
+  },
+  {
+   "id": "de-0043",
+   "text": "Danke schön!",
+   "meaning": "Thank you very much!",
+   "category": "Getting by",
+   "level": 0
+  },
+  {
+   "id": "de-0044",
+   "text": "Vielen Dank!",
+   "meaning": "Many thanks!",
+   "category": "Getting by",
+   "level": 0
+  },
+  {
+   "id": "de-0045",
+   "text": "Bitte schön.",
+   "meaning": "You're welcome.",
+   "category": "Getting by",
+   "level": 0
+  },
+  {
+   "id": "de-0046",
+   "text": "Gern geschehen.",
+   "meaning": "My pleasure.",
+   "category": "Getting by",
+   "level": 1
+  },
+  {
+   "id": "de-0047",
+   "text": "Was kostet das?",
+   "meaning": "How much is that?",
+   "category": "Shops",
+   "level": 0
+  },
+  {
+   "id": "de-0048",
+   "text": "Das ist zu teuer.",
+   "meaning": "That's too expensive.",
+   "category": "Shops",
+   "level": 1
+  },
+  {
+   "id": "de-0049",
+   "text": "Haben Sie das in Größe M?",
+   "meaning": "Do you have this in size M?",
+   "category": "Shops",
+   "level": 2
+  },
+  {
+   "id": "de-0050",
+   "text": "Ich schaue nur.",
+   "meaning": "I'm just looking.",
+   "category": "Shops",
+   "level": 1
+  },
+  {
+   "id": "de-0051",
+   "text": "Ich nehme das.",
+   "meaning": "I'll take it.",
+   "category": "Shops",
+   "level": 0
+  },
+  {
+   "id": "de-0052",
+   "text": "Kann ich mit Karte zahlen?",
+   "meaning": "Can I pay by card?",
+   "category": "Shops",
+   "level": 1
+  },
+  {
+   "id": "de-0053",
+   "text": "Nur Bargeld, bitte.",
+   "meaning": "Cash only, please.",
+   "category": "Shops",
+   "level": 1
+  },
+  {
+   "id": "de-0054",
+   "text": "Haben Sie eine Tüte?",
+   "meaning": "Do you have a bag?",
+   "category": "Shops",
+   "level": 1
+  },
+  {
+   "id": "de-0055",
+   "text": "Wo ist die Kasse?",
+   "meaning": "Where is the till?",
+   "category": "Shops",
+   "level": 1
+  },
+  {
+   "id": "de-0056",
+   "text": "Ich hätte gern eine Quittung.",
+   "meaning": "I'd like a receipt.",
+   "category": "Shops",
+   "level": 2
+  },
+  {
+   "id": "de-0057",
+   "text": "Das ist alles, danke.",
+   "meaning": "That's everything, thanks.",
+   "category": "Shops",
+   "level": 1
+  },
+  {
+   "id": "de-0058",
+   "text": "Ist das im Angebot?",
+   "meaning": "Is that on offer?",
+   "category": "Shops",
+   "level": 2
+  },
+  {
+   "id": "de-0059",
+   "text": "Können Sie mir das zeigen?",
+   "meaning": "Can you show me that?",
+   "category": "Shops",
+   "level": 2
+  },
+  {
+   "id": "de-0060",
+   "text": "Ich suche ein Geschenk.",
+   "meaning": "I'm looking for a present.",
+   "category": "Shops",
+   "level": 1
+  },
+  {
+   "id": "de-0061",
+   "text": "Einen Kaffee, bitte.",
+   "meaning": "A coffee, please.",
+   "category": "Food and drink",
+   "level": 0
+  },
+  {
+   "id": "de-0062",
+   "text": "Ich hätte gern einen Tee.",
+   "meaning": "I'd like a tea.",
+   "category": "Food and drink",
+   "level": 1
+  },
+  {
+   "id": "de-0063",
+   "text": "Die Speisekarte, bitte.",
+   "meaning": "The menu, please.",
+   "category": "Food and drink",
+   "level": 0
+  },
+  {
+   "id": "de-0064",
+   "text": "Was empfehlen Sie?",
+   "meaning": "What do you recommend?",
+   "category": "Food and drink",
+   "level": 2
+  },
+  {
+   "id": "de-0065",
+   "text": "Ich nehme das Tagesgericht.",
+   "meaning": "I'll have the dish of the day.",
+   "category": "Food and drink",
+   "level": 2
+  },
+  {
+   "id": "de-0066",
+   "text": "Ich bin Vegetarier.",
+   "meaning": "I'm vegetarian.",
+   "category": "Food and drink",
+   "level": 1
+  },
+  {
+   "id": "de-0067",
+   "text": "Ohne Zwiebeln, bitte.",
+   "meaning": "Without onions, please.",
+   "category": "Food and drink",
+   "level": 1
+  },
+  {
+   "id": "de-0068",
+   "text": "Noch ein Glas Wasser, bitte.",
+   "meaning": "Another glass of water, please.",
+   "category": "Food and drink",
+   "level": 1
+  },
+  {
+   "id": "de-0069",
+   "text": "Guten Appetit!",
+   "meaning": "Enjoy your meal!",
+   "category": "Food and drink",
+   "level": 0
+  },
+  {
+   "id": "de-0070",
+   "text": "Hat es geschmeckt?",
+   "meaning": "Did you enjoy it?",
+   "category": "Food and drink",
+   "level": 2
+  },
+  {
+   "id": "de-0071",
+   "text": "Es war sehr lecker.",
+   "meaning": "It was delicious.",
+   "category": "Food and drink",
+   "level": 1
+  },
+  {
+   "id": "de-0072",
+   "text": "Die Rechnung, bitte.",
+   "meaning": "The bill, please.",
+   "category": "Food and drink",
+   "level": 0
+  },
+  {
+   "id": "de-0073",
+   "text": "Zusammen oder getrennt?",
+   "meaning": "Together or separately?",
+   "category": "Food and drink",
+   "level": 1
+  },
+  {
+   "id": "de-0074",
+   "text": "Getrennt, bitte.",
+   "meaning": "Separately, please.",
+   "category": "Food and drink",
+   "level": 0
+  },
+  {
+   "id": "de-0075",
+   "text": "Stimmt so.",
+   "meaning": "Keep the change.",
+   "category": "Food and drink",
+   "level": 1
+  },
+  {
+   "id": "de-0076",
+   "text": "Ich habe einen Tisch reserviert.",
+   "meaning": "I have a table booked.",
+   "category": "Food and drink",
+   "level": 2
+  },
+  {
+   "id": "de-0077",
+   "text": "Für zwei Personen, bitte.",
+   "meaning": "For two people, please.",
+   "category": "Food and drink",
+   "level": 1
+  },
+  {
+   "id": "de-0078",
+   "text": "Ist dieser Platz frei?",
+   "meaning": "Is this seat free?",
+   "category": "Food and drink",
+   "level": 1
+  },
+  {
+   "id": "de-0079",
+   "text": "Wann fährt der nächste Zug?",
+   "meaning": "When does the next train leave?",
+   "category": "Transport",
+   "level": 2
+  },
+  {
+   "id": "de-0080",
+   "text": "Eine Fahrkarte nach Hamburg, bitte.",
+   "meaning": "A ticket to Hamburg, please.",
+   "category": "Transport",
+   "level": 1
+  },
+  {
+   "id": "de-0081",
+   "text": "Einfach oder hin und zurück?",
+   "meaning": "One way or return?",
+   "category": "Transport",
+   "level": 2
+  },
+  {
+   "id": "de-0082",
+   "text": "Von welchem Gleis fährt der Zug?",
+   "meaning": "Which platform does the train leave from?",
+   "category": "Transport",
+   "level": 3
+  },
+  {
+   "id": "de-0083",
+   "text": "Der Zug hat Verspätung.",
+   "meaning": "The train is delayed.",
+   "category": "Transport",
+   "level": 2
+  },
+  {
+   "id": "de-0084",
+   "text": "Ich habe meinen Zug verpasst.",
+   "meaning": "I missed my train.",
+   "category": "Transport",
+   "level": 2
+  },
+  {
+   "id": "de-0085",
+   "text": "Wo ist die Haltestelle?",
+   "meaning": "Where is the stop?",
+   "category": "Transport",
+   "level": 1
+  },
+  {
+   "id": "de-0086",
+   "text": "Muss ich umsteigen?",
+   "meaning": "Do I have to change?",
+   "category": "Transport",
+   "level": 2
+  },
+  {
+   "id": "de-0087",
+   "text": "Wie lange dauert die Fahrt?",
+   "meaning": "How long does the journey take?",
+   "category": "Transport",
+   "level": 2
+  },
+  {
+   "id": "de-0088",
+   "text": "Ist dieser Platz besetzt?",
+   "meaning": "Is this seat taken?",
+   "category": "Transport",
+   "level": 1
+  },
+  {
+   "id": "de-0089",
+   "text": "Können Sie mich hier absetzen?",
+   "meaning": "Can you drop me off here?",
+   "category": "Transport",
+   "level": 3
+  },
+  {
+   "id": "de-0090",
+   "text": "Ich möchte ein Taxi bestellen.",
+   "meaning": "I'd like to order a taxi.",
+   "category": "Transport",
+   "level": 2
+  },
+  {
+   "id": "de-0091",
+   "text": "Wie komme ich zum Bahnhof?",
+   "meaning": "How do I get to the station?",
+   "category": "Transport",
+   "level": 1
+  },
+  {
+   "id": "de-0092",
+   "text": "Fährt dieser Bus zum Zentrum?",
+   "meaning": "Does this bus go to the centre?",
+   "category": "Transport",
+   "level": 2
+  },
+  {
+   "id": "de-0093",
+   "text": "Ich steige hier aus.",
+   "meaning": "I'm getting off here.",
+   "category": "Transport",
+   "level": 1
+  },
+  {
+   "id": "de-0094",
+   "text": "Bitte einsteigen!",
+   "meaning": "All aboard!",
+   "category": "Transport",
+   "level": 1
+  },
+  {
+   "id": "de-0095",
+   "text": "Wo ist die Toilette?",
+   "meaning": "Where is the toilet?",
+   "category": "Directions",
+   "level": 0
+  },
+  {
+   "id": "de-0096",
+   "text": "Geradeaus, bitte.",
+   "meaning": "Straight ahead, please.",
+   "category": "Directions",
+   "level": 0
+  },
+  {
+   "id": "de-0097",
+   "text": "Links abbiegen.",
+   "meaning": "Turn left.",
+   "category": "Directions",
+   "level": 1
+  },
+  {
+   "id": "de-0098",
+   "text": "Rechts abbiegen.",
+   "meaning": "Turn right.",
+   "category": "Directions",
+   "level": 1
+  },
+  {
+   "id": "de-0099",
+   "text": "Es ist gleich um die Ecke.",
+   "meaning": "It's just around the corner.",
+   "category": "Directions",
+   "level": 2
+  },
+  {
+   "id": "de-0100",
+   "text": "Ist es weit von hier?",
+   "meaning": "Is it far from here?",
+   "category": "Directions",
+   "level": 1
+  },
+  {
+   "id": "de-0101",
+   "text": "Ich habe mich verlaufen.",
+   "meaning": "I'm lost.",
+   "category": "Directions",
+   "level": 2
+  },
+  {
+   "id": "de-0102",
+   "text": "Können Sie mir den Weg zeigen?",
+   "meaning": "Can you show me the way?",
+   "category": "Directions",
+   "level": 2
+  },
+  {
+   "id": "de-0103",
+   "text": "Neben der Apotheke.",
+   "meaning": "Next to the pharmacy.",
+   "category": "Directions",
+   "level": 1
+  },
+  {
+   "id": "de-0104",
+   "text": "Gegenüber vom Bahnhof.",
+   "meaning": "Opposite the station.",
+   "category": "Directions",
+   "level": 2
+  },
+  {
+   "id": "de-0105",
+   "text": "Ich habe heute viel zu tun.",
+   "meaning": "I have a lot to do today.",
+   "category": "Work",
+   "level": 2
+  },
+  {
+   "id": "de-0106",
+   "text": "Ich bin in einer Besprechung.",
+   "meaning": "I'm in a meeting.",
+   "category": "Work",
+   "level": 2
+  },
+  {
+   "id": "de-0107",
+   "text": "Können wir das morgen besprechen?",
+   "meaning": "Can we discuss that tomorrow?",
+   "category": "Work",
+   "level": 3
+  },
+  {
+   "id": "de-0108",
+   "text": "Ich schicke dir eine E-Mail.",
+   "meaning": "I'll send you an email.",
+   "category": "Work",
+   "level": 1
+  },
+  {
+   "id": "de-0109",
+   "text": "Ich melde mich später.",
+   "meaning": "I'll get back to you later.",
+   "category": "Work",
+   "level": 2
+  },
+  {
+   "id": "de-0110",
+   "text": "Hast du kurz Zeit?",
+   "meaning": "Do you have a minute?",
+   "category": "Work",
+   "level": 1
+  },
+  {
+   "id": "de-0111",
+   "text": "Das mache ich sofort.",
+   "meaning": "I'll do that right away.",
+   "category": "Work",
+   "level": 1
+  },
+  {
+   "id": "de-0112",
+   "text": "Die Frist ist am Freitag.",
+   "meaning": "The deadline is on Friday.",
+   "category": "Work",
+   "level": 2
+  },
+  {
+   "id": "de-0113",
+   "text": "Ich arbeite heute von zu Hause.",
+   "meaning": "I'm working from home today.",
+   "category": "Work",
+   "level": 2
+  },
+  {
+   "id": "de-0114",
+   "text": "Ich bin im Urlaub.",
+   "meaning": "I'm on holiday.",
+   "category": "Work",
+   "level": 1
+  },
+  {
+   "id": "de-0115",
+   "text": "Könnten Sie mir das erklären?",
+   "meaning": "Could you explain that to me?",
+   "category": "Work",
+   "level": 3
+  },
+  {
+   "id": "de-0116",
+   "text": "Das ist kein Problem.",
+   "meaning": "That's no problem.",
+   "category": "Work",
+   "level": 1
+  },
+  {
+   "id": "de-0117",
+   "text": "Ich kümmere mich darum.",
+   "meaning": "I'll take care of it.",
+   "category": "Work",
+   "level": 3
+  },
+  {
+   "id": "de-0118",
+   "text": "Wir sehen uns im Büro.",
+   "meaning": "See you at the office.",
+   "category": "Work",
+   "level": 1
+  },
+  {
+   "id": "de-0119",
+   "text": "Feierabend!",
+   "meaning": "Done for the day!",
+   "category": "Work",
+   "level": 1
+  },
+  {
+   "id": "de-0120",
+   "text": "Schönen Feierabend!",
+   "meaning": "Have a good evening after work!",
+   "category": "Work",
+   "level": 2
+  },
+  {
+   "id": "de-0121",
+   "text": "Ich muss noch einkaufen.",
+   "meaning": "I still need to do the shopping.",
+   "category": "At home",
+   "level": 2
+  },
+  {
+   "id": "de-0122",
+   "text": "Ich räume die Küche auf.",
+   "meaning": "I'm tidying the kitchen.",
+   "category": "At home",
+   "level": 2
+  },
+  {
+   "id": "de-0123",
+   "text": "Die Waschmaschine läuft.",
+   "meaning": "The washing machine is running.",
+   "category": "At home",
+   "level": 2
+  },
+  {
+   "id": "de-0124",
+   "text": "Kannst du den Müll rausbringen?",
+   "meaning": "Can you take the rubbish out?",
+   "category": "At home",
+   "level": 2
+  },
+  {
+   "id": "de-0125",
+   "text": "Ich koche heute Abend.",
+   "meaning": "I'm cooking this evening.",
+   "category": "At home",
+   "level": 1
+  },
+  {
+   "id": "de-0126",
+   "text": "Das Licht ist noch an.",
+   "meaning": "The light is still on.",
+   "category": "At home",
+   "level": 1
+  },
+  {
+   "id": "de-0127",
+   "text": "Ich gehe schlafen.",
+   "meaning": "I'm going to bed.",
+   "category": "At home",
+   "level": 0
+  },
+  {
+   "id": "de-0128",
+   "text": "Ich stehe früh auf.",
+   "meaning": "I get up early.",
+   "category": "At home",
+   "level": 1
+  },
+  {
+   "id": "de-0129",
+   "text": "Fühl dich wie zu Hause.",
+   "meaning": "Make yourself at home.",
+   "category": "At home",
+   "level": 2
+  },
+  {
+   "id": "de-0130",
+   "text": "Es ist ziemlich unordentlich.",
+   "meaning": "It's quite messy.",
+   "category": "At home",
+   "level": 2
+  },
+  {
+   "id": "de-0131",
+   "text": "Die Heizung funktioniert nicht.",
+   "meaning": "The heating isn't working.",
+   "category": "At home",
+   "level": 2
+  },
+  {
+   "id": "de-0132",
+   "text": "Ich habe den Schlüssel vergessen.",
+   "meaning": "I've forgotten the key.",
+   "category": "At home",
+   "level": 2
+  },
+  {
+   "id": "de-0133",
+   "text": "Mir geht es nicht gut.",
+   "meaning": "I'm not feeling well.",
+   "category": "Health",
+   "level": 1
+  },
+  {
+   "id": "de-0134",
+   "text": "Ich habe Kopfschmerzen.",
+   "meaning": "I have a headache.",
+   "category": "Health",
+   "level": 1
+  },
+  {
+   "id": "de-0135",
+   "text": "Ich bin erkältet.",
+   "meaning": "I have a cold.",
+   "category": "Health",
+   "level": 1
+  },
+  {
+   "id": "de-0136",
+   "text": "Ich brauche einen Termin.",
+   "meaning": "I need an appointment.",
+   "category": "Health",
+   "level": 1
+  },
+  {
+   "id": "de-0137",
+   "text": "Wo ist die nächste Apotheke?",
+   "meaning": "Where's the nearest pharmacy?",
+   "category": "Health",
+   "level": 2
+  },
+  {
+   "id": "de-0138",
+   "text": "Gute Besserung!",
+   "meaning": "Get well soon!",
+   "category": "Health",
+   "level": 1
+  },
+  {
+   "id": "de-0139",
+   "text": "Ich bin müde.",
+   "meaning": "I'm tired.",
+   "category": "Health",
+   "level": 0
+  },
+  {
+   "id": "de-0140",
+   "text": "Ich muss mich ausruhen.",
+   "meaning": "I need to rest.",
+   "category": "Health",
+   "level": 2
+  },
+  {
+   "id": "de-0141",
+   "text": "Haben Sie etwas gegen Husten?",
+   "meaning": "Do you have something for a cough?",
+   "category": "Health",
+   "level": 3
+  },
+  {
+   "id": "de-0142",
+   "text": "Es tut hier weh.",
+   "meaning": "It hurts here.",
+   "category": "Health",
+   "level": 1
+  },
+  {
+   "id": "de-0143",
+   "text": "Ich freue mich.",
+   "meaning": "I'm glad.",
+   "category": "Feelings",
+   "level": 1
+  },
+  {
+   "id": "de-0144",
+   "text": "Ich freue mich darauf.",
+   "meaning": "I'm looking forward to it.",
+   "category": "Feelings",
+   "level": 2
+  },
+  {
+   "id": "de-0145",
+   "text": "Das macht mir Spaß.",
+   "meaning": "I enjoy that.",
+   "category": "Feelings",
+   "level": 2
+  },
+  {
+   "id": "de-0146",
+   "text": "Ich bin ein bisschen nervös.",
+   "meaning": "I'm a little nervous.",
+   "category": "Feelings",
+   "level": 2
+  },
+  {
+   "id": "de-0147",
+   "text": "Ich bin sehr froh.",
+   "meaning": "I'm very happy.",
+   "category": "Feelings",
+   "level": 1
+  },
+  {
+   "id": "de-0148",
+   "text": "Das ärgert mich.",
+   "meaning": "That annoys me.",
+   "category": "Feelings",
+   "level": 2
+  },
+  {
+   "id": "de-0149",
+   "text": "Ich bin enttäuscht.",
+   "meaning": "I'm disappointed.",
+   "category": "Feelings",
+   "level": 2
+  },
+  {
+   "id": "de-0150",
+   "text": "Ich habe Angst davor.",
+   "meaning": "I'm afraid of it.",
+   "category": "Feelings",
+   "level": 3
+  },
+  {
+   "id": "de-0151",
+   "text": "Das ist mir egal.",
+   "meaning": "I don't mind.",
+   "category": "Feelings",
+   "level": 2
+  },
+  {
+   "id": "de-0152",
+   "text": "Ich bin stolz auf dich.",
+   "meaning": "I'm proud of you.",
+   "category": "Feelings",
+   "level": 2
+  },
+  {
+   "id": "de-0153",
+   "text": "Ich vermisse dich.",
+   "meaning": "I miss you.",
+   "category": "Feelings",
+   "level": 1
+  },
+  {
+   "id": "de-0154",
+   "text": "Ich bin gestresst.",
+   "meaning": "I'm stressed.",
+   "category": "Feelings",
+   "level": 1
+  },
+  {
+   "id": "de-0155",
+   "text": "Mir ist langweilig.",
+   "meaning": "I'm bored.",
+   "category": "Feelings",
+   "level": 1
+  },
+  {
+   "id": "de-0156",
+   "text": "Das tut mir leid.",
+   "meaning": "I'm sorry.",
+   "category": "Feelings",
+   "level": 1
+  },
+  {
+   "id": "de-0157",
+   "text": "Was machst du heute Abend?",
+   "meaning": "What are you doing this evening?",
+   "category": "Plans",
+   "level": 1
+  },
+  {
+   "id": "de-0158",
+   "text": "Hast du am Wochenende Zeit?",
+   "meaning": "Do you have time at the weekend?",
+   "category": "Plans",
+   "level": 2
+  },
+  {
+   "id": "de-0159",
+   "text": "Wollen wir einen Kaffee trinken?",
+   "meaning": "Shall we have a coffee?",
+   "category": "Plans",
+   "level": 2
+  },
+  {
+   "id": "de-0160",
+   "text": "Ich habe schon etwas vor.",
+   "meaning": "I already have plans.",
+   "category": "Plans",
+   "level": 2
+  },
+  {
+   "id": "de-0161",
+   "text": "Passt es dir um acht?",
+   "meaning": "Does eight work for you?",
+   "category": "Plans",
+   "level": 2
+  },
+  {
+   "id": "de-0162",
+   "text": "Wir treffen uns um sieben.",
+   "meaning": "We're meeting at seven.",
+   "category": "Plans",
+   "level": 1
+  },
+  {
+   "id": "de-0163",
+   "text": "Ich komme etwas später.",
+   "meaning": "I'll be a bit late.",
+   "category": "Plans",
+   "level": 1
+  },
+  {
+   "id": "de-0164",
+   "text": "Ich muss leider absagen.",
+   "meaning": "I'm afraid I have to cancel.",
+   "category": "Plans",
+   "level": 3
+  },
+  {
+   "id": "de-0165",
+   "text": "Vielleicht ein andermal.",
+   "meaning": "Maybe another time.",
+   "category": "Plans",
+   "level": 2
+  },
+  {
+   "id": "de-0166",
+   "text": "Ich freue mich auf das Wochenende.",
+   "meaning": "I'm looking forward to the weekend.",
+   "category": "Plans",
+   "level": 2
+  },
+  {
+   "id": "de-0167",
+   "text": "Lass uns spazieren gehen.",
+   "meaning": "Let's go for a walk.",
+   "category": "Plans",
+   "level": 2
+  },
+  {
+   "id": "de-0168",
+   "text": "Hast du Lust, ins Kino zu gehen?",
+   "meaning": "Do you fancy going to the cinema?",
+   "category": "Plans",
+   "level": 3
+  },
+  {
+   "id": "de-0169",
+   "text": "Ich rufe dich später an.",
+   "meaning": "I'll call you later.",
+   "category": "Plans",
+   "level": 2
+  },
+  {
+   "id": "de-0170",
+   "text": "Schreib mir einfach.",
+   "meaning": "Just text me.",
+   "category": "Plans",
+   "level": 1
+  },
+  {
+   "id": "de-0171",
+   "text": "Ich finde das gut.",
+   "meaning": "I think that's good.",
+   "category": "Opinions",
+   "level": 1
+  },
+  {
+   "id": "de-0172",
+   "text": "Was hältst du davon?",
+   "meaning": "What do you think of it?",
+   "category": "Opinions",
+   "level": 3
+  },
+  {
+   "id": "de-0173",
+   "text": "Meiner Meinung nach ist das richtig.",
+   "meaning": "In my opinion that's right.",
+   "category": "Opinions",
+   "level": 3
+  },
+  {
+   "id": "de-0174",
+   "text": "Ich bin nicht sicher.",
+   "meaning": "I'm not sure.",
+   "category": "Opinions",
+   "level": 1
+  },
+  {
+   "id": "de-0175",
+   "text": "Das kommt darauf an.",
+   "meaning": "That depends.",
+   "category": "Opinions",
+   "level": 2
+  },
+  {
+   "id": "de-0176",
+   "text": "Ich sehe das anders.",
+   "meaning": "I see it differently.",
+   "category": "Opinions",
+   "level": 3
+  },
+  {
+   "id": "de-0177",
+   "text": "Da hast du recht.",
+   "meaning": "You're right there.",
+   "category": "Opinions",
+   "level": 2
+  },
+  {
+   "id": "de-0178",
+   "text": "Genau!",
+   "meaning": "Exactly!",
+   "category": "Opinions",
+   "level": 0
+  },
+  {
+   "id": "de-0179",
+   "text": "Das stimmt.",
+   "meaning": "That's true.",
+   "category": "Opinions",
+   "level": 1
+  },
+  {
+   "id": "de-0180",
+   "text": "Das stimmt nicht.",
+   "meaning": "That's not true.",
+   "category": "Opinions",
+   "level": 1
+  },
+  {
+   "id": "de-0181",
+   "text": "Ich glaube schon.",
+   "meaning": "I think so.",
+   "category": "Opinions",
+   "level": 1
+  },
+  {
+   "id": "de-0182",
+   "text": "Ich glaube nicht.",
+   "meaning": "I don't think so.",
+   "category": "Opinions",
+   "level": 1
+  },
+  {
+   "id": "de-0183",
+   "text": "Einerseits ja, andererseits nein.",
+   "meaning": "On the one hand yes, on the other no.",
+   "category": "Opinions",
+   "level": 4
+  },
+  {
+   "id": "de-0184",
+   "text": "Ehrlich gesagt gefällt es mir nicht.",
+   "meaning": "Honestly, I don't like it.",
+   "category": "Opinions",
+   "level": 3
+  },
+  {
+   "id": "de-0185",
+   "text": "Das ist Geschmackssache.",
+   "meaning": "That's a matter of taste.",
+   "category": "Opinions",
+   "level": 3
+  },
+  {
+   "id": "de-0186",
+   "text": "Ich kann das gut verstehen.",
+   "meaning": "I can understand that.",
+   "category": "Opinions",
+   "level": 2
+  },
+  {
+   "id": "de-0187",
+   "text": "Wirklich?",
+   "meaning": "Really?",
+   "category": "Reactions",
+   "level": 0
+  },
+  {
+   "id": "de-0188",
+   "text": "Ach so!",
+   "meaning": "Oh, I see!",
+   "category": "Reactions",
+   "level": 0
+  },
+  {
+   "id": "de-0189",
+   "text": "Na klar!",
+   "meaning": "Of course!",
+   "category": "Reactions",
+   "level": 0
+  },
+  {
+   "id": "de-0190",
+   "text": "Kein Problem.",
+   "meaning": "No problem.",
+   "category": "Reactions",
+   "level": 0
+  },
+  {
+   "id": "de-0191",
+   "text": "Alles klar.",
+   "meaning": "All good.",
+   "category": "Reactions",
+   "level": 0
+  },
+  {
+   "id": "de-0192",
+   "text": "Schade!",
+   "meaning": "What a shame!",
+   "category": "Reactions",
+   "level": 0
+  },
+  {
+   "id": "de-0193",
+   "text": "Wie schön!",
+   "meaning": "How lovely!",
+   "category": "Reactions",
+   "level": 0
+  },
+  {
+   "id": "de-0194",
+   "text": "Das ist ja toll!",
+   "meaning": "That's great!",
+   "category": "Reactions",
+   "level": 1
+  },
+  {
+   "id": "de-0195",
+   "text": "Oh je!",
+   "meaning": "Oh dear!",
+   "category": "Reactions",
+   "level": 0
+  },
+  {
+   "id": "de-0196",
+   "text": "Im Ernst?",
+   "meaning": "Seriously?",
+   "category": "Reactions",
+   "level": 1
+  },
+  {
+   "id": "de-0197",
+   "text": "Na ja ...",
+   "meaning": "Well ...",
+   "category": "Reactions",
+   "level": 0
+  },
+  {
+   "id": "de-0198",
+   "text": "Also, ich meine ...",
+   "meaning": "Well, I mean ...",
+   "category": "Reactions",
+   "level": 1
+  },
+  {
+   "id": "de-0199",
+   "text": "Moment mal!",
+   "meaning": "Hang on a second!",
+   "category": "Reactions",
+   "level": 1
+  },
+  {
+   "id": "de-0200",
+   "text": "Das glaube ich nicht!",
+   "meaning": "I don't believe it!",
+   "category": "Reactions",
+   "level": 1
+  },
+  {
+   "id": "de-0201",
+   "text": "Viel Glück!",
+   "meaning": "Good luck!",
+   "category": "Reactions",
+   "level": 0
+  },
+  {
+   "id": "de-0202",
+   "text": "Herzlichen Glückwunsch!",
+   "meaning": "Congratulations!",
+   "category": "Reactions",
+   "level": 1
+  },
+  {
+   "id": "de-0203",
+   "text": "Entschuldigen Sie bitte.",
+   "meaning": "Excuse me, please. (formal)",
+   "category": "Politeness",
+   "level": 1
+  },
+  {
+   "id": "de-0204",
+   "text": "Das war meine Schuld.",
+   "meaning": "That was my fault.",
+   "category": "Politeness",
+   "level": 2
+  },
+  {
+   "id": "de-0205",
+   "text": "Ich wollte das nicht.",
+   "meaning": "I didn't mean to.",
+   "category": "Politeness",
+   "level": 2
+  },
+  {
+   "id": "de-0206",
+   "text": "Kein Grund zur Sorge.",
+   "meaning": "No need to worry.",
+   "category": "Politeness",
+   "level": 3
+  },
+  {
+   "id": "de-0207",
+   "text": "Darf ich Sie etwas fragen?",
+   "meaning": "May I ask you something?",
+   "category": "Politeness",
+   "level": 2
+  },
+  {
+   "id": "de-0208",
+   "text": "Würden Sie mir bitte helfen?",
+   "meaning": "Would you help me, please?",
+   "category": "Politeness",
+   "level": 3
+  },
+  {
+   "id": "de-0209",
+   "text": "Könnten Sie das bitte wiederholen?",
+   "meaning": "Could you repeat that, please?",
+   "category": "Politeness",
+   "level": 3
+  },
+  {
+   "id": "de-0210",
+   "text": "Vielen Dank für Ihre Hilfe.",
+   "meaning": "Thank you for your help.",
+   "category": "Politeness",
+   "level": 2
+  },
+  {
+   "id": "de-0211",
+   "text": "Nichts zu danken.",
+   "meaning": "Don't mention it.",
+   "category": "Politeness",
+   "level": 2
+  },
+  {
+   "id": "de-0212",
+   "text": "Entschuldigung für die Verspätung.",
+   "meaning": "Sorry for being late.",
+   "category": "Politeness",
+   "level": 2
+  },
+  {
+   "id": "de-0213",
+   "text": "Schönes Wetter heute!",
+   "meaning": "Lovely weather today!",
+   "category": "Weather",
+   "level": 1
+  },
+  {
+   "id": "de-0214",
+   "text": "Es regnet schon wieder.",
+   "meaning": "It's raining again.",
+   "category": "Weather",
+   "level": 1
+  },
+  {
+   "id": "de-0215",
+   "text": "Es ist ziemlich kalt draußen.",
+   "meaning": "It's quite cold outside.",
+   "category": "Weather",
+   "level": 2
+  },
+  {
+   "id": "de-0216",
+   "text": "Die Sonne scheint.",
+   "meaning": "The sun is shining.",
+   "category": "Weather",
+   "level": 1
+  },
+  {
+   "id": "de-0217",
+   "text": "Es schneit!",
+   "meaning": "It's snowing!",
+   "category": "Weather",
+   "level": 0
+  },
+  {
+   "id": "de-0218",
+   "text": "Was für ein Wetter!",
+   "meaning": "What weather!",
+   "category": "Weather",
+   "level": 1
+  },
+  {
+   "id": "de-0219",
+   "text": "Es soll morgen wärmer werden.",
+   "meaning": "It's supposed to get warmer tomorrow.",
+   "category": "Weather",
+   "level": 3
+  },
+  {
+   "id": "de-0220",
+   "text": "Ich mag den Herbst.",
+   "meaning": "I like autumn.",
+   "category": "Weather",
+   "level": 1
+  },
+  {
+   "id": "de-0221",
+   "text": "Der Sommer war toll.",
+   "meaning": "The summer was great.",
+   "category": "Weather",
+   "level": 2
+  },
+  {
+   "id": "de-0222",
+   "text": "Nimm einen Schirm mit.",
+   "meaning": "Take an umbrella with you.",
+   "category": "Weather",
+   "level": 2
+  }
+ ]
+}

@@ -5,7 +5,8 @@
 //!   jsout <name> <code>  save the returned JSON to <dir>/<name>.txt
 //!   event <json>     handle a provider event (debug.start opens an offline conversation,
 //!                    debug.heard stands in for a finished on-device utterance;
-//!                    debug.start takes "local" and "natural" to pick the voice path)
+//!                    debug.start takes "local" and "natural" to pick the voice path;
+//!                    debug.shadow_heard scores a shadowing repeat without a microphone)
 //!   dom <name>       save <dir>/<name>.html with the current DOM
 use std::path::PathBuf;
 use std::time::Duration;
