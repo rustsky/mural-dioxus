@@ -69,6 +69,12 @@ pub struct Conv {
     pub input_level: f64,
     pub output_level: f64,
     pub is_muted: bool,
+    /// Push to talk only: true while the learner holds the microphone.
+    pub holding: bool,
+    /// Mirrors the preference, so the view can label the microphone without reading settings.
+    pub hold_to_talk: bool,
+    /// Speech captured during this hold, still waiting for the learner to finish.
+    held_speech: bool,
     pub working: bool,
     pub error: Option<String>,
     pub typed_reply_error: Option<String>,
@@ -117,7 +123,7 @@ impl Default for Conv {
     fn default() -> Self {
         Self {
             state: ConnectionState::Idle, session: None, selected_theme: None, input_level: 0.0, output_level: 0.0,
-            is_muted: false, working: false, error: None, typed_reply_error: None, notice: None, inactivity_seconds: None,
+            is_muted: false, holding: false, hold_to_talk: false, held_speech: false, working: false, error: None, typed_reply_error: None, notice: None, inactivity_seconds: None,
             meaning: Meaning::default(), start_after_consent: false,
             attempt: None, instructions: String::new(), channel_open: false, started: false, transport_closing: false,
             recovery_task: None, ready_task: None,
@@ -163,6 +169,8 @@ impl Conv {
     }
     pub fn microphone_label(&self) -> &'static str {
         match self.state {
+            ConnectionState::Active if self.holding => "Listening — release when you’re done",
+            ConnectionState::Active if self.hold_to_talk => "Hold the microphone to speak",
             ConnectionState::Active if self.is_muted => "Microphone muted",
             ConnectionState::Active => "Microphone on",
             ConnectionState::Connecting => "Connecting microphone",
@@ -643,6 +651,56 @@ impl Mural {
         }
     }
 
+    /// Opens the microphone while the learner holds it, and ends the turn the moment they let go.
+    pub fn set_holding(self, holding: bool) {
+        let conv = self.conv;
+        if conv.peek().state != ConnectionState::Active || !self.push_to_talk() { return; }
+        if conv.peek().holding == holding { return; }
+        {
+            let mut c = conv.write_unchecked();
+            c.holding = holding;
+            c.is_muted = !holding;
+            if holding { c.held_speech = false; }
+            // Holding the microphone is engagement, even before any words arrive.
+            if holding { c.activity.learner_engaged(uptime()); }
+        }
+        self.bridge_send(json!({"cmd": "mute", "muted": !holding}));
+        let kind = if holding { "session.input_audio.unmute" } else { "session.input_audio.mute" };
+        self.transport_send(json!({"type": kind, "event_id": new_id()}));
+        if !holding {
+            if tracing() { eprintln!("{:.1} released, speech held: {}", uptime(), conv.peek().held_speech); }
+            // The provider's own detector closes a live turn; on-device voice needs telling.
+            if conv.peek().natural_voice { self.end_local_turn(); }
+            // System speech has no buffer to flush, so whatever was heard is already in hand.
+            else if std::mem::take(&mut conv.write_unchecked().held_speech) { self.local_turn(); }
+        }
+    }
+
+    pub fn push_to_talk(self) -> bool { provider::current().push_to_talk }
+
+    /// Transcribes whatever the learner said before letting go, without waiting for silence.
+    fn end_local_turn(self) {
+        let attempt = self.conv.peek().attempt.clone();
+        let Some(attempt) = attempt else { return };
+        spawn_forever(async move {
+            // The last audio chunks are still crossing from the page; flushing now would clip them.
+            sleep(0.25).await;
+            let heard = match voice::end_turn().await {
+                Ok(heard) => heard,
+                Err(error) => { eprintln!("voice: {error}"); return; }
+            };
+            if tracing() && !heard.is_empty() { eprintln!("{:.1} heard on release {heard:?}", uptime()); }
+            if !self.current_attempt(&attempt) { return; }
+            for text in heard.iter().map(|t| t.trim()).filter(|t| !t.is_empty()) {
+                self.local_transcript(Speaker::User, text);
+                self.conv.write_unchecked().held_speech = true;
+            }
+            // One reply for everything said during the hold, however many pauses it contained.
+            let spoke = std::mem::take(&mut self.conv.write_unchecked().held_speech);
+            if spoke { self.local_turn(); } else { self.local_listen(); }
+        });
+    }
+
     pub fn toggle_mute(self) {
         let conv = self.conv;
         if conv.peek().state != ConnectionState::Active { return; }
@@ -673,6 +731,21 @@ impl Mural {
     pub fn correct_passage(self, session_id: &str, passage_id: &str, text: &str) {
         if self.store.write_unchecked().correct_passage(session_id, passage_id, text) {
             self.cancel_final_assessment(session_id);
+        }
+    }
+
+    /// Changing this mid-conversation would leave the microphone in a state the learner did not
+    /// choose, so it only takes effect for the next one.
+    /// Returns the setting as it now stands, so the view can follow it.
+    pub fn toggle_push_to_talk(self) -> bool {
+        if self.conv.peek().is_running() { return provider::current().push_to_talk; }
+        let held = !provider::current().push_to_talk;
+        match provider::update(|s| s.push_to_talk = held) {
+            Ok(updated) => updated.push_to_talk,
+            Err(error) => {
+                self.conv.write_unchecked().notice = Some(error);
+                provider::current().push_to_talk
+            }
         }
     }
 
@@ -822,11 +895,19 @@ impl Mural {
                 {
                     let mut c = conv.write_unchecked();
                     c.state = ConnectionState::Active;
+                    c.holding = false;
                     c.activity = ConversationActivity::with_challenge(uptime(), self.store.peek().learner().challenge);
                     c.pace = ConversationPace::default();
                     c.plan = TeachingPlan::default();
                     c.inactivity_seconds = None;
                     if let Some(s) = c.session.as_mut() { s.provider_id = event["session"]["id"].as_str().map(String::from); }
+                }
+                // Push to talk keeps the microphone closed until the learner asks for it.
+                conv.write_unchecked().hold_to_talk = self.push_to_talk();
+                if self.push_to_talk() {
+                    conv.write_unchecked().is_muted = true;
+                    self.bridge_send(json!({"cmd": "mute", "muted": true}));
+                    self.transport_send(json!({"type": "session.input_audio.mute", "event_id": new_id()}));
                 }
                 self.append("instructions", &teaching::greeting(self.language()), None);
                 self.local_speak_now();
@@ -916,6 +997,8 @@ impl Mural {
                     c.inactivity_seconds = None;
                     let now = Date::now();
                     c.pending_commands.retain(|_, sent| now.since(*sent) <= 20.0);
+                    // A long pause while holding the microphone is the learner thinking, not silence.
+                    if c.holding { c.activity.learner_engaged(uptime()); }
                     c.activity.tick(uptime(), muted, busy)
                 };
                 match action {
@@ -957,6 +1040,12 @@ impl Mural {
             return;
         }
         self.local_transcript(Speaker::User, text);
+        // A pause while holding is thinking time, not the end of a turn.
+        if self.conv.peek().holding {
+            self.conv.write_unchecked().held_speech = true;
+            self.local_listen();
+            return;
+        }
         self.local_turn();
     }
 
@@ -1677,6 +1766,14 @@ impl Mural {
             c.attempt = Some("debug".into());
             c.channel_open = true;
             c.transport_closing = false;
+            // "local": true drives the on-device path, which otherwise needs a microphone.
+            c.local_voice = value["local"].as_bool().unwrap_or(false);
+            c.natural_voice = value["natural"].as_bool().unwrap_or(false);
+            return;
+        }
+        // Stands in for an utterance the on-device recogniser finished, which needs a microphone.
+        if value["type"] == "mural.debug.heard" {
+            if let Some(text) = value["text"].as_str() { self.local_heard(text); }
             return;
         }
         self.handle(value);

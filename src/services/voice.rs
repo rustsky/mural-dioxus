@@ -321,22 +321,39 @@ pub fn reset_listening() {
     let _ = worker().send(Box::new(|state| state.restart_listening()));
 }
 
+/// Ends the current utterance now, without waiting for silence: the learner said they are done.
+pub async fn end_turn() -> Result<Vec<String>, String> {
+    run(move |state| {
+        let Some(vad) = &state.vad else { return vec![] };
+        vad.flush();
+        state.drain()
+    }).await
+}
+
 /// Feeds 16 kHz microphone audio; returns the text of every utterance that just finished.
 pub async fn hear(samples: Vec<f32>) -> Result<Vec<String>, String> {
     run(move |state| {
-        let (Some(vad), Some(loaded)) = (&state.vad, &state.loaded) else { return vec![] };
+        if state.vad.is_none() || state.loaded.is_none() { return vec![] }
         state.history.extend_from_slice(&samples);
         if state.history.len() > HISTORY {
             let excess = state.history.len() - HISTORY;
             state.history.drain(..excess);
             state.history_start += excess;
         }
-        vad.accept_waveform(&samples);
+        if let Some(vad) = &state.vad { vad.accept_waveform(&samples); }
+        state.drain()
+    }).await
+}
+
+impl State {
+    /// The text of every utterance the VAD has finished with.
+    fn drain(&self) -> Vec<String> {
+        let (Some(vad), Some(loaded)) = (&self.vad, &self.loaded) else { return vec![] };
         let mut heard = vec![];
         while let Some(segment) = vad.front() {
-            let start = (segment.start().max(0) as usize).saturating_sub(LEAD_IN).max(state.history_start);
+            let start = (segment.start().max(0) as usize).saturating_sub(LEAD_IN).max(self.history_start);
             let end = segment.start().max(0) as usize + segment.samples().len();
-            let audio = state.history.get(start - state.history_start..end.saturating_sub(state.history_start).min(state.history.len()))
+            let audio = self.history.get(start - self.history_start..end.saturating_sub(self.history_start).min(self.history.len()))
                 .filter(|a| a.len() >= segment.samples().len())
                 .unwrap_or(segment.samples());
             let stream = loaded.recognizer.create_stream();
@@ -348,7 +365,7 @@ pub async fn hear(samples: Vec<f32>) -> Result<Vec<String>, String> {
             vad.pop();
         }
         heard
-    }).await
+    }
 }
 
 /// Speaks `text`, sending each sentence's audio (samples, sample rate) as soon as it is ready.

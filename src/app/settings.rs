@@ -18,6 +18,7 @@ pub fn SettingsSheet() -> Element {
     let mut message = use_signal(|| None::<String>);
     let mut deleting = use_signal(|| false);
     let mut showing_key = use_signal(|| !OPENAI.has_key());
+    let mut held = use_signal(|| provider::current().push_to_talk);
     let running = app.conv.read().is_running();
     let store = app.store.read();
     let prefs = store.preferences().clone();
@@ -82,6 +83,16 @@ pub fn SettingsSheet() -> Element {
                                     option { key: "{l}", value: l, selected: l == prefs.meaning_language, "{l}" }
                                 }
                             }
+                        }
+                        div { class: "form-row",
+                            span { class: "label", "Hold to speak" }
+                            button { class: if held() { "switch on" } else { "switch" }, role: "switch",
+                                disabled: running, aria_checked: "{held}", aria_label: "Hold to speak",
+                                onclick: move |_| held.set(app.toggle_push_to_talk()),
+                            }
+                        }
+                        div { class: "form-row hint",
+                            span { class: "value", "Mural normally decides when your turn has ended. Hold the microphone instead, and take as long as you like." }
                         }
                         div { class: "form-row", span { class: "label", "Corrections" } span { class: "value", "Gently, as we talk" } }
                         div { class: "form-row",

@@ -37,8 +37,12 @@ pub fn TalkView() -> Element {
     let has_sources = conv.session.as_ref().and_then(|s| s.topics.last()).map(|t| !t.sources.is_empty()).unwrap_or(false);
     let has_session = conv.session.is_some();
     let busy = matches!(state, ConnectionState::Connecting | ConnectionState::Closing);
+    let hold_to_talk = conv.hold_to_talk;
+    let holding = conv.holding;
     let mic_icon = if conv.is_muted && state == ConnectionState::Active { "mic.slash" } else { "mic" };
     let mic_label = match state {
+        ConnectionState::Active if hold_to_talk && holding => "Release to finish speaking",
+        ConnectionState::Active if hold_to_talk => "Hold to speak",
         ConnectionState::Active if conv.is_muted => "Unmute microphone",
         ConnectionState::Active => "Mute microphone",
         _ => "Start conversation",
@@ -107,12 +111,21 @@ pub fn TalkView() -> Element {
                     }
                     "Meaning"
                 }
-                button { class: "mic-button", disabled: busy, aria_label: mic_label, title: mic_label,
+                button {
+                    class: if holding { "mic-button holding" } else { "mic-button" },
+                    disabled: busy, aria_label: mic_label, title: mic_label,
                     onclick: move |_| {
                         let state = app.conv.peek().state;
-                        if state == ConnectionState::Active { app.toggle_mute() }
-                        else if !app.conv.peek().is_running() { app.start() }
+                        if state == ConnectionState::Active {
+                            // While holding to talk, the press and release do the work instead.
+                            if !hold_to_talk { app.toggle_mute() }
+                        } else if !app.conv.peek().is_running() { app.start() }
                     },
+                    onpointerdown: move |_| app.set_holding(true),
+                    onpointerup: move |_| app.set_holding(false),
+                    onpointerleave: move |_| app.set_holding(false),
+                    onkeydown: move |e| if matches!(e.key(), Key::Character(ref c) if c == " ") { app.set_holding(true) },
+                    onkeyup: move |e| if matches!(e.key(), Key::Character(ref c) if c == " ") { app.set_holding(false) },
                     if busy { span { class: "spinner dark" } } else { Icon { name: mic_icon, size: 30, weight: 1.5 } }
                 }
                 div { class: "control",
