@@ -7,8 +7,8 @@ impl std::fmt::Display for KeyError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
             KeyError::Invalid => "Enter a valid API key.",
-            KeyError::Save => "The key couldn’t be saved to this Mac’s Keychain.",
-            KeyError::Remove => "The key couldn’t be removed. Unlock this Mac’s Keychain and try again.",
+            KeyError::Save => "The key couldn’t be saved to this computer’s keychain.",
+            KeyError::Remove => "The key couldn’t be removed. Unlock this computer’s keychain and try again.",
         })
     }
 }
@@ -73,7 +73,26 @@ mod platform {
     }
 }
 
-#[cfg(not(target_os = "macos"))]
+/// Windows Credential Manager, or the Secret Service (GNOME Keyring, KWallet) on Linux.
+#[cfg(any(windows, target_os = "linux"))]
+mod platform {
+    use super::*;
+
+    fn entry(service: &str) -> Option<keyring::Entry> { keyring::Entry::new(service, ACCOUNT).ok() }
+
+    pub fn read(service: &str) -> Option<String> { entry(service)?.get_password().ok() }
+    pub fn save(service: &str, value: &str) -> Result<(), KeyError> {
+        entry(service).ok_or(KeyError::Save)?.set_password(value).map_err(|_| KeyError::Save)
+    }
+    pub fn delete(service: &str) -> Result<(), KeyError> {
+        match entry(service).ok_or(KeyError::Remove)?.delete_credential() {
+            Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
+            Err(_) => Err(KeyError::Remove),
+        }
+    }
+}
+
+#[cfg(not(any(target_os = "macos", windows, target_os = "linux")))]
 mod platform {
     use super::*;
     pub fn read(_service: &str) -> Option<String> { None }
