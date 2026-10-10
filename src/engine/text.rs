@@ -28,6 +28,8 @@ pub fn contains_ci(haystack: &str, needle: &str) -> bool {
 
 pub fn prefix(text: &str, count: usize) -> String { text.chars().take(count).collect() }
 
+/// Kept in step with the iPhone core, which still trims captions this way.
+#[allow(dead_code)]
 pub fn suffix(text: &str, count: usize) -> String {
     let total = text.chars().count();
     text.chars().skip(total.saturating_sub(count)).collect()

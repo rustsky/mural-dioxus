@@ -8,68 +8,6 @@ use crate::engine::models::{SessionRecord, Speaker, TopicBrief};
 use crate::engine::text::contains_ci;
 
 #[component]
-pub fn ThemesView() -> Element {
-    let app = use_context::<Mural>();
-    let mut search = use_signal(String::new);
-    let mut category = use_signal(|| "All".to_string());
-    let language = app.store.read().language();
-    let all = language.themes();
-    let mut categories = vec!["All".to_string()];
-    for t in &all { if !categories.contains(&t.category) { categories.push(t.category.clone()); } }
-    let query = search.read().clone();
-    let themes: Vec<_> = all.into_iter().filter(|t| {
-        (category() == "All" || t.category == category())
-            && (query.is_empty() || contains_ci(&t.title, &query) || contains_ci(&t.category, &query))
-    }).collect();
-    let choose = move |theme| {
-        app.choose_theme(theme);
-        app.ui.write_unchecked().tab = Tab::Talk;
-    };
-    rsx! {
-        div { class: "page stack",
-            PageHeading { eyebrow: "A place to begin", title: "What’s on\nyour mind?", subtitle: "Same friend. Somewhere new." }
-            div { class: "search",
-                Icon { name: "magnifyingglass", size: 15 }
-                input { r#type: "search", placeholder: "Find a conversation", value: "{search}", oninput: move |e| search.set(e.value()) }
-            }
-            button { class: "just-talk", onclick: move |_| choose(None),
-                Icon { name: "waveform" } span { "Just talk" } span { class: "spacer" } Icon { name: "arrow.up.right" }
-            }
-            div { class: "chips",
-                for c in categories {
-                    button { key: "{c}", class: if category() == c { "chip selected" } else { "chip" },
-                        aria_pressed: "{category() == c}",
-                        onclick: { let c = c.clone(); move |_| category.set(c.clone()) },
-                        "{c}"
-                    }
-                }
-            }
-            div { class: "theme-grid",
-                for theme in themes.iter().cloned() {
-                    button { key: "{theme.id}", class: "theme-card panel-{theme.color_index % 4}",
-                        onclick: {
-                            let theme = theme.clone();
-                            move |_| if theme.id == "today" { app.open_sheet(Sheet::CurrentTopic) } else { choose(Some(theme.clone())) }
-                        },
-                        span { class: "secondary", Icon { name: theme.symbol.clone(), size: 28, weight: 1.2 } }
-                        div {
-                            div { class: "title", "{theme.title}" }
-                            div { class: "subtitle", "{theme.subtitle}" }
-                        }
-                    }
-                }
-            }
-            if themes.is_empty() {
-                div { class: "empty-state",
-                    h3 { "No Results for “{query}”" }
-                    div { "Check the spelling or try a new search." }
-                }
-            }
-        }
-    }
-}
-
-#[component]
 pub fn CurrentTopicSheet() -> Element {
     let app = use_context::<Mural>();
     let mut query = use_signal(String::new);
@@ -247,11 +185,38 @@ fn TranscriptBody(session: SessionRecord, meaning_language: String, #[props(defa
     }
 }
 
+/// Keeps a live transcript at the newest line, unless the learner has scrolled back to read.
+/// Scrolling within 40px of the bottom resumes following.
+const FOLLOW: &str = "requestAnimationFrame(() => {
+  const b = document.querySelector('.sheet-body');
+  if (!b) return;
+  if (!b.dataset.wired) {
+    b.dataset.wired = '1';
+    b.dataset.follow = 'on';
+    b.addEventListener('scroll', () => {
+      b.dataset.follow = b.scrollHeight - b.scrollTop - b.clientHeight < 40 ? 'on' : 'off';
+    });
+  }
+  if (b.dataset.follow !== 'off') b.scrollTop = b.scrollHeight;
+});";
+
 #[component]
 pub fn TranscriptSheet() -> Element {
     let app = use_context::<Mural>();
     let session = app.conv.read().session.clone();
     let meaning_language = app.store.read().preferences().meaning_language.clone();
+    let conv = app.conv;
+    use_effect(move || {
+        // Reading the conversation here is what re-runs this as new lines arrive.
+        let live = {
+            let c = conv.read();
+            let Some(session) = c.session.as_ref() else { return };
+            let _lines = session.fragments.len();
+            session.ended_at.is_none()
+        };
+        if !live { return; }
+        spawn(async move { let _ = document::eval(FOLLOW).await; });
+    });
     rsx! {
         SheetFrame { title: "Our conversation",
             match session {

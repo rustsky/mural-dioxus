@@ -5,6 +5,7 @@ use serde_json::Value;
 use super::activity::{Action, ConversationActivity};
 use super::languages;
 use super::learning::LearningEngine;
+use super::pace::{ConversationPace, Delivery};
 use super::models::*;
 use super::pinyin;
 use super::provider::{ProviderFailure, ProviderFailureKind};
@@ -33,6 +34,7 @@ fn fixture(day: f64, theme: &str, supported: bool, kind: EvidenceKind) -> Sessio
             lemma: "å gå".into(), meaning: "to go".into(), form: "gikk".into(), kind, confidence: 0.95,
             source_ids: p.fragments.iter().map(|f| f.id.clone()).collect(), quote: "Jeg gikk i skogen.".into(), language: "nb".into(),
         }],
+        errors: vec![],
         created_at: date, context: theme.into(),
     }];
     s
@@ -343,4 +345,65 @@ fn pinyin_uses_word_readings() {
     let joined: String = pinyin::tokens("你好，世界").into_iter().map(|t| t.text).collect();
     assert_eq!(joined, "你好，世界");
     assert!(pinyin::reading("Hello").is_none());
+}
+
+#[test]
+fn beginners_are_given_longer_to_think() {
+    let mut beginner = ConversationActivity::with_challenge(0.0, 0);
+    // The check-in scales with the allowance instead of firing a quarter of the way in.
+    assert_eq!(beginner.tick(15.0, false, false), Action::Wait);
+    assert_eq!(beginner.tick(30.0, false, false), Action::CheckIn);
+    assert_eq!(beginner.tick(45.0, false, false), Action::Wait);
+    assert_eq!(beginner.tick(60.0, false, false), Action::End);
+    let mut advanced = ConversationActivity::with_challenge(0.0, 5);
+    assert_eq!(advanced.tick(30.0, false, false), Action::End);
+}
+
+#[test]
+fn pace_eases_after_two_turns_that_do_not_land() {
+    let mut session = fixture(0.0, "coffee", false, EvidenceKind::Independent);
+    let passage = session.passages()[0].clone();
+    let mut pace = ConversationPace::default();
+    session.assessments[0].suggested_level = 3;
+    assert!(pace.observe(&session.assessments[0], &passage, "nb"));
+    assert_eq!(pace.delivery, Delivery::Natural);
+    // One turn that does not land is noise; two in a row are a signal.
+    let mut partial = session.assessments[0].clone();
+    partial.outcome = Outcome::Partial;
+    assert!(!pace.observe(&partial, &passage, "nb"));
+    assert_eq!(pace.delivery, Delivery::Natural);
+    assert!(pace.observe(&partial, &passage, "nb"));
+    assert_eq!(pace.delivery, Delivery::Gentle);
+}
+
+#[test]
+fn an_error_counts_as_recurring_only_when_seen_again() {
+    let error = ErrorProposal {
+        form: "Jeg gikk".into(), correction: "Jeg gikk en tur".into(), label: "word order".into(), language: "nb".into(),
+    };
+    let mut first = fixture(0.0, "coffee", false, EvidenceKind::Independent);
+    first.assessments[0].errors = vec![error.clone()];
+    let now = Date(first.started_at.0 + 2.0 * 86_400.0);
+    let once = LearningEngine::project(std::slice::from_ref(&first), "nb", &[], now);
+    assert!(once.recurring_errors.is_empty());
+
+    let mut again = fixture(1.0, "walk", false, EvidenceKind::Independent);
+    again.assessments[0].errors = vec![error];
+    let state = LearningEngine::project(&[first, again], "nb", &[], now);
+    assert_eq!(state.recurring_errors.len(), 1);
+    assert_eq!(state.recurring_errors[0].count, 2);
+    assert_eq!(state.recurring_errors[0].correction, "Jeg gikk en tur");
+    // The newest conversation is the one worth picking up again.
+    let recap = state.recent_session.expect("recap");
+    assert_eq!(recap.days_ago, 1);
+}
+
+#[test]
+fn an_error_the_learner_did_not_say_is_discarded() {
+    let mut session = fixture(0.0, "coffee", false, EvidenceKind::Independent);
+    session.assessments[0].errors = vec![ErrorProposal {
+        form: "noe helt annet".into(), correction: "en tur".into(), label: "invented".into(), language: "nb".into(),
+    }];
+    let validated = LearningEngine::validate(&session.assessments[0], &session).expect("validated");
+    assert!(validated.errors.is_empty());
 }

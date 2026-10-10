@@ -3,7 +3,11 @@
 //!   js <code>        evaluate JavaScript in the page
 //!   snap <name>      save <dir>/<name>.tiff from WKWebView
 //!   jsout <name> <code>  save the returned JSON to <dir>/<name>.txt
-//!   event <json>     handle a provider event (debug.start opens an offline conversation)
+//!   event <json>     handle a provider event (debug.start opens an offline conversation,
+//!                    debug.heard stands in for a finished on-device utterance;
+//!                    debug.start takes "local" and "natural" to pick the voice path;
+//!                    debug.shadow_heard scores a shadowing repeat without a microphone;
+//!                    debug.beats marks scenario beats as reached)
 //!   dom <name>       save <dir>/<name>.html with the current DOM
 use std::path::PathBuf;
 use std::time::Duration;

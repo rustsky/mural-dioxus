@@ -136,6 +136,23 @@ impl WordProposal {
     }
 }
 
+/// A meaningful error worth coming back to. Only recurring ones earn a correction.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ErrorProposal {
+    pub form: String,
+    pub correction: String,
+    pub label: String,
+    #[serde(default = "default_language")]
+    pub language: String,
+}
+
+impl ErrorProposal {
+    pub fn key(&self) -> String {
+        format!("{}|{}|{}", self.language, self.label.trim().to_lowercase(), self.correction.trim().to_lowercase())
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Assessment {
@@ -147,6 +164,8 @@ pub struct Assessment {
     pub next_goal: String,
     pub capability: String,
     pub words: Vec<WordProposal>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub errors: Vec<ErrorProposal>,
     pub created_at: Date,
     #[serde(default = "default_context")]
     pub context: String,

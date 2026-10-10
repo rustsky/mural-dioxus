@@ -6,6 +6,7 @@ pub const IDLE_VOICE_SECONDS: f64 = 30.0;
 
 #[derive(Clone, Debug)]
 pub struct ConversationActivity {
+    quiet_allowance: f64,
     quiet_since: f64,
     output_deadline: f64,
     last_input: Option<f64>,
@@ -18,12 +19,23 @@ pub struct ConversationActivity {
 impl ConversationActivity {
     pub const QUIET_SECONDS: f64 = IDLE_VOICE_SECONDS;
     pub const CHECK_IN_SECONDS: f64 = 15.0;
+    /// A beginner composing one sentence needs the most silence and would otherwise get the least.
+    pub const PATIENT_QUIET_SECONDS: f64 = 60.0;
+    pub const STEADY_QUIET_SECONDS: f64 = 45.0;
     pub const SPEECH_GRACE_SECONDS: f64 = 15.0;
     pub const TYPING_GRACE_SECONDS: f64 = 60.0;
     pub const RESPONSE_GRACE_SECONDS: f64 = 45.0;
 
-    pub fn new(now: f64) -> Self {
-        Self { quiet_since: now, output_deadline: now + 60.0, last_input: None, typing_started: None, last_typing: None, busy_started: None, checked_in: false }
+    pub fn new(now: f64) -> Self { Self::with_challenge(now, 5) }
+
+    /// Silence that is thinking time at one level is an abandoned conversation at another.
+    pub fn with_challenge(now: f64, challenge: i64) -> Self {
+        let quiet_allowance = match challenge {
+            ..=1 => Self::PATIENT_QUIET_SECONDS,
+            2..=3 => Self::STEADY_QUIET_SECONDS,
+            _ => Self::QUIET_SECONDS,
+        };
+        Self { quiet_allowance, quiet_since: now, output_deadline: now + 60.0, last_input: None, typing_started: None, last_typing: None, busy_started: None, checked_in: false }
     }
     pub fn learner_engaged(&mut self, now: f64) {
         self.quiet_since = now;
@@ -47,14 +59,15 @@ impl ConversationActivity {
         if !busy { self.busy_started = None; }
         let recent_input = !muted && self.last_input.map(|t| now - t < 1.5).unwrap_or(false);
         let editing = self.last_typing.map(|t| now - t < 10.0).unwrap_or(false);
-        let mut deadline = self.quiet_since + Self::QUIET_SECONDS;
+        let mut deadline = self.quiet_since + self.quiet_allowance;
         // Audio levels provide bounded protection for delayed transcripts, never unlimited activity.
         if recent_input { deadline += Self::SPEECH_GRACE_SECONDS; }
         if editing { if let Some(started) = self.typing_started { deadline = deadline.max(started + Self::TYPING_GRACE_SECONDS); } }
         if busy { if let Some(started) = self.busy_started { deadline = deadline.max(started + Self::RESPONSE_GRACE_SECONDS); } }
         if now >= deadline { return Action::End; }
         if deadline - now <= 5.0 { return Action::Warning((deadline - now).ceil() as i64); }
-        if !self.checked_in && !muted && !recent_input && !editing && !busy && now - self.quiet_since >= Self::CHECK_IN_SECONDS {
+        let check_in_after = Self::CHECK_IN_SECONDS * self.quiet_allowance / Self::QUIET_SECONDS;
+        if !self.checked_in && !muted && !recent_input && !editing && !busy && now - self.quiet_since >= check_in_after {
             self.checked_in = true;
             return Action::CheckIn;
         }

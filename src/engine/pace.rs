@@ -5,24 +5,32 @@ use super::models::{Assessment, EvidenceKind, Outcome, Passage, Speaker};
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Delivery { Gentle, Natural, Extended }
 
+impl Delivery {
+    fn easier(self) -> Delivery {
+        match self { Delivery::Extended => Delivery::Natural, _ => Delivery::Gentle }
+    }
+}
+
 /// Temporary delivery guidance; it never changes saved learning progress.
 #[derive(Clone, Debug)]
 pub struct ConversationPace {
     pub delivery: Delivery,
     successful_passages: HashSet<String>,
     high_successes: u32,
+    struggles: u32,
     help_passage_id: Option<String>,
 }
 
 impl Default for ConversationPace {
     fn default() -> Self {
-        Self { delivery: Delivery::Gentle, successful_passages: HashSet::new(), high_successes: 0, help_passage_id: None }
+        Self { delivery: Delivery::Gentle, successful_passages: HashSet::new(), high_successes: 0, struggles: 0, help_passage_id: None }
     }
 }
 
 impl ConversationPace {
     pub fn ask_for_help(&mut self, after: Option<&Passage>) -> bool {
         self.high_successes = 0;
+        self.struggles = 0;
         self.help_passage_id = after.map(|p| p.id.clone());
         self.set(Delivery::Gentle)
     }
@@ -35,12 +43,23 @@ impl ConversationPace {
             return false;
         }
         if assessment.outcome == Outcome::Breakdown { return self.ask_for_help(Some(passage)); }
+        // Struggling is not only a breakdown: two turns that do not land are a signal in themselves.
+        if assessment.outcome != Outcome::Success {
+            self.high_successes = 0;
+            self.struggles += 1;
+            if self.struggles < 2 { return false; }
+            self.struggles = 0;
+            return self.set(self.delivery.easier());
+        }
+        self.struggles = 0;
         let eligible = Some(&passage.id) != self.help_passage_id.as_ref()
-            && assessment.outcome == Outcome::Success
-            && !passage.fragments.iter().any(|f| f.typed || f.meaning_visible)
-            && assessment.words.iter().any(|w| w.language == language_id && w.kind == EvidenceKind::Independent && w.confidence >= 0.8);
+            && !passage.fragments.iter().any(|f| f.typed || f.meaning_visible);
         if !eligible || !self.successful_passages.insert(passage.id.clone()) { return false; }
-        self.high_successes = if assessment.suggested_level >= 4 { self.high_successes + 1 } else { 0 };
+        // Only unaided, independent production earns the longest turns; plain success is enough
+        // to stop speaking in single short sentences.
+        let independent = assessment.words.iter()
+            .any(|w| w.language == language_id && w.kind == EvidenceKind::Independent && w.confidence >= 0.8);
+        self.high_successes = if independent && assessment.suggested_level >= 4 { self.high_successes + 1 } else { 0 };
         if assessment.suggested_level <= 1 { return self.set(Delivery::Gentle); }
         self.set(if self.high_successes >= 2 { Delivery::Extended } else { Delivery::Natural })
     }

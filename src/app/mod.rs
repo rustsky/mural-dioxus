@@ -3,7 +3,9 @@ mod automation;
 mod components;
 mod icons;
 mod library;
+mod dialog;
 mod onboarding;
+mod shadow;
 mod settings;
 mod state;
 mod talk;
@@ -77,7 +79,8 @@ fn Main(store: Signal<Option<crate::services::store::LearningStore>>) -> Element
                 Brand {}
                 nav { class: "tabs", role: "tablist",
                     {tab_button(Tab::Talk, "Talk", "waveform")}
-                    {tab_button(Tab::Themes, "Themes", "square.grid.2x2")}
+                    {tab_button(Tab::Shadow, "Shadow", "waveform.bubble")}
+                    {tab_button(Tab::Dialog, "Dialog", "quote.bubble")}
                     {tab_button(Tab::Words, "Words", "book")}
                 }
                 button { class: "glass-button", aria_label: "Settings", title: "Settings", onclick: move |_| app.open_sheet(Sheet::Settings),
@@ -87,7 +90,8 @@ fn Main(store: Signal<Option<crate::services::store::LearningStore>>) -> Element
             main { class: "content",
                 match tab {
                     Tab::Talk => rsx! { talk::TalkView {} },
-                    Tab::Themes => rsx! { library::ThemesView {} },
+                    Tab::Shadow => rsx! { shadow::ShadowView {} },
+                    Tab::Dialog => rsx! { dialog::DialogView {} },
                     Tab::Words => rsx! { library::WordsView {} },
                 }
             }

@@ -1,4 +1,4 @@
-//! Which service answers teaching requests. Stored on this Mac only, outside the learning backup.
+//! Which service answers teaching requests. Stored on this computer only, outside the learning backup.
 use std::sync::RwLock;
 
 use serde::{Deserialize, Serialize};
@@ -25,7 +25,7 @@ impl Teacher {
         match self {
             Teacher::OpenAi => "OpenAI · GPT-5.6 Luna",
             Teacher::OllamaCloud => "Ollama Cloud · free account",
-            Teacher::OllamaLocal => "Ollama on this Mac",
+            Teacher::OllamaLocal => "Ollama on this computer",
         }
     }
     pub fn is_ollama(self) -> bool { self != Teacher::OpenAi }
@@ -55,6 +55,9 @@ pub struct ProviderSettings {
     pub cloud_model: String,
     pub local_model: String,
     pub voice: VoiceStyle,
+    /// Hold the microphone to speak, instead of letting voice activity detection decide when a
+    /// turn ended. Kept here, with the other machine-local settings, and never backed up.
+    pub push_to_talk: bool,
 }
 
 impl Default for ProviderSettings {
@@ -64,6 +67,7 @@ impl Default for ProviderSettings {
             cloud_model: Teacher::OllamaCloud.default_model().into(),
             local_model: Teacher::OllamaLocal.default_model().into(),
             voice: VoiceStyle::Natural,
+            push_to_talk: false,
         }
     }
 }
@@ -117,5 +121,8 @@ mod tests {
         assert_eq!(Teacher::from_id("ollamaLocal"), Some(Teacher::OllamaLocal));
         assert_eq!(ProviderSettings::default().model(), "gpt-5.6-luna");
         assert_eq!(s.voice, VoiceStyle::Natural);
+        assert!(!s.push_to_talk);
+        let held: ProviderSettings = serde_json::from_str(r#"{"pushToTalk":true}"#).unwrap();
+        assert!(held.push_to_talk);
     }
 }

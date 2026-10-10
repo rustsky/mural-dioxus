@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use super::languages::{self};
-use super::models::{Assessment, EvidenceKind, Outcome, Passage, SessionRecord, Speaker, WordProposal};
+use super::models::{Assessment, ErrorProposal, EvidenceKind, Outcome, Passage, SessionRecord, Speaker, WordProposal};
 use super::text::{char_count, contains_ci, prefix};
 use super::time::{Date, DAY};
 
@@ -31,6 +31,21 @@ impl WordState {
     }
 }
 
+/// An error seen on more than one occasion, so a gentle correction is worth the interruption.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RecurringError {
+    pub label: String,
+    pub correction: String,
+    pub count: usize,
+}
+
+/// What the last conversation was about, so a new one can pick up a thread instead of starting cold.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SessionRecap {
+    pub title: String,
+    pub days_ago: i64,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct LearnerState {
     pub challenge: i64,
@@ -38,12 +53,22 @@ pub struct LearnerState {
     pub next_goal: String,
     pub capabilities: Vec<String>,
     pub words: Vec<WordState>,
+    pub recurring_errors: Vec<RecurringError>,
+    pub recent_session: Option<SessionRecap>,
 }
 
 impl LearnerState {
-    pub fn due_lemmas(&self, limit: usize) -> String {
+    /// Due words with the sense and form the learner actually showed: a bare lemma leaves the
+    /// teacher guessing which meaning was logged, and it cannot build a retrieval opening.
+    pub fn due_words(&self, limit: usize) -> String {
         let now = Date::now();
-        self.words.iter().filter(|w| w.due_at < now).take(limit).map(|w| w.lemma.as_str()).collect::<Vec<_>>().join(", ")
+        let due = self.words.iter().filter(|w| w.due_at < now).take(limit).map(|w| {
+            let mut entry = format!("{} — {}", w.lemma, w.meaning);
+            if !w.example.is_empty() { entry.push_str(&format!(" (said: “{}”)", prefix(&w.example, 80))); }
+            entry
+        }).collect::<Vec<_>>();
+        if due.is_empty() { return "none due yet".into() }
+        due.join("; ")
     }
 }
 
@@ -87,7 +112,30 @@ impl LearningEngine {
             }
             Some(result)
         }).collect();
+        validated.errors = proposal.errors.iter().filter(|e| {
+            e.language == session.language_id
+                && !e.form.is_empty() && char_count(&e.form) < 100
+                && !e.correction.is_empty() && char_count(&e.correction) < 160
+                && !e.label.is_empty() && char_count(&e.label) < 80
+                && !e.form.eq_ignore_ascii_case(&e.correction)
+                && contains_ci(&passage_text, &e.form)
+        }).take(4).cloned().collect();
         Some(validated)
+    }
+
+    /// Errors seen at least twice in the recent past, strongest first.
+    fn recurring(events: &[(ErrorProposal, Date)], now: Date) -> Vec<RecurringError> {
+        let mut counts: BTreeMap<String, (ErrorProposal, usize)> = BTreeMap::new();
+        for (error, _) in events.iter().filter(|(_, at)| now.since(*at) < 30.0 * DAY) {
+            let entry = counts.entry(error.key()).or_insert_with(|| (error.clone(), 0));
+            entry.1 += 1;
+        }
+        let mut recurring: Vec<RecurringError> = counts.into_values().filter(|(_, count)| *count >= 2)
+            .map(|(error, count)| RecurringError { label: error.label, correction: error.correction, count })
+            .collect();
+        recurring.sort_by(|a, b| b.count.cmp(&a.count).then(a.label.cmp(&b.label)));
+        recurring.truncate(3);
+        recurring
     }
 
     pub fn project(sessions: &[SessionRecord], language_id: &str, hidden_words: &[String], now: Date) -> LearnerState {
@@ -97,9 +145,13 @@ impl LearningEngine {
         let mut next_goal = "Start with a greeting and one small question. Adjust from what the learner actually says.".to_string();
         let mut capability_evidence: BTreeMap<String, HashSet<String>> = BTreeMap::new();
         let mut events: HashMap<String, Vec<(WordProposal, Date, String)>> = HashMap::new();
+        let mut errors: Vec<(ErrorProposal, Date)> = Vec::new();
 
         let mut ordered: Vec<&SessionRecord> = sessions.iter().filter(|s| s.language_id == language_id).collect();
         ordered.sort_by(|a, b| a.started_at.0.total_cmp(&b.started_at.0));
+        let recent = ordered.iter().rev().find(|s| !s.fragments.is_empty() && !s.title.is_empty()).map(|s| {
+            SessionRecap { title: prefix(&s.title, 80), days_ago: (now.since(s.started_at) / DAY).floor().max(0.0) as i64 }
+        });
         for session in ordered {
             let mut seen = HashSet::new();
             let mut raws: Vec<&Assessment> = session.assessments.iter().collect();
@@ -122,6 +174,7 @@ impl LearningEngine {
                     capability_evidence.entry(a.capability.clone()).or_default()
                         .insert(format!("{}|{}", a.created_at.day_key(), a.context));
                 }
+                errors.extend(a.errors.iter().cloned().map(|e| (e, a.created_at)));
                 let mut seen_words = HashSet::new();
                 for word in &a.words {
                     let key = word.key();
@@ -169,6 +222,8 @@ impl LearningEngine {
             next_goal,
             capabilities: capability_evidence.into_iter().filter(|(_, v)| v.len() >= 3).map(|(k, _)| k).collect(),
             words,
+            recurring_errors: Self::recurring(&errors, now),
+            recent_session: recent,
         }
     }
 }
