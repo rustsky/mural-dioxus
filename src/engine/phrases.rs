@@ -98,7 +98,7 @@ mod tests {
     #[test]
     fn the_german_catalogue_is_well_formed() {
         let phrases = all("de");
-        assert!(phrases.len() >= 200, "only {} phrases", phrases.len());
+        assert_eq!(phrases.len(), 1500);
 
         let mut ids: Vec<&str> = phrases.iter().map(|p| p.id.as_str()).collect();
         ids.sort_unstable();
@@ -127,7 +127,7 @@ mod tests {
         assert_eq!(bands("de"), Band::ALL.to_vec());
         for band in Band::ALL {
             let count = all("de").iter().filter(|p| p.cefr == band).count();
-            assert!(count >= 15, "{} has only {count} phrases", band.label());
+            assert_eq!(count, 300, "{} has {count} phrases", band.label());
         }
         assert!(Band::A1 < Band::C1);
         assert!(bands("nb").is_empty());
