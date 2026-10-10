@@ -11,13 +11,16 @@ use crate::engine::languages::{self, ConversationTheme, LanguageModule, MEANING_
 use crate::engine::learning::LearningEngine;
 use crate::engine::models::{Assessment, ErrorProposal, Fragment, Outcome, Passage, SessionRecord, Speaker, TopicBrief, WordProposal};
 use crate::engine::pace::ConversationPace;
+use crate::engine::phrases::{self, Phrase};
 use crate::engine::plan::TeachingPlan;
+use crate::engine::shadow::{self as shadow_engine, Attempt as ShadowAttempt};
 use crate::engine::text::{char_count, prefix};
 use crate::engine::time::{new_id, uptime, Date};
 use crate::engine::{langdetect, meaning_cache_key, teaching, AI_CONSENT_REQUIRED, AI_CONSENT_VERSION};
 use crate::services::api::{self, ApiError, ApiResult, Usage};
 use crate::services::credentials::{OLLAMA, OPENAI};
 use crate::services::provider;
+use crate::services::shadow_store;
 use crate::services::voice;
 use crate::services::store::LearningStore;
 
@@ -180,7 +183,7 @@ impl Conv {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Tab { Talk, Themes, Words }
+pub enum Tab { Talk, Shadow, Themes, Words }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Sheet {
@@ -239,6 +242,27 @@ fn tracing() -> bool {
 
 async fn sleep(seconds: f64) { tokio::time::sleep(Duration::from_secs_f64(seconds)).await }
 
+/// One phrase being drilled: what is playing, what was heard, and how it scored.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Shadow {
+    /// The bridge session id while the microphone is ours.
+    pub attempt: Option<String>,
+    pub phrase_id: Option<String>,
+    pub holding: bool,
+    pub speaking: bool,
+    pub ready: bool,
+    /// Download or warm-up progress, shown in place of the drill.
+    pub preparing: Option<String>,
+    pub notice: Option<String>,
+    pub result: Option<ShadowAttempt>,
+    /// What the recogniser has returned during this hold.
+    heard: Vec<String>,
+}
+
+impl Shadow {
+    pub fn is_busy(&self) -> bool { self.preparing.is_some() }
+}
+
 /// Bumped whenever the teacher settings change. Views that branch on them read this first, so
 /// they re-render when the teacher does.
 pub static PROVIDER_REVISION: GlobalSignal<u32> = Signal::global(|| 0);
@@ -256,6 +280,7 @@ pub struct Mural {
     pub conv: Signal<Conv>,
     pub store: Signal<LearningStore>,
     pub ui: Signal<Ui>,
+    pub shadow: Signal<Shadow>,
     bridge: Signal<Option<document::Eval>>,
 }
 
@@ -268,6 +293,7 @@ impl Mural {
             conv: Signal::new_in_scope(Conv::default(), root),
             store: Signal::new_in_scope(store, root),
             ui: Signal::new_in_scope(Ui { tab: Tab::Talk, sheets: vec![], onboarding }, root),
+            shadow: Signal::new_in_scope(Shadow::default(), root),
             bridge: Signal::new_in_scope(None, root),
         }
     }
@@ -413,6 +439,18 @@ impl Mural {
                 }
             }
             BridgeMessage::Pcm { attempt, data } => {
+                if self.shadow.peek().attempt.as_deref() == Some(attempt.as_str()) {
+                    let Some(samples) = decode_pcm(&data) else { return };
+                    let shadow = self.shadow;
+                    spawn_forever(async move {
+                        match voice::hear(samples).await {
+                            Ok(heard) if !heard.is_empty() => shadow.write_unchecked().heard.extend(heard),
+                            Ok(_) => {}
+                            Err(error) => eprintln!("voice: {error}"),
+                        }
+                    });
+                    return;
+                }
                 if !self.current_attempt(&attempt) || !conv.peek().natural_voice { return; }
                 let Some(samples) = decode_pcm(&data) else { return };
                 spawn_forever(async move {
@@ -689,6 +727,188 @@ impl Mural {
 
     pub fn push_to_talk(self) -> bool { provider::current().push_to_talk }
 
+    // ---------- Shadowing ----------
+
+    /// The phrase being drilled, if the catalogue still has it.
+    pub fn shadow_phrase(self) -> Option<&'static Phrase> {
+        let id = self.shadow.peek().phrase_id.clone()?;
+        phrases::find(self.language().id, &id)
+    }
+
+    /// Opens a phrase and makes sure the voice is ready to speak and listen.
+    pub fn shadow_open(self, phrase_id: String) {
+        if self.conv.peek().is_running() { return; }
+        {
+            let mut s = self.shadow.write_unchecked();
+            s.phrase_id = Some(phrase_id);
+            s.result = None;
+            s.notice = None;
+            s.heard.clear();
+        }
+        if self.shadow.peek().ready || self.shadow.peek().is_busy() { return; }
+        self.shadow_prepare();
+    }
+
+    /// Downloads the voice models if needed, then opens the microphone for the drill.
+    fn shadow_prepare(self) {
+        let language_id = self.language().id;
+        if !voice::supported(language_id) {
+            self.shadow.write_unchecked().notice = Some("Shadowing needs the on-device voice, which doesn’t cover this language yet.".into());
+            return;
+        }
+        let shadow = self.shadow;
+        let attempt = format!("shadow-{}", new_id());
+        shadow.write_unchecked().attempt = Some(attempt.clone());
+        spawn_forever(async move {
+            let megabytes = voice::missing_megabytes(language_id);
+            if megabytes > 0 {
+                shadow.write_unchecked().preparing = Some(format!("Downloading the voice… 0% of {megabytes} MB"));
+                let progress = move |step: voice::Progress| {
+                    let text = match step {
+                        voice::Progress::Downloading(fraction) => format!("Downloading the voice… {}% of {megabytes} MB", (fraction * 100.0).floor() as i64),
+                        voice::Progress::Unpacking => "Unpacking the voice…".to_string(),
+                    };
+                    let mut s = shadow.write_unchecked();
+                    if s.preparing.as_ref() != Some(&text) { s.preparing = Some(text); }
+                };
+                if let Err(error) = voice::install(language_id, progress).await {
+                    let mut s = shadow.write_unchecked();
+                    s.preparing = None;
+                    s.notice = Some(error);
+                    return;
+                }
+            }
+            if shadow.peek().attempt.as_deref() != Some(attempt.as_str()) { return; }
+            shadow.write_unchecked().preparing = Some("Warming up the voice…".into());
+            let result = voice::prepare(language_id).await;
+            if shadow.peek().attempt.as_deref() != Some(attempt.as_str()) { return; }
+            {
+                let mut s = shadow.write_unchecked();
+                s.preparing = None;
+                match &result {
+                    Ok(()) => { s.ready = true; }
+                    Err(error) => { s.notice = Some(error.clone()); }
+                }
+            }
+            if result.is_ok() {
+                // The same audio session a local conversation uses: microphone in, playback out.
+                self.bridge_send(json!({"cmd": "local_start", "attempt": attempt, "lang": self.language().locale, "engine": "natural"}));
+                self.bridge_send(json!({"cmd": "mute", "muted": true}));
+            }
+        });
+    }
+
+    /// Opens a phrase that has never been tried, chosen at random from `within` when it is not
+    /// empty, so the category showing is respected. Says so when there is nothing left untried.
+    pub fn shadow_open_untried(self, within: Vec<String>) {
+        let record = shadow_store::current();
+        let language_id = self.language().id;
+        let pool: Vec<&Phrase> = phrases::all(language_id).iter()
+            .filter(|p| record.get(&p.id).attempts == 0)
+            .filter(|p| within.is_empty() || within.contains(&p.id))
+            .collect();
+        // uuid v4 is already how this app gets randomness.
+        let seed = uuid::Uuid::new_v4().as_u128();
+        match phrases::pick(&pool, seed) {
+            Some(phrase) => self.shadow_open(phrase.id.clone()),
+            None => self.shadow.write_unchecked().notice = Some("You’ve tried every phrase here. Pick one to say again.".into()),
+        }
+    }
+
+    /// Back to the list, keeping the voice ready for the next phrase.
+    pub fn shadow_open_none(self) {
+        let mut s = self.shadow.write_unchecked();
+        s.phrase_id = None;
+        s.result = None;
+        s.heard.clear();
+    }
+
+    /// Hands the microphone and the models back when the drill is left.
+    pub fn shadow_close(self) {
+        let had = self.shadow.write_unchecked().attempt.take();
+        *self.shadow.write_unchecked() = Shadow::default();
+        if had.is_some() {
+            self.bridge_send(json!({"cmd": "mute", "muted": true}));
+            self.bridge_send(json!({"cmd": "disconnect"}));
+        }
+    }
+
+    /// Speaks the phrase: `slow` is for hearing every syllable.
+    pub fn shadow_say(self, slow: bool) {
+        let (Some(phrase), Some(attempt)) = (self.shadow_phrase(), self.shadow.peek().attempt.clone()) else { return };
+        if !self.shadow.peek().ready { return; }
+        let text = phrase.text.clone();
+        self.shadow.write_unchecked().speaking = true;
+        voice::reset_listening();
+        self.bridge_send(json!({"cmd": "play_begin", "attempt": attempt}));
+        let shadow = self.shadow;
+        spawn_forever(async move {
+            let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+            let generation = voice::speak(text, if slow { 0.7 } else { 0.95 }, tx);
+            let forward = async {
+                let mut seconds = 0.0;
+                while let Some((samples, rate)) = rx.recv().await {
+                    seconds += samples.len() as f64 / rate.max(1) as f64;
+                    self.bridge_send(json!({"cmd": "play", "attempt": attempt, "rate": rate, "data": encode_pcm(&samples)}));
+                }
+                seconds
+            };
+            let (result, seconds) = tokio::join!(generation, forward);
+            if tracing() { eprintln!("{:.1} shadow spoke {:.1}s of audio", uptime(), seconds); }
+            self.bridge_send(json!({"cmd": "play_end", "attempt": attempt}));
+            let mut s = shadow.write_unchecked();
+            s.speaking = false;
+            if let Err(error) = result { s.notice = Some(error); }
+        });
+    }
+
+    /// Holds the microphone open for the learner's repeat, and scores it on release.
+    pub fn shadow_hold(self, holding: bool) {
+        let shadow = self.shadow;
+        if !shadow.peek().ready || shadow.peek().holding == holding { return; }
+        if holding && shadow.peek().speaking { return; }
+        {
+            let mut s = shadow.write_unchecked();
+            s.holding = holding;
+            if holding { s.heard.clear(); s.result = None; }
+        }
+        self.bridge_send(json!({"cmd": "mute", "muted": !holding}));
+        if holding { voice::reset_listening(); return; }
+        spawn_forever(async move {
+            // The last audio is still crossing from the page; flushing now would clip it.
+            sleep(0.25).await;
+            if let Ok(rest) = voice::end_turn().await {
+                shadow.write_unchecked().heard.extend(rest);
+            }
+            self.shadow_score();
+        });
+    }
+
+    /// Compares what was heard with the phrase, and records the attempt.
+    fn shadow_score(self) {
+        let Some(phrase) = self.shadow_phrase() else { return };
+        let heard = self.shadow.peek().heard.join(" ");
+        let attempt = shadow_engine::score(&phrase.text, &heard);
+        let good = attempt.verdict() == shadow_engine::Verdict::Good;
+        if let Err(error) = shadow_store::update(|record| { record.record(&phrase.id, attempt.score, good, Date::now()); }) {
+            self.shadow.write_unchecked().notice = Some(error);
+        }
+        let mut s = self.shadow.write_unchecked();
+        s.result = Some(attempt);
+    }
+
+    /// Opens the phrase on PlayPhrase in the browser, where film clips of it live.
+    pub fn shadow_in_films(self) {
+        let Some(phrase) = self.shadow_phrase() else { return };
+        let query: String = phrase.text.chars().map(|c| match c {
+            ' ' => "%20".to_string(),
+            c if c.is_ascii_alphanumeric() => c.to_string(),
+            c => c.to_string().bytes().map(|b| format!("%{b:02X}")).collect(),
+        }).collect();
+        let language = self.language().id;
+        let _ = open::that(format!("https://playphrase.me/#/search?q={query}&language={language}"));
+    }
+
     /// Transcribes whatever the learner said before letting go, without waiting for silence.
     fn end_local_turn(self) {
         let attempt = self.conv.peek().attempt.clone();
@@ -730,6 +950,9 @@ impl Mural {
             if let Some(t) = c.save_task.take() { t.cancel(); }
         }
         self.reset_conversation();
+        // Shadowing progress is learning data too, even though it lives in its own file.
+        if let Err(error) = shadow_store::remove_all() { self.conv.write_unchecked().notice = Some(error); }
+        *self.shadow.write_unchecked() = Shadow::default();
         let ids = self.store.write_unchecked().delete_all();
         for id in ids { self.cancel_final_assessment(&id); }
     }
@@ -1780,6 +2003,14 @@ impl Mural {
             // "local": true drives the on-device path, which otherwise needs a microphone.
             c.local_voice = value["local"].as_bool().unwrap_or(false);
             c.natural_voice = value["natural"].as_bool().unwrap_or(false);
+            return;
+        }
+        // Stands in for the learner repeating a phrase in the Shadow tab.
+        if value["type"] == "mural.debug.shadow_heard" {
+            if let Some(text) = value["text"].as_str() {
+                self.shadow.write_unchecked().heard = vec![text.to_string()];
+                self.shadow_score();
+            }
             return;
         }
         // Stands in for an utterance the on-device recogniser finished, which needs a microphone.
