@@ -41,9 +41,17 @@ pub struct LearnerState {
 }
 
 impl LearnerState {
-    pub fn due_lemmas(&self, limit: usize) -> String {
+    /// Due words with the sense and form the learner actually showed: a bare lemma leaves the
+    /// teacher guessing which meaning was logged, and it cannot build a retrieval opening.
+    pub fn due_words(&self, limit: usize) -> String {
         let now = Date::now();
-        self.words.iter().filter(|w| w.due_at < now).take(limit).map(|w| w.lemma.as_str()).collect::<Vec<_>>().join(", ")
+        let due = self.words.iter().filter(|w| w.due_at < now).take(limit).map(|w| {
+            let mut entry = format!("{} — {}", w.lemma, w.meaning);
+            if !w.example.is_empty() { entry.push_str(&format!(" (said: “{}”)", prefix(&w.example, 80))); }
+            entry
+        }).collect::<Vec<_>>();
+        if due.is_empty() { return "none due yet".into() }
+        due.join("; ")
     }
 }
 

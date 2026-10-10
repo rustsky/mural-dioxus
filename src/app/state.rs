@@ -11,6 +11,7 @@ use crate::engine::languages::{self, ConversationTheme, LanguageModule, MEANING_
 use crate::engine::learning::LearningEngine;
 use crate::engine::models::{Assessment, Fragment, Outcome, Passage, SessionRecord, Speaker, TopicBrief, WordProposal};
 use crate::engine::pace::ConversationPace;
+use crate::engine::plan::TeachingPlan;
 use crate::engine::text::{char_count, prefix};
 use crate::engine::time::{new_id, uptime, Date};
 use crate::engine::{langdetect, meaning_cache_key, teaching, AI_CONSENT_REQUIRED, AI_CONSENT_VERSION};
@@ -103,6 +104,7 @@ pub struct Conv {
     reset_deadline: Option<f64>,
     activity: ConversationActivity,
     pace: ConversationPace,
+    plan: TeachingPlan,
     last_language_check: String,
     pending_commands: HashMap<String, Date>,
     last_assessment_key: String,
@@ -123,7 +125,7 @@ impl Default for Conv {
             natural_voice: false, speech_task: None, prepare_task: None, preparing: None,
             connection_task: None, assessment_task: None, delegation_tasks: HashMap::new(), close_task: None,
             duration_task: None, save_task: None, reset_task: None, reset_deadline: None,
-            activity: ConversationActivity::new(0.0), pace: ConversationPace::default(),
+            activity: ConversationActivity::new(0.0), pace: ConversationPace::default(), plan: TeachingPlan::default(),
             last_language_check: String::new(), pending_commands: HashMap::new(), last_assessment_key: String::new(),
             pending_topic: None, language_generation: 0, final_jobs: HashMap::new(),
         }
@@ -541,7 +543,7 @@ impl Mural {
         let language = self.language();
         let (theme, topic) = { let c = conv.peek(); (c.selected_theme.clone(), c.pending_topic.clone()) };
         let mut record = SessionRecord::new(language.id, theme.as_ref().map(|t| t.id.clone()), theme.as_ref().map(|t| t.title.clone()));
-        if let Some(topic) = topic { record.topics = vec![topic]; }
+        if let Some(topic) = topic.clone() { record.topics = vec![topic]; }
         {
             let mut c = conv.write_unchecked();
             c.error = None;
@@ -559,7 +561,7 @@ impl Mural {
             let s = self.store.peek();
             (s.learner(), s.preferences().interests.clone(), s.preferences().meaning_language.clone())
         };
-        let mut instructions = teaching::voice(language, &learner, theme.as_ref(), &interests, &meaning_language);
+        let mut instructions = teaching::voice(language, &learner, theme.as_ref(), topic.as_ref(), &interests, &meaning_language);
         if local { instructions = format!("{instructions}\n{}", teaching::local_voice(language)); }
         self.transport_connect(instructions, local);
     }
@@ -822,6 +824,7 @@ impl Mural {
                     c.state = ConnectionState::Active;
                     c.activity = ConversationActivity::new(uptime());
                     c.pace = ConversationPace::default();
+                    c.plan = TeachingPlan::default();
                     c.inactivity_seconds = None;
                     if let Some(s) = c.session.as_mut() { s.provider_id = event["session"]["id"].as_str().map(String::from); }
                 }
@@ -1358,9 +1361,14 @@ impl Mural {
                 let instruction = conv.peek().pace.instruction();
                 self.append("instructions", &instruction, None);
             }
+            // One teaching action for the next reply, chosen from the evidence this turn produced.
+            let next = conv.write_unchecked().plan.next(&validated, &learner, &snapshot.language_id, Date::now());
+            if let Some(next) = next {
+                self.append("instructions", &teaching::teaching_move(target, &next), None);
+            }
             self.append("thinking", &format!(
                 "Teaching context, not spoken text: challenge {}/5 in {}. Next goal: {}. Revisit naturally: {}.",
-                learner.challenge, target.name, learner.next_goal, learner.due_lemmas(3)), None);
+                learner.challenge, target.name, learner.next_goal, learner.due_words(3)), None);
         });
         conv.write_unchecked().assessment_task = Some(task);
     }

@@ -7,6 +7,7 @@ pub mod learning;
 pub mod models;
 pub mod pace;
 pub mod pinyin;
+pub mod plan;
 pub mod provider;
 pub mod teaching;
 pub mod text;
