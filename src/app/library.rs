@@ -247,11 +247,38 @@ fn TranscriptBody(session: SessionRecord, meaning_language: String, #[props(defa
     }
 }
 
+/// Keeps a live transcript at the newest line, unless the learner has scrolled back to read.
+/// Scrolling within 40px of the bottom resumes following.
+const FOLLOW: &str = "requestAnimationFrame(() => {
+  const b = document.querySelector('.sheet-body');
+  if (!b) return;
+  if (!b.dataset.wired) {
+    b.dataset.wired = '1';
+    b.dataset.follow = 'on';
+    b.addEventListener('scroll', () => {
+      b.dataset.follow = b.scrollHeight - b.scrollTop - b.clientHeight < 40 ? 'on' : 'off';
+    });
+  }
+  if (b.dataset.follow !== 'off') b.scrollTop = b.scrollHeight;
+});";
+
 #[component]
 pub fn TranscriptSheet() -> Element {
     let app = use_context::<Mural>();
     let session = app.conv.read().session.clone();
     let meaning_language = app.store.read().preferences().meaning_language.clone();
+    let conv = app.conv;
+    use_effect(move || {
+        // Reading the conversation here is what re-runs this as new lines arrive.
+        let live = {
+            let c = conv.read();
+            let Some(session) = c.session.as_ref() else { return };
+            let _lines = session.fragments.len();
+            session.ended_at.is_none()
+        };
+        if !live { return; }
+        spawn(async move { let _ = document::eval(FOLLOW).await; });
+    });
     rsx! {
         SheetFrame { title: "Our conversation",
             match session {
