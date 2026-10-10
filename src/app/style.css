@@ -103,7 +103,10 @@ a { color: inherit; }
 .phrase-row:hover { background: var(--cream); }
 .phrase-row .phrase-text { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
 .phrase-row .said { font-family: var(--rounded); font-weight: 500; font-size: 17px; }
-.phrase-mark { flex: none; }
+.phrase-mark { flex: none; display: flex; align-items: center; gap: 7px; color: var(--secondary); }
+.phrase-mark .icon { color: #68a978; }
+.phrase-mark.settled .icon { color: #3f7d4e; }
+.phrase-mark.settled { font-weight: 500; }
 .caption2.good { color: #3f7d4e; }
 .drill { align-items: stretch; }
 .drill-card { background: white; border-radius: 18px; padding: 22px 20px; display: flex; flex-direction: column; gap: 8px; text-align: center; }

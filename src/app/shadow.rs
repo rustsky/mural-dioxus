@@ -65,6 +65,7 @@ fn PhraseList() -> Element {
         (!progress.is_due(now), progress.attempts > 0, p.level)
     });
 
+    let shown: Vec<String> = list.iter().map(|p| p.id.clone()).collect();
     let practised = record.practised();
     let settled = record.settled();
     let total = phrases::all(language.id).len();
@@ -81,6 +82,9 @@ fn PhraseList() -> Element {
             div { class: "search",
                 Icon { name: "magnifyingglass", size: 15 }
                 input { r#type: "search", placeholder: "Find a phrase", value: "{search}", oninput: move |e| search.set(e.value()) }
+            }
+            button { class: "action row", onclick: move |_| app.shadow_open_untried(shown.clone()),
+                Icon { name: "sparkles", size: 16 } "Something I haven’t tried"
             }
             div { class: "chips",
                 button { class: if chosen == "All" { "chip selected" } else { "chip" },
@@ -108,13 +112,13 @@ fn PhraseList() -> Element {
                                         span { class: "said", "{phrase.text}" }
                                         if meaning_visible { span { class: "sub secondary", "{phrase.meaning}" } }
                                     }
-                                    div { class: "phrase-mark",
+                                    div { class: if progress.is_settled() { "phrase-mark settled" } else { "phrase-mark" },
                                         if progress.attempts == 0 {
                                             span { class: "caption2 secondary", "New" }
-                                        } else if progress.is_settled() {
-                                            span { class: "caption2 good", "Settled" }
                                         } else {
-                                            span { class: "caption2 secondary", "{(progress.best * 100.0).round()}%" }
+                                            // A tick says it has been said; the figure is the best it has gone.
+                                            if progress.best > 0.0 { span { class: "caption2 secondary", "{(progress.best * 100.0).round()}%" } }
+                                            Icon { name: "checkmark.circle.fill", size: 17 }
                                         }
                                     }
                                 }
@@ -216,9 +220,12 @@ fn Drill() -> Element {
                 button { class: "text-button row", onclick: move |_| app.shadow_in_films(),
                     Icon { name: "film", size: 15 } "Hear it in films"
                 }
+                button { class: "text-button row", onclick: move |_| app.shadow_open_untried(vec![]),
+                    Icon { name: "sparkles", size: 15 } "Something new"
+                }
                 if let Some(id) = next {
                     button { class: "text-button row", onclick: move |_| app.shadow_open(id.clone()),
-                        "Next phrase" Icon { name: "arrow.up.right", size: 14 }
+                        "Next" Icon { name: "arrow.up.right", size: 14 }
                     }
                 }
             }

@@ -798,6 +798,23 @@ impl Mural {
         });
     }
 
+    /// Opens a phrase that has never been tried, chosen at random from `within` when it is not
+    /// empty, so the category showing is respected. Says so when there is nothing left untried.
+    pub fn shadow_open_untried(self, within: Vec<String>) {
+        let record = shadow_store::current();
+        let language_id = self.language().id;
+        let pool: Vec<&Phrase> = phrases::all(language_id).iter()
+            .filter(|p| record.get(&p.id).attempts == 0)
+            .filter(|p| within.is_empty() || within.contains(&p.id))
+            .collect();
+        // uuid v4 is already how this app gets randomness.
+        let seed = uuid::Uuid::new_v4().as_u128();
+        match phrases::pick(&pool, seed) {
+            Some(phrase) => self.shadow_open(phrase.id.clone()),
+            None => self.shadow.write_unchecked().notice = Some("You’ve tried every phrase here. Pick one to say again.".into()),
+        }
+    }
+
     /// Back to the list, keeping the voice ready for the next phrase.
     pub fn shadow_open_none(self) {
         let mut s = self.shadow.write_unchecked();

@@ -55,6 +55,13 @@ pub fn categories(language_id: &str) -> Vec<&'static str> {
     seen
 }
 
+/// One of `candidates`, chosen by `seed`. The caller decides what counts as a candidate; this is
+/// kept separate so the choice can be tested without a random source.
+pub fn pick<'a>(candidates: &[&'a Phrase], seed: u128) -> Option<&'a Phrase> {
+    if candidates.is_empty() { return None }
+    candidates.get((seed % candidates.len() as u128) as usize).copied()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -91,6 +98,24 @@ mod tests {
         assert!(all("nb").is_empty());
         assert!(!available("nb"));
         assert!(available("de"));
+    }
+
+    #[test]
+    fn picking_handles_none_one_and_many() {
+        let all = all("de");
+        assert_eq!(pick(&[], 7), None);
+
+        let one: Vec<&Phrase> = all.iter().take(1).collect();
+        assert_eq!(pick(&one, 0), Some(one[0]));
+        assert_eq!(pick(&one, 12_345), Some(one[0]), "one candidate is always the answer");
+
+        let few: Vec<&Phrase> = all.iter().take(4).collect();
+        assert_eq!(pick(&few, 0), Some(few[0]));
+        assert_eq!(pick(&few, 6), Some(few[2]));
+        // Different seeds reach every candidate, so nothing is unreachable.
+        let reached: std::collections::HashSet<&str> =
+            (0..40u128).filter_map(|seed| pick(&few, seed)).map(|p| p.id.as_str()).collect();
+        assert_eq!(reached.len(), 4);
     }
 
     #[test]
