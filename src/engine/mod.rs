@@ -10,6 +10,7 @@ pub mod phrases;
 pub mod pinyin;
 pub mod plan;
 pub mod provider;
+pub mod scenarios;
 pub mod shadow;
 pub mod teaching;
 pub mod text;

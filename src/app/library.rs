@@ -8,68 +8,6 @@ use crate::engine::models::{SessionRecord, Speaker, TopicBrief};
 use crate::engine::text::contains_ci;
 
 #[component]
-pub fn ThemesView() -> Element {
-    let app = use_context::<Mural>();
-    let mut search = use_signal(String::new);
-    let mut category = use_signal(|| "All".to_string());
-    let language = app.store.read().language();
-    let all = language.themes();
-    let mut categories = vec!["All".to_string()];
-    for t in &all { if !categories.contains(&t.category) { categories.push(t.category.clone()); } }
-    let query = search.read().clone();
-    let themes: Vec<_> = all.into_iter().filter(|t| {
-        (category() == "All" || t.category == category())
-            && (query.is_empty() || contains_ci(&t.title, &query) || contains_ci(&t.category, &query))
-    }).collect();
-    let choose = move |theme| {
-        app.choose_theme(theme);
-        app.ui.write_unchecked().tab = Tab::Talk;
-    };
-    rsx! {
-        div { class: "page stack",
-            PageHeading { eyebrow: "A place to begin", title: "What’s on\nyour mind?", subtitle: "Same friend. Somewhere new." }
-            div { class: "search",
-                Icon { name: "magnifyingglass", size: 15 }
-                input { r#type: "search", placeholder: "Find a conversation", value: "{search}", oninput: move |e| search.set(e.value()) }
-            }
-            button { class: "just-talk", onclick: move |_| choose(None),
-                Icon { name: "waveform" } span { "Just talk" } span { class: "spacer" } Icon { name: "arrow.up.right" }
-            }
-            div { class: "chips",
-                for c in categories {
-                    button { key: "{c}", class: if category() == c { "chip selected" } else { "chip" },
-                        aria_pressed: "{category() == c}",
-                        onclick: { let c = c.clone(); move |_| category.set(c.clone()) },
-                        "{c}"
-                    }
-                }
-            }
-            div { class: "theme-grid",
-                for theme in themes.iter().cloned() {
-                    button { key: "{theme.id}", class: "theme-card panel-{theme.color_index % 4}",
-                        onclick: {
-                            let theme = theme.clone();
-                            move |_| if theme.id == "today" { app.open_sheet(Sheet::CurrentTopic) } else { choose(Some(theme.clone())) }
-                        },
-                        span { class: "secondary", Icon { name: theme.symbol.clone(), size: 28, weight: 1.2 } }
-                        div {
-                            div { class: "title", "{theme.title}" }
-                            div { class: "subtitle", "{theme.subtitle}" }
-                        }
-                    }
-                }
-            }
-            if themes.is_empty() {
-                div { class: "empty-state",
-                    h3 { "No Results for “{query}”" }
-                    div { "Check the spelling or try a new search." }
-                }
-            }
-        }
-    }
-}
-
-#[component]
 pub fn CurrentTopicSheet() -> Element {
     let app = use_context::<Mural>();
     let mut query = use_signal(String::new);

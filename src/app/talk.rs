@@ -41,7 +41,9 @@ pub fn TalkView() -> Element {
     let running = conv.is_running();
     let assistant = conv.assistant_passage();
     let caption = conv.caption(language);
-    let title = conv.selected_theme.as_ref().map(|t| t.title.clone()).unwrap_or_else(|| language.talk_title());
+    let title = conv.scenario.map(|s| s.title.clone())
+        .or_else(|| conv.selected_theme.as_ref().map(|t| t.title.clone()))
+        .unwrap_or_else(|| language.talk_title());
     let energy = conv.output_level.max(conv.input_level * 0.45);
     let listening = state == ConnectionState::Active && !conv.is_muted;
     let meaning_visible = prefs.meaning_visible;
@@ -83,6 +85,17 @@ pub fn TalkView() -> Element {
     rsx! {
         div { class: "talk",
             div { class: "talk-pill", "{title}" }
+            if let Some(scenario) = conv.scenario {
+                div { class: "beat-strip",
+                    for (i, beat) in scenario.beats.iter().enumerate() {
+                        div { key: "{i}", class: if conv.beats_covered.contains(&i) { "beat-dot done" } else { "beat-dot" },
+                            title: "{beat.en}",
+                            if conv.beats_covered.contains(&i) { Icon { name: "checkmark.circle.fill", size: 13 } }
+                            span { "{beat.de}" }
+                        }
+                    }
+                }
+            }
             div { class: if has_assistant { "orb-wrap compact" } else { "orb-wrap" },
                 Orb { energy, listening, active: state != ConnectionState::Closing }
             }
