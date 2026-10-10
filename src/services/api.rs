@@ -328,6 +328,7 @@ pub fn assessment_schema(language: &LanguageModule) -> Value {
     let mut languages = vec![language.id, "en", "mixed", "uncertain"];
     languages.sort();
     languages.dedup();
+    let languages_for_errors = languages.clone();
     object(vec![
         ("outcome", json!({"type": "string", "enum": ["success", "partial", "breakdown", "uncertain"]})),
         ("suggestedLevel", json!({"type": "integer", "minimum": 0, "maximum": 5})),
@@ -339,6 +340,10 @@ pub fn assessment_schema(language: &LanguageModule) -> Value {
             ("kind", json!({"type": "string", "enum": ["exposure", "understanding", "assisted", "independent", "lapse"]})),
             ("confidence", json!({"type": "number", "minimum": 0, "maximum": 1})),
             ("sourceIDs", json!({"type": "array", "items": string()})),
+        ])})),
+        ("errors", json!({"type": "array", "maxItems": 4, "items": object(vec![
+            ("form", string()), ("correction", string()), ("label", string()),
+            ("language", json!({"type": "string", "enum": languages_for_errors})),
         ])})),
     ])
 }
@@ -397,7 +402,7 @@ mod tests {
     #[test]
     fn schema_requires_every_field() {
         let schema = assessment_schema(crate::engine::languages::module("es").unwrap());
-        assert_eq!(schema["required"], json!(["capability", "nextGoal", "outcome", "suggestedLevel", "words"]));
+        assert_eq!(schema["required"], json!(["capability", "errors", "nextGoal", "outcome", "suggestedLevel", "words"]));
         assert_eq!(schema["properties"]["words"]["items"]["properties"]["language"]["enum"], json!(["en", "es", "mixed", "uncertain"]));
     }
 }

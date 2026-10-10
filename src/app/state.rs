@@ -9,7 +9,7 @@ use serde_json::{json, Value};
 use crate::engine::activity::{Action, ConversationActivity};
 use crate::engine::languages::{self, ConversationTheme, LanguageModule, MEANING_LANGUAGES};
 use crate::engine::learning::LearningEngine;
-use crate::engine::models::{Assessment, Fragment, Outcome, Passage, SessionRecord, Speaker, TopicBrief, WordProposal};
+use crate::engine::models::{Assessment, ErrorProposal, Fragment, Outcome, Passage, SessionRecord, Speaker, TopicBrief, WordProposal};
 use crate::engine::pace::ConversationPace;
 use crate::engine::plan::TeachingPlan;
 use crate::engine::text::{char_count, prefix};
@@ -822,7 +822,7 @@ impl Mural {
                 {
                     let mut c = conv.write_unchecked();
                     c.state = ConnectionState::Active;
-                    c.activity = ConversationActivity::new(uptime());
+                    c.activity = ConversationActivity::with_challenge(uptime(), self.store.peek().learner().challenge);
                     c.pace = ConversationPace::default();
                     c.plan = TeachingPlan::default();
                     c.inactivity_seconds = None;
@@ -1305,7 +1305,8 @@ impl Mural {
     async fn assess(snapshot: SessionRecord, passage: Passage) -> Result<(Assessment, Usage), String> {
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
-        struct AssessmentResult { outcome: Outcome, suggested_level: i64, next_goal: String, capability: String, words: Vec<WordProposal> }
+        struct AssessmentResult { outcome: Outcome, suggested_level: i64, next_goal: String, capability: String, words: Vec<WordProposal>,
+            #[serde(default)] errors: Vec<ErrorProposal> }
         let language = languages::module(&snapshot.language_id).ok_or("unsupported language")?;
         let result = api::respond(&teaching::assessment(language), &teaching::context(&snapshot, Some(&passage)), Some(api::assessment_schema(language)), false)
             .await.map_err(|e| e.to_string())?;
@@ -1313,7 +1314,8 @@ impl Mural {
         let proposed = Assessment {
             passage_id: passage.id.clone(), revision_key: passage.revision_key(), outcome: decoded.outcome,
             suggested_level: decoded.suggested_level, next_goal: decoded.next_goal, capability: decoded.capability,
-            words: decoded.words, created_at: Date::now(), context: snapshot.theme_id.clone().unwrap_or_else(|| "free".into()),
+            words: decoded.words, errors: decoded.errors, created_at: Date::now(),
+            context: snapshot.theme_id.clone().unwrap_or_else(|| "free".into()),
         };
         Ok((proposed, result.usage))
     }
@@ -1322,7 +1324,7 @@ impl Mural {
         let conv = self.conv;
         if let Some(t) = conv.write_unchecked().assessment_task.take() { t.cancel(); }
         let task = spawn_forever(async move {
-            sleep(3.0).await;
+            sleep(1.5).await;
             let conv = self.conv;
             let (snapshot, passage) = {
                 let c = conv.peek();
@@ -1717,6 +1719,7 @@ impl Mural {
                         confidence: 0.95, source_ids: passage.fragments.iter().map(|f| f.id.clone()).collect(),
                         quote: (*quote).into(), language: "es".into(),
                     }],
+                    errors: vec![],
                     created_at: date, context: context.into(),
                 }];
                 self.store.write_unchecked().save(&record);

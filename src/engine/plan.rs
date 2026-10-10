@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use super::learning::{LearnerState, WordState};
+use super::learning::{LearnerState, RecurringError, WordState};
 use super::models::{Assessment, EvidenceKind, Outcome};
 use super::time::Date;
 
@@ -9,6 +9,8 @@ use super::time::Date;
 pub enum Move {
     /// Meaning broke down: recast it and lower the demand.
     Repair,
+    /// An error the learner keeps making turned up again: recast it in passing.
+    Recast { label: String, correction: String },
     /// Build a reason for the learner to use a word that is due again.
     Retrieve { lemma: String, meaning: String },
     /// Offer one new expression, then set up its later retrieval.
@@ -20,15 +22,17 @@ pub enum Move {
 }
 
 const REPAIR: u8 = 0;
-const RETRIEVE: u8 = 1;
-const INTRODUCE: u8 = 2;
-const STRETCH: u8 = 3;
-const CONSOLIDATE: u8 = 4;
+const RECAST: u8 = 1;
+const RETRIEVE: u8 = 2;
+const INTRODUCE: u8 = 3;
+const STRETCH: u8 = 4;
+const CONSOLIDATE: u8 = 5;
 
 impl Move {
     fn kind(&self) -> u8 {
         match self {
             Move::Repair => REPAIR,
+            Move::Recast { .. } => RECAST,
             Move::Retrieve { .. } => RETRIEVE,
             Move::Introduce => INTRODUCE,
             Move::Stretch => STRETCH,
@@ -39,12 +43,22 @@ impl Move {
 
 /// Chooses one move per assessed turn. Nothing here is saved: a new conversation starts with a
 /// fresh plan, while challenge and word strength keep coming from the learning record.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct TeachingPlan {
     quiet_turns: u32,
     since_retrieve: u32,
+    since_recast: u32,
     prompted: HashSet<String>,
     last: Option<u8>,
+}
+
+impl Default for TeachingPlan {
+    fn default() -> Self {
+        // An error is only on the recurring list because it happened before, so the first time it
+        // comes up in a conversation is already the right moment to recast it. Retrieval waits,
+        // because opening a conversation by fishing for a word is drilling, not talking.
+        Self { quiet_turns: 0, since_retrieve: 0, since_recast: 2, prompted: HashSet::new(), last: None }
+    }
 }
 
 impl TeachingPlan {
@@ -55,11 +69,20 @@ impl TeachingPlan {
             .any(|w| w.language == language_id && w.kind == EvidenceKind::Independent);
         self.quiet_turns = if independent { 0 } else { self.quiet_turns.saturating_add(1) };
         self.since_retrieve = self.since_retrieve.saturating_add(1);
+        self.since_recast = self.since_recast.saturating_add(1);
 
         // A breakdown is always worth addressing, even twice in a row.
         if assessment.outcome == Outcome::Breakdown {
             self.last = Some(REPAIR);
             return Some(Move::Repair);
+        }
+        // A recurring error earns one gentle recast, not a correction every time it appears.
+        if self.since_recast >= 2 {
+            if let Some(error) = Self::recurring_hit(assessment, learner, language_id) {
+                self.since_recast = 0;
+                self.last = Some(RECAST);
+                return Some(Move::Recast { label: error.label.clone(), correction: error.correction.clone() });
+            }
         }
         // Retrieval needs room to breathe; every turn would turn conversation into drilling.
         if self.since_retrieve >= 2 {
@@ -85,6 +108,15 @@ impl TeachingPlan {
         Some(chosen)
     }
 
+    /// An error from this turn that the learner has made before.
+    fn recurring_hit<'a>(assessment: &Assessment, learner: &'a LearnerState, language_id: &str) -> Option<&'a RecurringError> {
+        assessment.errors.iter().filter(|e| e.language == language_id).find_map(|seen| {
+            learner.recurring_errors.iter().find(|known| {
+                known.label.eq_ignore_ascii_case(&seen.label) && known.correction.eq_ignore_ascii_case(&seen.correction)
+            })
+        })
+    }
+
     /// The weakest word that is due and has not been set up yet in this conversation.
     fn due_word<'a>(&self, learner: &'a LearnerState, now: Date) -> Option<&'a WordState> {
         learner.words.iter()
@@ -96,12 +128,12 @@ impl TeachingPlan {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::engine::models::WordProposal;
+    use crate::engine::models::{ErrorProposal, WordProposal};
 
     const NOW: Date = Date(1_000_000.0);
 
     fn learner(words: Vec<WordState>) -> LearnerState {
-        LearnerState { challenge: 2, observation_count: 4, next_goal: "Fortell mer.".into(), capabilities: vec![], words }
+        LearnerState { challenge: 2, observation_count: 4, next_goal: "Fortell mer.".into(), capabilities: vec![], words, recurring_errors: vec![], recent_session: None }
     }
 
     fn word(id: &str, lemma: &str, bars: usize, due: f64) -> WordState {
@@ -122,12 +154,33 @@ mod tests {
         };
         Assessment {
             passage_id: "p1".into(), revision_key: "k1".into(), outcome, suggested_level: level,
-            next_goal: String::new(), capability: String::new(), words, created_at: NOW, context: "free".into(),
+            next_goal: String::new(), capability: String::new(), words, errors: vec![], created_at: NOW, context: "free".into(),
         }
     }
 
     fn next(plan: &mut TeachingPlan, a: &Assessment, learner: &LearnerState) -> Option<Move> {
         plan.next(a, learner, "nb", NOW)
+    }
+
+    #[test]
+    fn a_repeated_error_is_recast_once_then_left_alone() {
+        let mut plan = TeachingPlan::default();
+        let mut learner = learner(vec![]);
+        learner.recurring_errors = vec![RecurringError { label: "noun gender".into(), correction: "en tur".into(), count: 3 }];
+        let mut a = assessment(Outcome::Partial, 2, true);
+        a.errors = vec![ErrorProposal { form: "et tur".into(), correction: "en tur".into(), label: "noun gender".into(), language: "nb".into() }];
+        assert_eq!(next(&mut plan, &a, &learner), Some(Move::Recast { label: "noun gender".into(), correction: "en tur".into() }));
+        // Not again on the very next turn, even though the error is still on the list.
+        assert_eq!(next(&mut plan, &a, &learner), Some(Move::Consolidate));
+    }
+
+    #[test]
+    fn a_first_time_error_is_not_corrected() {
+        let mut plan = TeachingPlan::default();
+        let learner = learner(vec![]);
+        let mut a = assessment(Outcome::Partial, 2, true);
+        a.errors = vec![ErrorProposal { form: "et tur".into(), correction: "en tur".into(), label: "noun gender".into(), language: "nb".into() }];
+        assert_eq!(next(&mut plan, &a, &learner), Some(Move::Consolidate));
     }
 
     #[test]
