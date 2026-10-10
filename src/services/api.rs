@@ -323,7 +323,8 @@ fn object(fields: Vec<(&str, Value)>) -> Value {
     json!({"type": "object", "properties": properties, "required": required, "additionalProperties": false})
 }
 
-pub fn assessment_schema(language: &LanguageModule) -> Value {
+/// `beats` is how many beats the running scenario has, or 0 when none is running.
+pub fn assessment_schema(language: &LanguageModule, beats: usize) -> Value {
     let string = || json!({"type": "string"});
     let mut languages = vec![language.id, "en", "mixed", "uncertain"];
     languages.sort();
@@ -341,6 +342,8 @@ pub fn assessment_schema(language: &LanguageModule) -> Value {
             ("confidence", json!({"type": "number", "minimum": 0, "maximum": 1})),
             ("sourceIDs", json!({"type": "array", "items": string()})),
         ])})),
+        ("beatsCovered", json!({"type": "array", "maxItems": beats.max(1),
+            "items": {"type": "integer", "minimum": 0, "maximum": beats.saturating_sub(1)}})),
         ("errors", json!({"type": "array", "maxItems": 4, "items": object(vec![
             ("form", string()), ("correction", string()), ("label", string()),
             ("language", json!({"type": "string", "enum": languages_for_errors})),
@@ -401,8 +404,9 @@ mod tests {
 
     #[test]
     fn schema_requires_every_field() {
-        let schema = assessment_schema(crate::engine::languages::module("es").unwrap());
-        assert_eq!(schema["required"], json!(["capability", "errors", "nextGoal", "outcome", "suggestedLevel", "words"]));
+        let schema = assessment_schema(crate::engine::languages::module("es").unwrap(), 4);
+        assert_eq!(schema["required"], json!(["beatsCovered", "capability", "errors", "nextGoal", "outcome", "suggestedLevel", "words"]));
+        assert_eq!(schema["properties"]["beatsCovered"]["items"]["maximum"], json!(3));
         assert_eq!(schema["properties"]["words"]["items"]["properties"]["language"]["enum"], json!(["en", "es", "mixed", "uncertain"]));
     }
 }

@@ -13,6 +13,7 @@ use crate::engine::models::{Assessment, ErrorProposal, Fragment, Outcome, Passag
 use crate::engine::pace::ConversationPace;
 use crate::engine::phrases::{self, Phrase};
 use crate::engine::plan::TeachingPlan;
+use crate::engine::scenarios::Scenario;
 use crate::engine::shadow::{self as shadow_engine, Attempt as ShadowAttempt};
 use crate::engine::text::{char_count, prefix};
 use crate::engine::time::{new_id, uptime, Date};
@@ -20,6 +21,7 @@ use crate::engine::{langdetect, meaning_cache_key, teaching, AI_CONSENT_REQUIRED
 use crate::services::api::{self, ApiError, ApiResult, Usage};
 use crate::services::credentials::{OLLAMA, OPENAI};
 use crate::services::provider;
+use crate::services::dialog_store;
 use crate::services::shadow_store;
 use crate::services::voice;
 use crate::services::store::LearningStore;
@@ -69,6 +71,12 @@ pub struct Conv {
     pub state: ConnectionState,
     pub session: Option<SessionRecord>,
     pub selected_theme: Option<ConversationTheme>,
+    /// The scenario being played, if the learner started one from Dialog.
+    pub scenario: Option<&'static Scenario>,
+    /// Indices of the beats reached so far, in the order they were reported.
+    pub beats_covered: Vec<usize>,
+    /// True once Mural has been told to start closing; it is only said once.
+    wrapping_up: bool,
     pub input_level: f64,
     pub output_level: f64,
     pub is_muted: bool,
@@ -125,7 +133,8 @@ pub struct Conv {
 impl Default for Conv {
     fn default() -> Self {
         Self {
-            state: ConnectionState::Idle, session: None, selected_theme: None, input_level: 0.0, output_level: 0.0,
+            state: ConnectionState::Idle, session: None, selected_theme: None,
+            scenario: None, beats_covered: vec![], wrapping_up: false, input_level: 0.0, output_level: 0.0,
             is_muted: false, holding: false, hold_to_talk: false, held_speech: false, working: false, error: None, typed_reply_error: None, notice: None, inactivity_seconds: None,
             meaning: Meaning::default(), start_after_consent: false,
             attempt: None, instructions: String::new(), channel_open: false, started: false, transport_closing: false,
@@ -183,7 +192,7 @@ impl Conv {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Tab { Talk, Shadow, Themes, Words }
+pub enum Tab { Talk, Shadow, Dialog, Words }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Sheet {
@@ -598,8 +607,15 @@ impl Mural {
         self.cancel_reset();
         self.meaning_reset();
         let language = self.language();
-        let (theme, topic) = { let c = conv.peek(); (c.selected_theme.clone(), c.pending_topic.clone()) };
-        let mut record = SessionRecord::new(language.id, theme.as_ref().map(|t| t.id.clone()), theme.as_ref().map(|t| t.title.clone()));
+        let (theme, topic, scenario) = {
+            let c = conv.peek();
+            (c.selected_theme.clone(), c.pending_topic.clone(), c.scenario)
+        };
+        let mut record = SessionRecord::new(
+            language.id,
+            scenario.map(|s| s.id.clone()).or_else(|| theme.as_ref().map(|t| t.id.clone())),
+            scenario.map(|s| s.title.clone()).or_else(|| theme.as_ref().map(|t| t.title.clone())),
+        );
         if let Some(topic) = topic.clone() { record.topics = vec![topic]; }
         {
             let mut c = conv.write_unchecked();
@@ -610,6 +626,8 @@ impl Mural {
             c.pending_commands.clear();
             c.state = ConnectionState::Connecting;
             c.is_muted = false;
+            c.beats_covered.clear();
+            c.wrapping_up = false;
             c.session = Some(record.clone());
         }
         self.store.write_unchecked().save(&record);
@@ -618,7 +636,8 @@ impl Mural {
             let s = self.store.peek();
             (s.learner(), s.preferences().interests.clone(), s.preferences().meaning_language.clone())
         };
-        let mut instructions = teaching::voice(language, &learner, theme.as_ref(), topic.as_ref(), &interests, &meaning_language);
+        let brief = teaching::Brief { theme: theme.as_ref(), scenario, topic: topic.as_ref() };
+        let mut instructions = teaching::voice(language, &learner, brief, &interests, &meaning_language);
         if local { instructions = format!("{instructions}\n{}", teaching::local_voice(language)); }
         self.transport_connect(instructions, local);
     }
@@ -677,28 +696,6 @@ impl Mural {
         self.schedule_translation();
     }
 
-    pub fn choose_theme(self, theme: Option<ConversationTheme>) {
-        let conv = self.conv;
-        let (running, has_session) = { let c = conv.peek(); (c.is_running(), c.session.is_some()) };
-        if !running && has_session { self.reset_conversation(); }
-        {
-            let mut c = conv.write_unchecked();
-            if theme.as_ref().map(|t| t.id.as_str()) != Some("current") { c.pending_topic = None; }
-            c.selected_theme = theme.clone();
-        }
-        if conv.peek().state == ConnectionState::Active {
-            let language = self.language();
-            {
-                let mut c = conv.write_unchecked();
-                if let Some(s) = c.session.as_mut() {
-                    s.theme_id = theme.as_ref().map(|t| t.id.clone());
-                    s.title = theme.as_ref().map(|t| t.title.clone()).unwrap_or_else(|| language.default_title());
-                }
-            }
-            self.append("instructions", &teaching::theme(theme.as_ref(), language), None);
-            self.save();
-        }
-    }
 
     /// Opens the microphone while the learner holds it, and ends the turn the moment they let go.
     pub fn set_holding(self, holding: bool) {
@@ -952,6 +949,7 @@ impl Mural {
         self.reset_conversation();
         // Shadowing progress is learning data too, even though it lives in its own file.
         if let Err(error) = shadow_store::remove_all() { self.conv.write_unchecked().notice = Some(error); }
+        if let Err(error) = dialog_store::remove_all() { self.conv.write_unchecked().notice = Some(error); }
         *self.shadow.write_unchecked() = Shadow::default();
         let ids = self.store.write_unchecked().delete_all();
         for id in ids { self.cancel_final_assessment(&id); }
@@ -1052,6 +1050,7 @@ impl Mural {
         self.save();
         conv.write_unchecked().state = ConnectionState::Ended;
         let ended = conv.peek().session.clone();
+        if self.conv.peek().scenario.is_some() { self.save_scenario_progress(); }
         if let Some(session) = ended { self.submit_final_assessment(session); }
         self.schedule_translation();
         self.schedule_reset();
@@ -1220,6 +1219,19 @@ impl Mural {
                 };
                 // A model on this computer costs nothing, so its conversations never end on their own.
                 let unlimited = local && provider::current().teacher == provider::Teacher::OllamaLocal;
+                // A scenario has its own length: near the end, Mural is told to land it.
+                let scenario = conv.peek().scenario;
+                if let Some(scenario) = scenario {
+                    let elapsed = Date::now().since(started_at);
+                    let wrap_after = (scenario.minutes * 60) as f64 * 0.8;
+                    let due = elapsed > wrap_after && !conv.peek().wrapping_up;
+                    if due {
+                        conv.write_unchecked().wrapping_up = true;
+                        if tracing() { eprintln!("{:.1} scenario wrap-up after {:.0}s", uptime(), elapsed); }
+                        self.append("instructions", &teaching::wrap_up(self.language()), None);
+                        self.local_speak_now();
+                    }
+                }
                 let minutes = self.store.peek().preferences().session_minutes;
                 if !unlimited && Date::now().since(started_at) > (minutes * 60) as f64 {
                     conv.write_unchecked().notice = Some(TIME_LIMIT_NOTICE.into());
@@ -1586,6 +1598,8 @@ impl Mural {
         c.language_generation += 1;
         c.session = None;
         c.selected_theme = None;
+        c.scenario = None;
+        c.beats_covered.clear();
         c.pending_topic = None;
         c.notice = None;
         c.error = None;
@@ -1623,24 +1637,73 @@ impl Mural {
         if expired { self.reset_conversation(); }
     }
 
+    /// Folds the beats a turn reached into the arc, and says so when the last one lands.
+    fn scenario_progress(self, covered: Vec<usize>) {
+        let Some(scenario) = self.conv.peek().scenario else { return };
+        let (added, done) = {
+            let mut c = self.conv.write_unchecked();
+            let before = c.beats_covered.len();
+            for index in covered {
+                if !c.beats_covered.contains(&index) { c.beats_covered.push(index); }
+            }
+            c.beats_covered.sort_unstable();
+            (c.beats_covered.len() > before, c.beats_covered.len() >= scenario.beats.len())
+        };
+        if !added { return; }
+        if done && !dialog_store::current().get(&scenario.id).completed {
+            self.conv.write_unchecked().notice = Some(format!("You’ve been through everything in “{}”.", scenario.title));
+        }
+        self.save_scenario_progress();
+    }
+
+    /// Records the run so the Dialog list can show what has been played.
+    fn save_scenario_progress(self) {
+        let (Some(scenario), beats) = ({ let c = self.conv.peek(); (c.scenario, c.beats_covered.len()) }) else { return };
+        let total = scenario.beats.len();
+        if let Err(error) = dialog_store::update(|r| { r.record(&scenario.id, beats, total, Date::now()); }) {
+            self.conv.write_unchecked().notice = Some(error);
+        }
+    }
+
+    /// Chooses a scenario to play; the conversation itself starts from Talk.
+    pub fn choose_scenario(self, scenario: Option<&'static Scenario>) {
+        let conv = self.conv;
+        let (running, has_session) = { let c = conv.peek(); (c.is_running(), c.session.is_some()) };
+        if !running && has_session { self.reset_conversation(); }
+        let mut c = conv.write_unchecked();
+        c.scenario = scenario;
+        c.beats_covered.clear();
+        c.wrapping_up = false;
+        if scenario.is_some() { c.selected_theme = None; c.pending_topic = None; }
+    }
+
+
     // ---------- Assessment ----------
 
-    async fn assess(snapshot: SessionRecord, passage: Passage) -> Result<(Assessment, Usage), String> {
+    async fn assess(snapshot: SessionRecord, passage: Passage, scenario: Option<&'static Scenario>)
+        -> Result<(Assessment, Vec<usize>, Usage), String> {
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
         struct AssessmentResult { outcome: Outcome, suggested_level: i64, next_goal: String, capability: String, words: Vec<WordProposal>,
-            #[serde(default)] errors: Vec<ErrorProposal> }
+            #[serde(default)] errors: Vec<ErrorProposal>, #[serde(default)] beats_covered: Vec<usize> }
         let language = languages::module(&snapshot.language_id).ok_or("unsupported language")?;
-        let result = api::respond(&teaching::assessment(language), &teaching::context(&snapshot, Some(&passage)), Some(api::assessment_schema(language)), false)
+        let beats = scenario.map(|s| s.beats.len()).unwrap_or(0);
+        let mut prompt = teaching::assessment(language);
+        if let Some(scenario) = scenario { prompt.push_str(&teaching::beats_note(scenario)); }
+        let result = api::respond(&prompt, &teaching::context(&snapshot, Some(&passage)), Some(api::assessment_schema(language, beats)), false)
             .await.map_err(|e| e.to_string())?;
         let decoded: AssessmentResult = serde_json::from_str(&result.text).map_err(|e| e.to_string())?;
+        // A model can name a beat that does not exist; those are dropped rather than trusted.
+        let covered: Vec<usize> = decoded.beats_covered.into_iter()
+            .filter(|i| scenario.map(|s| s.valid_beat(*i)).unwrap_or(false))
+            .collect();
         let proposed = Assessment {
             passage_id: passage.id.clone(), revision_key: passage.revision_key(), outcome: decoded.outcome,
             suggested_level: decoded.suggested_level, next_goal: decoded.next_goal, capability: decoded.capability,
             words: decoded.words, errors: decoded.errors, created_at: Date::now(),
             context: snapshot.theme_id.clone().unwrap_or_else(|| "free".into()),
         };
-        Ok((proposed, result.usage))
+        Ok((proposed, covered, result.usage))
     }
 
     fn schedule_assessment(self) {
@@ -1658,7 +1721,9 @@ impl Mural {
             };
             let Some(target) = languages::module(&snapshot.language_id) else { return };
             // The passage remains saved without unverified learning evidence.
-            let Ok((assessment, usage)) = Self::assess(snapshot.clone(), passage.clone()).await else { return };
+            let scenario = conv.peek().scenario;
+            let Ok((assessment, covered, usage)) = Self::assess(snapshot.clone(), passage.clone(), scenario).await else { return };
+            self.scenario_progress(covered);
             let validated = {
                 let c = conv.peek();
                 let same = c.state == ConnectionState::Active && c.session.as_ref().map(|s| s.id == snapshot.id).unwrap_or(false)
@@ -1715,12 +1780,12 @@ impl Mural {
         let request = {
             let (token, session_id) = (token.clone(), session_id.clone());
             spawn_forever(async move {
-                let result = if consent { Self::assess(session.clone(), passage).await } else { Err(AI_CONSENT_REQUIRED.into()) };
+                let result = if consent { Self::assess(session.clone(), passage, None).await } else { Err(AI_CONSENT_REQUIRED.into()) };
                 let job_matches = self.conv.peek().final_jobs.get(&session_id).map(|j| j.token == token).unwrap_or(false);
                 if !job_matches { return; }
                 let job = self.conv.write_unchecked().final_jobs.remove(&session_id);
                 if let Some(job) = &job { job.timer.cancel(); }
-                let (Ok((assessment, usage)), Some(job)) = (result, job) else { return };
+                let (Ok((assessment, _, usage)), Some(job)) = (result, job) else { return };
                 if Date::now() > job.deadline { return; }
                 self.apply_final_assessment(&session_id, &session.language_id, assessment, usage);
             })
@@ -2003,6 +2068,16 @@ impl Mural {
             // "local": true drives the on-device path, which otherwise needs a microphone.
             c.local_voice = value["local"].as_bool().unwrap_or(false);
             c.natural_voice = value["natural"].as_bool().unwrap_or(false);
+            return;
+        }
+        // Stands in for the assessor reporting which scenario beats have been reached.
+        if value["type"] == "mural.debug.beats" {
+            let covered: Vec<usize> = value["beats"].as_array().map(|a| {
+                a.iter().filter_map(|v| v.as_u64().map(|n| n as usize)).collect()
+            }).unwrap_or_default();
+            let scenario = self.conv.peek().scenario;
+            let covered = covered.into_iter().filter(|i| scenario.map(|s| s.valid_beat(*i)).unwrap_or(false)).collect();
+            self.scenario_progress(covered);
             return;
         }
         // Stands in for the learner repeating a phrase in the Shadow tab.

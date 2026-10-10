@@ -1,0 +1,3056 @@
+{
+ "language": "de",
+ "version": 1,
+ "scenarios": [
+  {
+   "id": "sc-0001",
+   "title": "Beim Bäcker",
+   "titleEn": "At the bakery",
+   "category": "Shopping",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "A small bakery on a weekday morning, a short queue behind the learner.",
+   "partner": "Mural is the person behind the counter.",
+   "goal": "Zwei Brötchen und einen Kaffee kaufen.",
+   "goalEn": "Buy two rolls and a coffee.",
+   "beats": [
+    {
+     "de": "Begrüßen.",
+     "en": "Say hello."
+    },
+    {
+     "de": "Bestellen, was du möchtest.",
+     "en": "Order what you want."
+    },
+    {
+     "de": "Nach dem Preis fragen.",
+     "en": "Ask what it costs."
+    },
+    {
+     "de": "Bezahlen und dich verabschieden.",
+     "en": "Pay and say goodbye."
+    }
+   ]
+  },
+  {
+   "id": "sc-0002",
+   "title": "Ein Tisch für zwei",
+   "titleEn": "A table for two",
+   "category": "Food",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "A busy café at lunchtime; some tables are free.",
+   "partner": "Mural is the waiter.",
+   "goal": "Einen Tisch bekommen und etwas bestellen.",
+   "goalEn": "Get a table and order something.",
+   "beats": [
+    {
+     "de": "Nach einem Tisch fragen.",
+     "en": "Ask for a table."
+    },
+    {
+     "de": "Die Karte erbitten.",
+     "en": "Ask for the menu."
+    },
+    {
+     "de": "Getränk und Essen bestellen.",
+     "en": "Order a drink and food."
+    },
+    {
+     "de": "Die Rechnung verlangen.",
+     "en": "Ask for the bill."
+    }
+   ]
+  },
+  {
+   "id": "sc-0003",
+   "title": "Neue Nachbarn",
+   "titleEn": "New neighbours",
+   "category": "Small talk",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "In the stairwell of an apartment block; the learner has just moved in.",
+   "partner": "Mural is the neighbour from the flat below.",
+   "goal": "Dich vorstellen und etwas über die Nachbarschaft erfahren.",
+   "goalEn": "Introduce yourself and learn about the area.",
+   "beats": [
+    {
+     "de": "Dich vorstellen.",
+     "en": "Introduce yourself."
+    },
+    {
+     "de": "Sagen, woher du kommst.",
+     "en": "Say where you are from."
+    },
+    {
+     "de": "Nach dem Viertel fragen.",
+     "en": "Ask about the neighbourhood."
+    },
+    {
+     "de": "Dich freundlich verabschieden.",
+     "en": "Say a friendly goodbye."
+    }
+   ]
+  },
+  {
+   "id": "sc-0004",
+   "title": "Eine Fahrkarte kaufen",
+   "titleEn": "Buying a ticket",
+   "category": "Transport",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "A ticket counter at a regional station, mid-morning.",
+   "partner": "Mural is the clerk at the counter.",
+   "goal": "Eine Fahrkarte nach Hamburg kaufen.",
+   "goalEn": "Buy a ticket to Hamburg.",
+   "beats": [
+    {
+     "de": "Sagen, wohin du willst.",
+     "en": "Say where you want to go."
+    },
+    {
+     "de": "Nach der Abfahrt fragen.",
+     "en": "Ask when it leaves."
+    },
+    {
+     "de": "Einfach oder hin und zurück wählen.",
+     "en": "Choose single or return."
+    },
+    {
+     "de": "Bezahlen und nach dem Gleis fragen.",
+     "en": "Pay and ask about the platform."
+    }
+   ]
+  },
+  {
+   "id": "sc-0005",
+   "title": "Beim Arzt anrufen",
+   "titleEn": "Calling the doctor",
+   "category": "Health",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "On the phone to a GP practice on a Monday morning.",
+   "partner": "Mural is the receptionist.",
+   "goal": "Einen Termin bekommen.",
+   "goalEn": "Get an appointment.",
+   "beats": [
+    {
+     "de": "Dich melden und deinen Namen nennen.",
+     "en": "Say hello and give your name."
+    },
+    {
+     "de": "Sagen, dass du einen Termin brauchst.",
+     "en": "Say you need an appointment."
+    },
+    {
+     "de": "Einen Tag vereinbaren.",
+     "en": "Agree on a day."
+    },
+    {
+     "de": "Dich bedanken.",
+     "en": "Say thank you."
+    }
+   ]
+  },
+  {
+   "id": "sc-0006",
+   "title": "Der erste Tag",
+   "titleEn": "The first day",
+   "category": "Work",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "A small office on the learner's first morning.",
+   "partner": "Mural is a friendly colleague.",
+   "goal": "Dich vorstellen und erfahren, wo alles ist.",
+   "goalEn": "Introduce yourself and find out where things are.",
+   "beats": [
+    {
+     "de": "Guten Morgen sagen.",
+     "en": "Say good morning."
+    },
+    {
+     "de": "Deinen Namen und deine Rolle nennen.",
+     "en": "Give your name and role."
+    },
+    {
+     "de": "Nach der Küche fragen.",
+     "en": "Ask where the kitchen is."
+    },
+    {
+     "de": "Nach der Mittagspause fragen.",
+     "en": "Ask about the lunch break."
+    }
+   ]
+  },
+  {
+   "id": "sc-0007",
+   "title": "Besuch kommt",
+   "titleEn": "A visitor arrives",
+   "category": "Home",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "At the learner's front door; a friend has arrived for coffee.",
+   "partner": "Mural is the friend visiting.",
+   "goal": "Den Gast hereinbitten und etwas anbieten.",
+   "goalEn": "Welcome the guest in and offer something.",
+   "beats": [
+    {
+     "de": "Die Tür öffnen und begrüßen.",
+     "en": "Open the door and greet them."
+    },
+    {
+     "de": "Hereinbitten.",
+     "en": "Invite them in."
+    },
+    {
+     "de": "Etwas zu trinken anbieten.",
+     "en": "Offer something to drink."
+    },
+    {
+     "de": "Fragen, wie es geht.",
+     "en": "Ask how they are."
+    }
+   ]
+  },
+  {
+   "id": "sc-0008",
+   "title": "Im Hotel ankommen",
+   "titleEn": "Arriving at the hotel",
+   "category": "Travel",
+   "cefr": "A1",
+   "minutes": 6,
+   "setting": "A small hotel reception in the early evening.",
+   "partner": "Mural is the receptionist.",
+   "goal": "Einchecken und nach dem Frühstück fragen.",
+   "goalEn": "Check in and ask about breakfast.",
+   "beats": [
+    {
+     "de": "Sagen, dass du reserviert hast.",
+     "en": "Say you have a booking."
+    },
+    {
+     "de": "Deinen Namen nennen.",
+     "en": "Give your name."
+    },
+    {
+     "de": "Nach dem Frühstück fragen.",
+     "en": "Ask about breakfast."
+    },
+    {
+     "de": "Nach dem WLAN fragen.",
+     "en": "Ask about the wifi."
+    }
+   ]
+  },
+  {
+   "id": "sc-0009",
+   "title": "Umtausch ohne Bon",
+   "titleEn": "An exchange without a receipt",
+   "category": "Shopping",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "A clothes shop on a Saturday; the learner wants to exchange a jumper.",
+   "partner": "Mural is the shop assistant, polite but bound by the rules.",
+   "goal": "Den Pullover umtauschen, obwohl der Bon fehlt.",
+   "goalEn": "Exchange the jumper although the receipt is missing.",
+   "beats": [
+    {
+     "de": "Dein Anliegen erklären.",
+     "en": "Explain what you want."
+    },
+    {
+     "de": "Sagen, dass der Bon fehlt.",
+     "en": "Say the receipt is missing."
+    },
+    {
+     "de": "Nach einer Lösung fragen.",
+     "en": "Ask for a solution."
+    },
+    {
+     "de": "Eine Gutschrift oder Größe vereinbaren.",
+     "en": "Agree on a credit or a size."
+    },
+    {
+     "de": "Dich bedanken und gehen.",
+     "en": "Thank them and leave."
+    }
+   ]
+  },
+  {
+   "id": "sc-0010",
+   "title": "Krankmeldung",
+   "titleEn": "Calling in sick",
+   "category": "Work",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "On the phone to the office at eight in the morning.",
+   "partner": "Mural is the learner's team lead, understanding but busy.",
+   "goal": "Dich krankmelden und das Nötigste übergeben.",
+   "goalEn": "Call in sick and hand over the essentials.",
+   "beats": [
+    {
+     "de": "Sagen, dass du krank bist.",
+     "en": "Say that you are ill."
+    },
+    {
+     "de": "Erklären, wie lange es dauern könnte.",
+     "en": "Say how long it may last."
+    },
+    {
+     "de": "Die wichtigste Aufgabe übergeben.",
+     "en": "Hand over the most important task."
+    },
+    {
+     "de": "Gute Besserung annehmen und auflegen.",
+     "en": "Accept their wishes and ring off."
+    }
+   ]
+  },
+  {
+   "id": "sc-0011",
+   "title": "Etwas stimmt nicht",
+   "titleEn": "Something is wrong",
+   "category": "Food",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "A restaurant in the evening; the dish that arrived is not what was ordered.",
+   "partner": "Mural is the waiter, apologetic.",
+   "goal": "Das falsche Gericht höflich reklamieren.",
+   "goalEn": "Politely point out the wrong dish.",
+   "beats": [
+    {
+     "de": "Den Kellner rufen.",
+     "en": "Call the waiter over."
+    },
+    {
+     "de": "Erklären, was du bestellt hast.",
+     "en": "Explain what you ordered."
+    },
+    {
+     "de": "Um Austausch bitten.",
+     "en": "Ask for it to be swapped."
+    },
+    {
+     "de": "Eine Lösung annehmen.",
+     "en": "Accept a solution."
+    }
+   ]
+  },
+  {
+   "id": "sc-0012",
+   "title": "Zug verpasst",
+   "titleEn": "Missed the train",
+   "category": "Transport",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "A main station; the learner's connection has just left.",
+   "partner": "Mural is a staff member at the information desk.",
+   "goal": "Eine neue Verbindung finden.",
+   "goalEn": "Find a new connection.",
+   "beats": [
+    {
+     "de": "Erklären, was passiert ist.",
+     "en": "Explain what happened."
+    },
+    {
+     "de": "Nach der nächsten Verbindung fragen.",
+     "en": "Ask for the next connection."
+    },
+    {
+     "de": "Fragen, ob die Fahrkarte gilt.",
+     "en": "Ask whether your ticket is valid."
+    },
+    {
+     "de": "Das Gleis notieren und danken.",
+     "en": "Note the platform and say thanks."
+    }
+   ]
+  },
+  {
+   "id": "sc-0013",
+   "title": "Auf der Geburtstagsfeier",
+   "titleEn": "At the birthday party",
+   "category": "Party",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "A flat party; the learner knows only the host.",
+   "partner": "Mural is another guest, friendly and curious.",
+   "goal": "Ins Gespräch kommen und etwas gemeinsam finden.",
+   "goalEn": "Get talking and find something in common.",
+   "beats": [
+    {
+     "de": "Dich vorstellen.",
+     "en": "Introduce yourself."
+    },
+    {
+     "de": "Sagen, woher du den Gastgeber kennst.",
+     "en": "Say how you know the host."
+    },
+    {
+     "de": "Nach seinem Beruf oder Hobby fragen.",
+     "en": "Ask about their job or hobby."
+    },
+    {
+     "de": "Etwas Gemeinsames finden.",
+     "en": "Find something in common."
+    },
+    {
+     "de": "Das Gespräch freundlich beenden.",
+     "en": "End the chat warmly."
+    }
+   ]
+  },
+  {
+   "id": "sc-0014",
+   "title": "Paket abholen",
+   "titleEn": "Collecting a parcel",
+   "category": "Services",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "A post office counter at lunchtime; the learner has a collection slip.",
+   "partner": "Mural is the clerk.",
+   "goal": "Das Paket abholen, auch ohne Ausweis im Original.",
+   "goalEn": "Collect the parcel, even without the original ID.",
+   "beats": [
+    {
+     "de": "Den Abholschein zeigen.",
+     "en": "Show the collection slip."
+    },
+    {
+     "de": "Deinen Namen nennen.",
+     "en": "Give your name."
+    },
+    {
+     "de": "Das Problem mit dem Ausweis klären.",
+     "en": "Sort out the ID problem."
+    },
+    {
+     "de": "Unterschreiben und gehen.",
+     "en": "Sign and leave."
+    }
+   ]
+  },
+  {
+   "id": "sc-0015",
+   "title": "Die Heizung ist kaputt",
+   "titleEn": "The heating is broken",
+   "category": "Home",
+   "cefr": "A2",
+   "minutes": 7,
+   "setting": "On the phone to the landlord in November.",
+   "partner": "Mural is the landlord, a little slow to act.",
+   "goal": "Eine Reparatur vereinbaren.",
+   "goalEn": "Arrange a repair.",
+   "beats": [
+    {
+     "de": "Das Problem beschreiben.",
+     "en": "Describe the problem."
+    },
+    {
+     "de": "Sagen, seit wann es so ist.",
+     "en": "Say since when."
+    },
+    {
+     "de": "Um einen Termin bitten.",
+     "en": "Ask for an appointment."
+    },
+    {
+     "de": "Einen Tag vereinbaren.",
+     "en": "Agree a day."
+    },
+    {
+     "de": "Die Absprache wiederholen.",
+     "en": "Repeat what was agreed."
+    }
+   ]
+  },
+  {
+   "id": "sc-0016",
+   "title": "Ausflug planen",
+   "titleEn": "Planning a day out",
+   "category": "Vacation",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "A hotel lobby; the learner wants to see something nearby.",
+   "partner": "Mural is the receptionist with local knowledge.",
+   "goal": "Einen Ausflug für morgen planen.",
+   "goalEn": "Plan a trip for tomorrow.",
+   "beats": [
+    {
+     "de": "Nach Empfehlungen fragen.",
+     "en": "Ask for recommendations."
+    },
+    {
+     "de": "Nach der Anfahrt fragen.",
+     "en": "Ask how to get there."
+    },
+    {
+     "de": "Nach Zeit und Preis fragen.",
+     "en": "Ask about time and cost."
+    },
+    {
+     "de": "Dich entscheiden.",
+     "en": "Decide."
+    }
+   ]
+  },
+  {
+   "id": "sc-0017",
+   "title": "Im Sprachkurs",
+   "titleEn": "At the language course",
+   "category": "Study",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "The first evening of an adult German course.",
+   "partner": "Mural is the teacher welcoming a new student.",
+   "goal": "Dich anmelden und das Niveau klären.",
+   "goalEn": "Sign up and sort out your level.",
+   "beats": [
+    {
+     "de": "Dich vorstellen.",
+     "en": "Introduce yourself."
+    },
+    {
+     "de": "Sagen, wie lange du lernst.",
+     "en": "Say how long you have been learning."
+    },
+    {
+     "de": "Nach dem Kurs fragen.",
+     "en": "Ask about the course."
+    },
+    {
+     "de": "Termin und Material klären.",
+     "en": "Settle times and materials."
+    }
+   ]
+  },
+  {
+   "id": "sc-0018",
+   "title": "Gehalt ansprechen",
+   "titleEn": "Raising your salary",
+   "category": "Work",
+   "cefr": "B1",
+   "minutes": 7,
+   "setting": "A one-to-one with the manager, scheduled by the learner.",
+   "partner": "Mural is the manager, fair but non-committal.",
+   "goal": "Eine Gehaltserhöhung ansprechen und einen nächsten Schritt vereinbaren.",
+   "goalEn": "Raise the subject of a pay rise and agree a next step.",
+   "beats": [
+    {
+     "de": "Das Thema ansprechen.",
+     "en": "Open the subject."
+    },
+    {
+     "de": "Deine Argumente nennen.",
+     "en": "Give your reasons."
+    },
+    {
+     "de": "Auf Einwände eingehen.",
+     "en": "Respond to objections."
+    },
+    {
+     "de": "Einen konkreten nächsten Schritt vereinbaren.",
+     "en": "Agree a concrete next step."
+    }
+   ]
+  },
+  {
+   "id": "sc-0019",
+   "title": "Projekt verschieben",
+   "titleEn": "Pushing back a deadline",
+   "category": "Office",
+   "cefr": "B1",
+   "minutes": 7,
+   "setting": "A video call with a colleague whose work depends on the learner's.",
+   "partner": "Mural is the colleague, under pressure themselves.",
+   "goal": "Eine Verschiebung erklären und eine neue Frist vereinbaren.",
+   "goalEn": "Explain a delay and agree a new deadline.",
+   "beats": [
+    {
+     "de": "Die Lage erklären.",
+     "en": "Explain the situation."
+    },
+    {
+     "de": "Den Grund nennen.",
+     "en": "Give the reason."
+    },
+    {
+     "de": "Einen neuen Termin vorschlagen.",
+     "en": "Propose a new date."
+    },
+    {
+     "de": "Auf Bedenken eingehen.",
+     "en": "Address their concerns."
+    },
+    {
+     "de": "Die Absprache zusammenfassen.",
+     "en": "Sum up what was agreed."
+    }
+   ]
+  },
+  {
+   "id": "sc-0020",
+   "title": "Beim Bürgeramt",
+   "titleEn": "At the registration office",
+   "category": "Services",
+   "cefr": "B1",
+   "minutes": 7,
+   "setting": "A municipal office; the learner is registering a new address.",
+   "partner": "Mural is the official, correct and procedural.",
+   "goal": "Dich ummelden, obwohl ein Dokument fehlt.",
+   "goalEn": "Register your new address although a document is missing.",
+   "beats": [
+    {
+     "de": "Dein Anliegen nennen.",
+     "en": "State your business."
+    },
+    {
+     "de": "Die Unterlagen zeigen.",
+     "en": "Show your documents."
+    },
+    {
+     "de": "Das fehlende Dokument klären.",
+     "en": "Sort out the missing document."
+    },
+    {
+     "de": "Nach der Frist fragen.",
+     "en": "Ask about the deadline."
+    },
+    {
+     "de": "Den nächsten Schritt bestätigen.",
+     "en": "Confirm the next step."
+    }
+   ]
+  },
+  {
+   "id": "sc-0021",
+   "title": "Einladung absagen",
+   "titleEn": "Turning down an invitation",
+   "category": "Party",
+   "cefr": "B1",
+   "minutes": 7,
+   "setting": "A phone call to a good friend two days before their party.",
+   "partner": "Mural is the friend, disappointed but reasonable.",
+   "goal": "Freundlich absagen, ohne die Freundschaft zu belasten.",
+   "goalEn": "Decline kindly without straining the friendship.",
+   "beats": [
+    {
+     "de": "Für die Einladung danken.",
+     "en": "Thank them for the invitation."
+    },
+    {
+     "de": "Absagen und den Grund nennen.",
+     "en": "Decline and give the reason."
+    },
+    {
+     "de": "Auf die Enttäuschung eingehen.",
+     "en": "Acknowledge their disappointment."
+    },
+    {
+     "de": "Etwas anderes vorschlagen.",
+     "en": "Suggest something else."
+    }
+   ]
+  },
+  {
+   "id": "sc-0022",
+   "title": "Zimmer reklamieren",
+   "titleEn": "Complaining about a room",
+   "category": "Vacation",
+   "cefr": "B1",
+   "minutes": 7,
+   "setting": "A hotel reception; the room is noisy and overlooks building work.",
+   "partner": "Mural is the receptionist, keen to keep the guest.",
+   "goal": "Ein anderes Zimmer oder einen Ausgleich bekommen.",
+   "goalEn": "Get another room or some compensation.",
+   "beats": [
+    {
+     "de": "Das Problem sachlich schildern.",
+     "en": "Describe the problem factually."
+    },
+    {
+     "de": "Sagen, was du erwartest.",
+     "en": "Say what you expect."
+    },
+    {
+     "de": "Auf das Angebot reagieren.",
+     "en": "Respond to their offer."
+    },
+    {
+     "de": "Eine Lösung festhalten.",
+     "en": "Settle on a solution."
+    }
+   ]
+  },
+  {
+   "id": "sc-0023",
+   "title": "Handy reparieren lassen",
+   "titleEn": "Getting a phone repaired",
+   "category": "Shopping",
+   "cefr": "B1",
+   "minutes": 7,
+   "setting": "A repair shop; the screen is cracked and the phone is just out of warranty.",
+   "partner": "Mural is the technician.",
+   "goal": "Kosten und Dauer klären und entscheiden.",
+   "goalEn": "Find out cost and time, then decide.",
+   "beats": [
+    {
+     "de": "Den Schaden beschreiben.",
+     "en": "Describe the damage."
+    },
+    {
+     "de": "Nach Kosten und Dauer fragen.",
+     "en": "Ask cost and duration."
+    },
+    {
+     "de": "Nach Alternativen fragen.",
+     "en": "Ask about alternatives."
+    },
+    {
+     "de": "Eine Entscheidung treffen.",
+     "en": "Make a decision."
+    }
+   ]
+  },
+  {
+   "id": "sc-0024",
+   "title": "Beim Zahnarzt",
+   "titleEn": "At the dentist",
+   "category": "Health",
+   "cefr": "B1",
+   "minutes": 7,
+   "setting": "A dental surgery; the learner has had pain for a week.",
+   "partner": "Mural is the dentist.",
+   "goal": "Die Beschwerden schildern und das Vorgehen verstehen.",
+   "goalEn": "Describe the trouble and understand the plan.",
+   "beats": [
+    {
+     "de": "Die Beschwerden beschreiben.",
+     "en": "Describe the symptoms."
+    },
+    {
+     "de": "Sagen, seit wann.",
+     "en": "Say since when."
+    },
+    {
+     "de": "Nach der Behandlung fragen.",
+     "en": "Ask about the treatment."
+    },
+    {
+     "de": "Nach Kosten fragen.",
+     "en": "Ask about the cost."
+    },
+    {
+     "de": "Einen Folgetermin vereinbaren.",
+     "en": "Arrange a follow-up."
+    }
+   ]
+  },
+  {
+   "id": "sc-0025",
+   "title": "Im Zug ins Gespräch",
+   "titleEn": "Talking on the train",
+   "category": "Small talk",
+   "cefr": "B1",
+   "minutes": 7,
+   "setting": "A long regional train; the learner shares a table with a stranger.",
+   "partner": "Mural is a talkative fellow passenger.",
+   "goal": "Ein echtes Gespräch führen und höflich beenden.",
+   "goalEn": "Hold a real conversation and end it politely.",
+   "beats": [
+    {
+     "de": "Ein Gespräch eröffnen.",
+     "en": "Open a conversation."
+    },
+    {
+     "de": "Über das Reiseziel sprechen.",
+     "en": "Talk about where you are going."
+    },
+    {
+     "de": "Eine Meinung austauschen.",
+     "en": "Exchange an opinion."
+    },
+    {
+     "de": "Das Gespräch höflich beenden.",
+     "en": "End it politely."
+    }
+   ]
+  },
+  {
+   "id": "sc-0026",
+   "title": "Kritik im Team",
+   "titleEn": "Criticism in the team",
+   "category": "Office",
+   "cefr": "B2",
+   "minutes": 8,
+   "setting": "A meeting room after a project went badly; the learner must give difficult feedback.",
+   "partner": "Mural is the colleague receiving the feedback, initially defensive.",
+   "goal": "Kritik sachlich äußern und gemeinsam weiterkommen.",
+   "goalEn": "Give criticism objectively and move forward together.",
+   "beats": [
+    {
+     "de": "Den Rahmen klären.",
+     "en": "Set the frame."
+    },
+    {
+     "de": "Die Beobachtung sachlich schildern.",
+     "en": "Describe what you observed."
+    },
+    {
+     "de": "Auf die Reaktion eingehen.",
+     "en": "Respond to their reaction."
+    },
+    {
+     "de": "Gemeinsam eine Lösung suchen.",
+     "en": "Look for a solution together."
+    },
+    {
+     "de": "Verbindlich abschließen.",
+     "en": "Close with a commitment."
+    }
+   ]
+  },
+  {
+   "id": "sc-0027",
+   "title": "Gehaltsverhandlung",
+   "titleEn": "Negotiating the offer",
+   "category": "Work",
+   "cefr": "B2",
+   "minutes": 8,
+   "setting": "A final interview; the offer is slightly below expectation.",
+   "partner": "Mural is the hiring manager with a budget to defend.",
+   "goal": "Das Angebot verhandeln, ohne die Stelle zu gefährden.",
+   "goalEn": "Negotiate the offer without risking the job.",
+   "beats": [
+    {
+     "de": "Interesse bekräftigen.",
+     "en": "Confirm your interest."
+    },
+    {
+     "de": "Deine Vorstellung begründen.",
+     "en": "Justify your figure."
+    },
+    {
+     "de": "Auf das Gegenargument eingehen.",
+     "en": "Address the counter-argument."
+    },
+    {
+     "de": "Alternativen abwägen.",
+     "en": "Weigh up alternatives."
+    },
+    {
+     "de": "Das Ergebnis festhalten.",
+     "en": "Nail down the outcome."
+    }
+   ]
+  },
+  {
+   "id": "sc-0028",
+   "title": "Rechnung anfechten",
+   "titleEn": "Disputing a bill",
+   "category": "Services",
+   "cefr": "B2",
+   "minutes": 8,
+   "setting": "A phone call to an energy supplier about a sharply higher bill.",
+   "partner": "Mural is a call-centre agent following a script.",
+   "goal": "Die Rechnung prüfen lassen und eine Zusage bekommen.",
+   "goalEn": "Get the bill reviewed and obtain a commitment.",
+   "beats": [
+    {
+     "de": "Dein Anliegen klar benennen.",
+     "en": "State your case clearly."
+    },
+    {
+     "de": "Die Zahlen hinterfragen.",
+     "en": "Question the figures."
+    },
+    {
+     "de": "Auf Ausflüchte reagieren.",
+     "en": "Respond to evasions."
+    },
+    {
+     "de": "Eine Zusage einholen.",
+     "en": "Secure a commitment."
+    },
+    {
+     "de": "Schriftliche Bestätigung verlangen.",
+     "en": "Ask for it in writing."
+    }
+   ]
+  },
+  {
+   "id": "sc-0029",
+   "title": "Heikles Thema am Tisch",
+   "titleEn": "An awkward topic at dinner",
+   "category": "Party",
+   "cefr": "B2",
+   "minutes": 8,
+   "setting": "A dinner party where another guest raises a touchy political subject.",
+   "partner": "Mural is that guest, opinionated but not hostile.",
+   "goal": "Höflich widersprechen, ohne den Abend zu verderben.",
+   "goalEn": "Disagree politely without spoiling the evening.",
+   "beats": [
+    {
+     "de": "Zuhören und nachfragen.",
+     "en": "Listen and ask a question."
+    },
+    {
+     "de": "Deine Sicht vorsichtig einbringen.",
+     "en": "Introduce your view carefully."
+    },
+    {
+     "de": "Gemeinsamkeiten benennen.",
+     "en": "Name what you agree on."
+    },
+    {
+     "de": "Das Thema elegant wechseln.",
+     "en": "Change the subject gracefully."
+    }
+   ]
+  },
+  {
+   "id": "sc-0030",
+   "title": "Flug annulliert",
+   "titleEn": "Flight cancelled",
+   "category": "Vacation",
+   "cefr": "B2",
+   "minutes": 8,
+   "setting": "An airline desk after a cancellation; a long queue and few options.",
+   "partner": "Mural is the airline agent, harried.",
+   "goal": "Umbuchung und Entschädigung klären.",
+   "goalEn": "Sort out rebooking and compensation.",
+   "beats": [
+    {
+     "de": "Die Lage schildern.",
+     "en": "Lay out the situation."
+    },
+    {
+     "de": "Nach Alternativen fragen.",
+     "en": "Ask about alternatives."
+    },
+    {
+     "de": "Auf Entschädigung bestehen.",
+     "en": "Press for compensation."
+    },
+    {
+     "de": "Unterkunft klären.",
+     "en": "Settle accommodation."
+    },
+    {
+     "de": "Alles bestätigen lassen.",
+     "en": "Get it all confirmed."
+    }
+   ]
+  },
+  {
+   "id": "sc-0031",
+   "title": "Lärm beim Nachbarn",
+   "titleEn": "Noise next door",
+   "category": "Home",
+   "cefr": "B2",
+   "minutes": 8,
+   "setting": "At the neighbour's door after several late, loud nights.",
+   "partner": "Mural is the neighbour, surprised and a bit defensive.",
+   "goal": "Das Problem ansprechen und eine Vereinbarung treffen.",
+   "goalEn": "Raise the problem and reach an agreement.",
+   "beats": [
+    {
+     "de": "Freundlich eröffnen.",
+     "en": "Open in a friendly way."
+    },
+    {
+     "de": "Das Problem konkret benennen.",
+     "en": "Name the problem concretely."
+    },
+    {
+     "de": "Auf die Reaktion eingehen.",
+     "en": "Deal with the reaction."
+    },
+    {
+     "de": "Eine Regelung vorschlagen.",
+     "en": "Propose an arrangement."
+    },
+    {
+     "de": "Das Verhältnis gut lassen.",
+     "en": "Leave the relationship intact."
+    }
+   ]
+  },
+  {
+   "id": "sc-0032",
+   "title": "Aufgabe ablehnen",
+   "titleEn": "Declining a task",
+   "category": "Office",
+   "cefr": "B2",
+   "minutes": 8,
+   "setting": "The manager asks the learner to take on a fourth project.",
+   "partner": "Mural is the manager, used to saying yes to everything.",
+   "goal": "Nein sagen und die Prioritäten klären.",
+   "goalEn": "Say no and clarify priorities.",
+   "beats": [
+    {
+     "de": "Verständnis zeigen.",
+     "en": "Show you understand."
+    },
+    {
+     "de": "Die Auslastung darlegen.",
+     "en": "Set out your workload."
+    },
+    {
+     "de": "Um Priorisierung bitten.",
+     "en": "Ask for prioritisation."
+    },
+    {
+     "de": "Eine Teillösung anbieten.",
+     "en": "Offer a partial solution."
+    }
+   ]
+  },
+  {
+   "id": "sc-0033",
+   "title": "Netzwerken auf der Messe",
+   "titleEn": "Networking at a trade fair",
+   "category": "Small talk",
+   "cefr": "B2",
+   "minutes": 8,
+   "setting": "A busy trade-fair stand; the learner wants a useful contact.",
+   "partner": "Mural is a potential business contact with little time.",
+   "goal": "Interesse wecken und einen Kontakt vereinbaren.",
+   "goalEn": "Spark interest and secure a follow-up.",
+   "beats": [
+    {
+     "de": "Dich kurz vorstellen.",
+     "en": "Introduce yourself briefly."
+    },
+    {
+     "de": "Den Nutzen in einem Satz nennen.",
+     "en": "State the benefit in one sentence."
+    },
+    {
+     "de": "Eine gute Frage stellen.",
+     "en": "Ask a good question."
+    },
+    {
+     "de": "Einen Folgetermin vereinbaren.",
+     "en": "Agree a follow-up."
+    }
+   ]
+  },
+  {
+   "id": "sc-0034",
+   "title": "Konflikt moderieren",
+   "titleEn": "Mediating a conflict",
+   "category": "Office",
+   "cefr": "C1",
+   "minutes": 10,
+   "setting": "Two colleagues have stopped co-operating; the learner chairs the clearing session.",
+   "partner": "Mural plays the more entrenched of the two colleagues.",
+   "goal": "Die Fronten lösen und eine tragfähige Absprache erreichen.",
+   "goalEn": "Unlock the standoff and reach a workable agreement.",
+   "beats": [
+    {
+     "de": "Den Rahmen setzen.",
+     "en": "Set the frame."
+    },
+    {
+     "de": "Beide Sichtweisen herausarbeiten.",
+     "en": "Draw out both views."
+    },
+    {
+     "de": "Den Kern des Konflikts benennen.",
+     "en": "Name the core of the conflict."
+    },
+    {
+     "de": "Optionen abwägen.",
+     "en": "Weigh the options."
+    },
+    {
+     "de": "Eine verbindliche Absprache festhalten.",
+     "en": "Record a binding agreement."
+    }
+   ]
+  },
+  {
+   "id": "sc-0035",
+   "title": "Schlechte Nachricht überbringen",
+   "titleEn": "Delivering bad news",
+   "category": "Work",
+   "cefr": "C1",
+   "minutes": 10,
+   "setting": "The learner must tell a long-standing supplier the contract will not be renewed.",
+   "partner": "Mural is the supplier's owner, who expected a renewal.",
+   "goal": "Die Absage klar und würdig überbringen.",
+   "goalEn": "Deliver the decision clearly and with dignity.",
+   "beats": [
+    {
+     "de": "Den Anlass benennen.",
+     "en": "State the occasion."
+    },
+    {
+     "de": "Die Entscheidung klar sagen.",
+     "en": "State the decision clearly."
+    },
+    {
+     "de": "Die Gründe darlegen.",
+     "en": "Set out the reasons."
+    },
+    {
+     "de": "Auf die Reaktion eingehen.",
+     "en": "Respond to the reaction."
+    },
+    {
+     "de": "Den Abschluss würdig gestalten.",
+     "en": "Close with dignity."
+    }
+   ]
+  },
+  {
+   "id": "sc-0036",
+   "title": "Widerspruch einlegen",
+   "titleEn": "Filing an objection",
+   "category": "Services",
+   "cefr": "C1",
+   "minutes": 10,
+   "setting": "An appointment at an authority to contest a formal decision.",
+   "partner": "Mural is the case officer, procedurally correct.",
+   "goal": "Den Widerspruch begründen und das Verfahren klären.",
+   "goalEn": "Justify the objection and clarify the procedure.",
+   "beats": [
+    {
+     "de": "Den Sachverhalt zusammenfassen.",
+     "en": "Summarise the facts."
+    },
+    {
+     "de": "Den Widerspruch begründen.",
+     "en": "Justify the objection."
+    },
+    {
+     "de": "Auf Gegenargumente eingehen.",
+     "en": "Address counter-arguments."
+    },
+    {
+     "de": "Fristen und Formalitäten klären.",
+     "en": "Clarify deadlines and formalities."
+    },
+    {
+     "de": "Das weitere Vorgehen festhalten.",
+     "en": "Record the next steps."
+    }
+   ]
+  },
+  {
+   "id": "sc-0037",
+   "title": "Eine Rede halten",
+   "titleEn": "Giving a speech",
+   "category": "Party",
+   "cefr": "C1",
+   "minutes": 10,
+   "setting": "A colleague's leaving do; the learner has been asked to say a few words.",
+   "partner": "Mural is a guest who chats with the learner before and after.",
+   "goal": "Eine kurze, warme Rede vorbereiten und halten.",
+   "goalEn": "Prepare and give a short, warm speech.",
+   "beats": [
+    {
+     "de": "Den Anlass besprechen.",
+     "en": "Talk through the occasion."
+    },
+    {
+     "de": "Den roten Faden festlegen.",
+     "en": "Settle on a thread."
+    },
+    {
+     "de": "Eine Anekdote einbauen.",
+     "en": "Work in an anecdote."
+    },
+    {
+     "de": "Die Rede halten.",
+     "en": "Give the speech."
+    },
+    {
+     "de": "Auf Reaktionen eingehen.",
+     "en": "Respond to the reactions."
+    }
+   ]
+  },
+  {
+   "id": "sc-0038",
+   "title": "Reiseplanung mit Konflikt",
+   "titleEn": "Planning a trip with a clash",
+   "category": "Vacation",
+   "cefr": "C1",
+   "minutes": 10,
+   "setting": "Two friends plan a shared holiday but want very different things.",
+   "partner": "Mural is the friend who wants a packed itinerary.",
+   "goal": "Einen Kompromiss finden, mit dem beide zufrieden sind.",
+   "goalEn": "Find a compromise both are happy with.",
+   "beats": [
+    {
+     "de": "Die Wünsche beider sammeln.",
+     "en": "Gather both sets of wishes."
+    },
+    {
+     "de": "Die Unterschiede benennen.",
+     "en": "Name the differences."
+    },
+    {
+     "de": "Prioritäten abwägen.",
+     "en": "Weigh the priorities."
+    },
+    {
+     "de": "Einen Kompromiss formulieren.",
+     "en": "Formulate a compromise."
+    },
+    {
+     "de": "Die Abmachung bestätigen.",
+     "en": "Confirm the deal."
+    }
+   ]
+  },
+  {
+   "id": "sc-0039",
+   "title": "Projekt präsentieren",
+   "titleEn": "Presenting a project",
+   "category": "Office",
+   "cefr": "C1",
+   "minutes": 10,
+   "setting": "A steering meeting; the learner presents results and takes hard questions.",
+   "partner": "Mural is a sceptical stakeholder.",
+   "goal": "Die Ergebnisse vertreten und Rückfragen bestehen.",
+   "goalEn": "Defend the results and handle the questions.",
+   "beats": [
+    {
+     "de": "Die Ergebnisse knapp darstellen.",
+     "en": "Present the results concisely."
+    },
+    {
+     "de": "Die Methode begründen.",
+     "en": "Justify the method."
+    },
+    {
+     "de": "Kritische Fragen beantworten.",
+     "en": "Answer critical questions."
+    },
+    {
+     "de": "Grenzen offen benennen.",
+     "en": "State the limitations openly."
+    },
+    {
+     "de": "Den Entscheidungsvorschlag machen.",
+     "en": "Make the recommendation."
+    }
+   ]
+  },
+  {
+   "id": "sc-0040",
+   "title": "Beileid aussprechen",
+   "titleEn": "Offering condolences",
+   "category": "Small talk",
+   "cefr": "C1",
+   "minutes": 10,
+   "setting": "A colleague has lost a parent and is back at work.",
+   "partner": "Mural is that colleague, quiet and composed.",
+   "goal": "Anteilnahme zeigen, ohne aufdringlich zu sein.",
+   "goalEn": "Show sympathy without intruding.",
+   "beats": [
+    {
+     "de": "Behutsam ansprechen.",
+     "en": "Approach gently."
+    },
+    {
+     "de": "Anteilnahme ausdrücken.",
+     "en": "Express sympathy."
+    },
+    {
+     "de": "Raum lassen.",
+     "en": "Leave space."
+    },
+    {
+     "de": "Konkrete Hilfe anbieten.",
+     "en": "Offer concrete help."
+    }
+   ]
+  },
+  {
+   "id": "sc-0041",
+   "title": "Mieterhöhung verhandeln",
+   "titleEn": "Negotiating a rent rise",
+   "category": "Home",
+   "cefr": "C1",
+   "minutes": 10,
+   "setting": "The landlord has announced a steep increase; the learner wants it reduced.",
+   "partner": "Mural is the landlord, citing the market.",
+   "goal": "Die Erhöhung mindern oder abfedern.",
+   "goalEn": "Reduce or soften the increase.",
+   "beats": [
+    {
+     "de": "Den Erhalt bestätigen.",
+     "en": "Acknowledge the letter."
+    },
+    {
+     "de": "Die Erhöhung hinterfragen.",
+     "en": "Question the increase."
+    },
+    {
+     "de": "Argumente vorbringen.",
+     "en": "Put your arguments."
+    },
+    {
+     "de": "Einen Gegenvorschlag machen.",
+     "en": "Make a counter-proposal."
+    },
+    {
+     "de": "Das Ergebnis schriftlich sichern.",
+     "en": "Secure the outcome in writing."
+    }
+   ]
+  },
+  {
+   "id": "sc-0042",
+   "title": "Im Supermarkt",
+   "titleEn": "At the supermarket",
+   "category": "Shopping",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "A supermarket aisle; the learner cannot find what they need.",
+   "partner": "Mural is a member of staff stacking shelves.",
+   "goal": "Milch und Eier finden.",
+   "goalEn": "Find the milk and eggs.",
+   "beats": [
+    {
+     "de": "Jemanden ansprechen.",
+     "en": "Get someone's attention."
+    },
+    {
+     "de": "Nach der Milch fragen.",
+     "en": "Ask where the milk is."
+    },
+    {
+     "de": "Nach den Eiern fragen.",
+     "en": "Ask about the eggs."
+    },
+    {
+     "de": "Dich bedanken.",
+     "en": "Say thank you."
+    }
+   ]
+  },
+  {
+   "id": "sc-0043",
+   "title": "Kaffee zum Mitnehmen",
+   "titleEn": "Coffee to go",
+   "category": "Food",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "A takeaway counter with a queue behind.",
+   "partner": "Mural is the barista, quick and friendly.",
+   "goal": "Einen Kaffee zum Mitnehmen bestellen.",
+   "goalEn": "Order a coffee to take away.",
+   "beats": [
+    {
+     "de": "Bestellen.",
+     "en": "Order."
+    },
+    {
+     "de": "Die Größe wählen.",
+     "en": "Choose the size."
+    },
+    {
+     "de": "Mit Karte zahlen.",
+     "en": "Pay by card."
+    },
+    {
+     "de": "Dich verabschieden.",
+     "en": "Say goodbye."
+    }
+   ]
+  },
+  {
+   "id": "sc-0044",
+   "title": "Nach dem Bus fragen",
+   "titleEn": "Asking about the bus",
+   "category": "Transport",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "A bus stop; the timetable is confusing.",
+   "partner": "Mural is another person waiting.",
+   "goal": "Herausfinden, welcher Bus ins Zentrum fährt.",
+   "goalEn": "Find out which bus goes to the centre.",
+   "beats": [
+    {
+     "de": "Höflich ansprechen.",
+     "en": "Approach politely."
+    },
+    {
+     "de": "Nach dem Bus fragen.",
+     "en": "Ask about the bus."
+    },
+    {
+     "de": "Nach der Zeit fragen.",
+     "en": "Ask about the time."
+    },
+    {
+     "de": "Dich bedanken.",
+     "en": "Say thanks."
+    }
+   ]
+  },
+  {
+   "id": "sc-0045",
+   "title": "Im Fahrstuhl",
+   "titleEn": "In the lift",
+   "category": "Small talk",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "A short lift ride in an office building.",
+   "partner": "Mural is a colleague from another floor.",
+   "goal": "Ein kurzes, freundliches Gespräch führen.",
+   "goalEn": "Have a short, friendly exchange.",
+   "beats": [
+    {
+     "de": "Grüßen.",
+     "en": "Say hello."
+    },
+    {
+     "de": "Über das Wetter sprechen.",
+     "en": "Talk about the weather."
+    },
+    {
+     "de": "Eine kurze Frage stellen.",
+     "en": "Ask a short question."
+    },
+    {
+     "de": "Dich verabschieden.",
+     "en": "Say goodbye."
+    }
+   ]
+  },
+  {
+   "id": "sc-0046",
+   "title": "In der Apotheke",
+   "titleEn": "At the pharmacy",
+   "category": "Health",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "A pharmacy counter; the learner has a cold.",
+   "partner": "Mural is the pharmacist.",
+   "goal": "Etwas gegen Husten bekommen.",
+   "goalEn": "Get something for a cough.",
+   "beats": [
+    {
+     "de": "Dein Problem nennen.",
+     "en": "Say what is wrong."
+    },
+    {
+     "de": "Nach einem Mittel fragen.",
+     "en": "Ask for something for it."
+    },
+    {
+     "de": "Nach der Einnahme fragen.",
+     "en": "Ask how to take it."
+    },
+    {
+     "de": "Bezahlen.",
+     "en": "Pay."
+    }
+   ]
+  },
+  {
+   "id": "sc-0047",
+   "title": "Paket für den Nachbarn",
+   "titleEn": "A parcel for the neighbour",
+   "category": "Home",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "At the neighbour's door with a parcel taken in earlier.",
+   "partner": "Mural is the neighbour, grateful.",
+   "goal": "Das Paket übergeben.",
+   "goalEn": "Hand the parcel over.",
+   "beats": [
+    {
+     "de": "Klingeln und grüßen.",
+     "en": "Ring and greet."
+    },
+    {
+     "de": "Das Paket erklären.",
+     "en": "Explain the parcel."
+    },
+    {
+     "de": "Es übergeben.",
+     "en": "Hand it over."
+    },
+    {
+     "de": "Dich verabschieden.",
+     "en": "Say goodbye."
+    }
+   ]
+  },
+  {
+   "id": "sc-0048",
+   "title": "Kaffeepause",
+   "titleEn": "Coffee break",
+   "category": "Work",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "The office kitchen at eleven in the morning.",
+   "partner": "Mural is a colleague making tea.",
+   "goal": "Zusammen Pause machen und etwas plaudern.",
+   "goalEn": "Take a break together and chat a little.",
+   "beats": [
+    {
+     "de": "Grüßen.",
+     "en": "Say hello."
+    },
+    {
+     "de": "Etwas anbieten.",
+     "en": "Offer something."
+    },
+    {
+     "de": "Nach dem Wochenende fragen.",
+     "en": "Ask about the weekend."
+    },
+    {
+     "de": "Zurück an die Arbeit gehen.",
+     "en": "Go back to work."
+    }
+   ]
+  },
+  {
+   "id": "sc-0049",
+   "title": "Am Strand",
+   "titleEn": "At the beach",
+   "category": "Vacation",
+   "cefr": "A1",
+   "minutes": 6,
+   "setting": "A sunny beach; the learner wants to rent a sunbed.",
+   "partner": "Mural rents out sunbeds and umbrellas.",
+   "goal": "Eine Liege für den Tag mieten.",
+   "goalEn": "Rent a sunbed for the day.",
+   "beats": [
+    {
+     "de": "Nach dem Preis fragen.",
+     "en": "Ask the price."
+    },
+    {
+     "de": "Eine Liege mieten.",
+     "en": "Rent a sunbed."
+    },
+    {
+     "de": "Nach dem Schirm fragen.",
+     "en": "Ask about an umbrella."
+    },
+    {
+     "de": "Bezahlen.",
+     "en": "Pay."
+    }
+   ]
+  },
+  {
+   "id": "sc-0050",
+   "title": "Im Fundbüro",
+   "titleEn": "At the lost property office",
+   "category": "Services",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "A lost property desk; the learner left a bag on the train.",
+   "partner": "Mural is the clerk.",
+   "goal": "Nach deiner Tasche fragen.",
+   "goalEn": "Ask about your bag.",
+   "beats": [
+    {
+     "de": "Dein Problem erklären.",
+     "en": "Explain the problem."
+    },
+    {
+     "de": "Die Tasche beschreiben.",
+     "en": "Describe the bag."
+    },
+    {
+     "de": "Sagen, wann es passiert ist.",
+     "en": "Say when it happened."
+    },
+    {
+     "de": "Nach dem nächsten Schritt fragen.",
+     "en": "Ask what happens next."
+    }
+   ]
+  },
+  {
+   "id": "sc-0051",
+   "title": "Drucker kaputt",
+   "titleEn": "The printer is broken",
+   "category": "Office",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "An open-plan office; the printer has jammed before an important meeting.",
+   "partner": "Mural is the colleague who knows the machine.",
+   "goal": "Den Drucker wieder zum Laufen bringen.",
+   "goalEn": "Get the printer working again.",
+   "beats": [
+    {
+     "de": "Um Hilfe bitten.",
+     "en": "Ask for help."
+    },
+    {
+     "de": "Das Problem beschreiben.",
+     "en": "Describe the problem."
+    },
+    {
+     "de": "Die Anweisungen befolgen.",
+     "en": "Follow the instructions."
+    },
+    {
+     "de": "Dich bedanken.",
+     "en": "Say thanks."
+    }
+   ]
+  },
+  {
+   "id": "sc-0052",
+   "title": "Schuhe kaufen",
+   "titleEn": "Buying shoes",
+   "category": "Shopping",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "A shoe shop; the learner's size is nearly sold out.",
+   "partner": "Mural is the assistant.",
+   "goal": "Ein Paar Schuhe in deiner Größe finden.",
+   "goalEn": "Find a pair in your size.",
+   "beats": [
+    {
+     "de": "Sagen, was du suchst.",
+     "en": "Say what you want."
+    },
+    {
+     "de": "Deine Größe nennen.",
+     "en": "Give your size."
+    },
+    {
+     "de": "Anprobieren und bewerten.",
+     "en": "Try them and judge."
+    },
+    {
+     "de": "Eine Alternative prüfen.",
+     "en": "Consider an alternative."
+    },
+    {
+     "de": "Kaufen oder höflich ablehnen.",
+     "en": "Buy or politely decline."
+    }
+   ]
+  },
+  {
+   "id": "sc-0053",
+   "title": "Zum Essen einladen",
+   "titleEn": "Inviting someone to dinner",
+   "category": "Party",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "A chat after work; the learner wants to invite a colleague home.",
+   "partner": "Mural is the colleague, pleased but busy.",
+   "goal": "Eine Einladung aussprechen und einen Termin finden.",
+   "goalEn": "Invite them and find a date.",
+   "beats": [
+    {
+     "de": "Die Einladung aussprechen.",
+     "en": "Make the invitation."
+    },
+    {
+     "de": "Einen Tag vorschlagen.",
+     "en": "Suggest a day."
+    },
+    {
+     "de": "Auf Terminprobleme reagieren.",
+     "en": "Deal with diary problems."
+    },
+    {
+     "de": "Den Termin bestätigen.",
+     "en": "Confirm the date."
+    }
+   ]
+  },
+  {
+   "id": "sc-0054",
+   "title": "Mietwagen abholen",
+   "titleEn": "Picking up a hire car",
+   "category": "Travel",
+   "cefr": "A2",
+   "minutes": 7,
+   "setting": "A car hire desk at the airport.",
+   "partner": "Mural is the agent, keen to sell extras.",
+   "goal": "Den Wagen übernehmen, ohne unnötige Extras.",
+   "goalEn": "Take the car without unnecessary extras.",
+   "beats": [
+    {
+     "de": "Die Reservierung nennen.",
+     "en": "Give the booking."
+    },
+    {
+     "de": "Die Papiere zeigen.",
+     "en": "Show the documents."
+    },
+    {
+     "de": "Extras höflich ablehnen.",
+     "en": "Decline extras politely."
+    },
+    {
+     "de": "Den Zustand prüfen.",
+     "en": "Check the condition."
+    },
+    {
+     "de": "Die Rückgabe klären.",
+     "en": "Settle the return."
+    }
+   ]
+  },
+  {
+   "id": "sc-0055",
+   "title": "Termin verschieben",
+   "titleEn": "Moving an appointment",
+   "category": "Health",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "On the phone to a practice; the learner cannot make Thursday.",
+   "partner": "Mural is the receptionist with a full diary.",
+   "goal": "Einen neuen Termin finden.",
+   "goalEn": "Find a new appointment.",
+   "beats": [
+    {
+     "de": "Den alten Termin nennen.",
+     "en": "Give the old appointment."
+    },
+    {
+     "de": "Um Verschiebung bitten.",
+     "en": "Ask to move it."
+    },
+    {
+     "de": "Einen neuen Tag finden.",
+     "en": "Find a new day."
+    },
+    {
+     "de": "Alles bestätigen.",
+     "en": "Confirm everything."
+    }
+   ]
+  },
+  {
+   "id": "sc-0056",
+   "title": "Hausaufgaben vergessen",
+   "titleEn": "Forgot the homework",
+   "category": "Study",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "Before class; the learner has not done the exercises.",
+   "partner": "Mural is the teacher, strict but fair.",
+   "goal": "Die Lage erklären und eine Frist bekommen.",
+   "goalEn": "Explain and get an extension.",
+   "beats": [
+    {
+     "de": "Das Problem ansprechen.",
+     "en": "Raise it."
+    },
+    {
+     "de": "Den Grund nennen.",
+     "en": "Give the reason."
+    },
+    {
+     "de": "Um Aufschub bitten.",
+     "en": "Ask for extra time."
+    },
+    {
+     "de": "Die Abmachung bestätigen.",
+     "en": "Confirm the deal."
+    }
+   ]
+  },
+  {
+   "id": "sc-0057",
+   "title": "Internet funktioniert nicht",
+   "titleEn": "The internet is down",
+   "category": "Home",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "On the phone to the provider's hotline.",
+   "partner": "Mural is the support agent working through a checklist.",
+   "goal": "Die Störung melden und einen Techniker bekommen.",
+   "goalEn": "Report the fault and get a technician.",
+   "beats": [
+    {
+     "de": "Die Störung melden.",
+     "en": "Report the fault."
+    },
+    {
+     "de": "Die Fragen beantworten.",
+     "en": "Answer their questions."
+    },
+    {
+     "de": "Auf den Vorschlag reagieren.",
+     "en": "Respond to the suggestion."
+    },
+    {
+     "de": "Einen Termin vereinbaren.",
+     "en": "Arrange a visit."
+    }
+   ]
+  },
+  {
+   "id": "sc-0058",
+   "title": "Konto eröffnen",
+   "titleEn": "Opening an account",
+   "category": "Services",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "A bank branch; the learner wants a current account.",
+   "partner": "Mural is the bank adviser.",
+   "goal": "Ein Konto eröffnen und die Kosten verstehen.",
+   "goalEn": "Open an account and understand the fees.",
+   "beats": [
+    {
+     "de": "Dein Anliegen nennen.",
+     "en": "State what you want."
+    },
+    {
+     "de": "Die Unterlagen zeigen.",
+     "en": "Show your documents."
+    },
+    {
+     "de": "Nach Gebühren fragen.",
+     "en": "Ask about fees."
+    },
+    {
+     "de": "Den nächsten Schritt klären.",
+     "en": "Clarify the next step."
+    }
+   ]
+  },
+  {
+   "id": "sc-0059",
+   "title": "Fahrrad mieten",
+   "titleEn": "Renting a bike",
+   "category": "Vacation",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "A bike rental shop by the lake on a warm morning.",
+   "partner": "Mural runs the shop.",
+   "goal": "Ein Fahrrad für einen Tag mieten.",
+   "goalEn": "Rent a bike for the day.",
+   "beats": [
+    {
+     "de": "Nach Verfügbarkeit fragen.",
+     "en": "Ask what is available."
+    },
+    {
+     "de": "Preis und Zeit klären.",
+     "en": "Settle price and time."
+    },
+    {
+     "de": "Nach einem Schloss fragen.",
+     "en": "Ask about a lock."
+    },
+    {
+     "de": "Die Rückgabe vereinbaren.",
+     "en": "Agree the return."
+    }
+   ]
+  },
+  {
+   "id": "sc-0060",
+   "title": "Urlaub beantragen",
+   "titleEn": "Requesting leave",
+   "category": "Office",
+   "cefr": "B1",
+   "minutes": 7,
+   "setting": "A short meeting with the manager during a busy period.",
+   "partner": "Mural is the manager, reluctant about the dates.",
+   "goal": "Deinen Urlaub genehmigt bekommen.",
+   "goalEn": "Get your leave approved.",
+   "beats": [
+    {
+     "de": "Den Wunsch nennen.",
+     "en": "State what you want."
+    },
+    {
+     "de": "Die Dates begründen.",
+     "en": "Justify the dates."
+    },
+    {
+     "de": "Die Vertretung klären.",
+     "en": "Sort out cover."
+    },
+    {
+     "de": "Die Zusage festhalten.",
+     "en": "Pin down the approval."
+    }
+   ]
+  },
+  {
+   "id": "sc-0061",
+   "title": "Kollegin um Hilfe bitten",
+   "titleEn": "Asking a colleague for help",
+   "category": "Work",
+   "cefr": "B1",
+   "minutes": 7,
+   "setting": "A deadline tomorrow and one task the learner cannot finish alone.",
+   "partner": "Mural is a busy but decent colleague.",
+   "goal": "Konkrete Hilfe vereinbaren.",
+   "goalEn": "Agree concrete help.",
+   "beats": [
+    {
+     "de": "Die Lage schildern.",
+     "en": "Describe the situation."
+    },
+    {
+     "de": "Genau sagen, was du brauchst.",
+     "en": "Say exactly what you need."
+    },
+    {
+     "de": "Auf Einwände eingehen.",
+     "en": "Address objections."
+    },
+    {
+     "de": "Zeit und Umfang vereinbaren.",
+     "en": "Agree time and scope."
+    }
+   ]
+  },
+  {
+   "id": "sc-0062",
+   "title": "Reklamation im Laden",
+   "titleEn": "A complaint in the shop",
+   "category": "Shopping",
+   "cefr": "B1",
+   "minutes": 7,
+   "setting": "A shop counter; a lamp bought last week stopped working.",
+   "partner": "Mural is the assistant who wants a receipt.",
+   "goal": "Ersatz oder Geld zurück bekommen.",
+   "goalEn": "Get a replacement or your money back.",
+   "beats": [
+    {
+     "de": "Das Problem schildern.",
+     "en": "Describe the problem."
+    },
+    {
+     "de": "Den Kauf belegen.",
+     "en": "Prove the purchase."
+    },
+    {
+     "de": "Auf die Garantie verweisen.",
+     "en": "Point to the guarantee."
+    },
+    {
+     "de": "Eine Lösung aushandeln.",
+     "en": "Negotiate a solution."
+    }
+   ]
+  },
+  {
+   "id": "sc-0063",
+   "title": "Gastgeber sein",
+   "titleEn": "Being the host",
+   "category": "Party",
+   "cefr": "B1",
+   "minutes": 7,
+   "setting": "The learner's own flat; the first guests have arrived.",
+   "partner": "Mural is a guest who knows nobody.",
+   "goal": "Deinen Gast ins Gespräch bringen.",
+   "goalEn": "Get your guest talking to others.",
+   "beats": [
+    {
+     "de": "Begrüßen und Mantel nehmen.",
+     "en": "Greet and take their coat."
+    },
+    {
+     "de": "Etwas anbieten.",
+     "en": "Offer something."
+    },
+    {
+     "de": "Jemanden vorstellen.",
+     "en": "Introduce them to someone."
+    },
+    {
+     "de": "Ein Gesprächsthema geben.",
+     "en": "Give them a subject."
+    }
+   ]
+  },
+  {
+   "id": "sc-0064",
+   "title": "Umbuchen am Schalter",
+   "titleEn": "Rebooking at the counter",
+   "category": "Travel",
+   "cefr": "B1",
+   "minutes": 7,
+   "setting": "A train station counter; the learner needs an earlier train.",
+   "partner": "Mural is the clerk, checking the fare rules.",
+   "goal": "Auf einen früheren Zug umbuchen.",
+   "goalEn": "Rebook onto an earlier train.",
+   "beats": [
+    {
+     "de": "Die Buchung nennen.",
+     "en": "Give the booking."
+    },
+    {
+     "de": "Den Wunsch erklären.",
+     "en": "Explain what you want."
+    },
+    {
+     "de": "Die Kosten klären.",
+     "en": "Clarify the cost."
+    },
+    {
+     "de": "Den Platz bestätigen.",
+     "en": "Confirm the seat."
+    }
+   ]
+  },
+  {
+   "id": "sc-0065",
+   "title": "Beim Physiotherapeuten",
+   "titleEn": "At the physiotherapist",
+   "category": "Health",
+   "cefr": "B1",
+   "minutes": 7,
+   "setting": "A first physio appointment for a bad shoulder.",
+   "partner": "Mural is the physiotherapist.",
+   "goal": "Die Beschwerden erklären und einen Plan bekommen.",
+   "goalEn": "Explain the trouble and get a plan.",
+   "beats": [
+    {
+     "de": "Die Beschwerden schildern.",
+     "en": "Describe the trouble."
+    },
+    {
+     "de": "Den Verlauf erklären.",
+     "en": "Explain how it developed."
+    },
+    {
+     "de": "Fragen zur Übung stellen.",
+     "en": "Ask about the exercises."
+    },
+    {
+     "de": "Die nächsten Termine klären.",
+     "en": "Settle the next sessions."
+    }
+   ]
+  },
+  {
+   "id": "sc-0066",
+   "title": "Handyvertrag kündigen",
+   "titleEn": "Cancelling a phone contract",
+   "category": "Services",
+   "cefr": "B1",
+   "minutes": 7,
+   "setting": "A phone call to the provider; the contract is up for renewal.",
+   "partner": "Mural is retention staff with offers.",
+   "goal": "Kündigen oder ein deutlich besseres Angebot bekommen.",
+   "goalEn": "Cancel, or get a clearly better offer.",
+   "beats": [
+    {
+     "de": "Die Kündigung aussprechen.",
+     "en": "State the cancellation."
+    },
+    {
+     "de": "Den Grund nennen.",
+     "en": "Give the reason."
+    },
+    {
+     "de": "Das Gegenangebot prüfen.",
+     "en": "Weigh the counter-offer."
+    },
+    {
+     "de": "Entscheiden.",
+     "en": "Decide."
+    },
+    {
+     "de": "Die Bestätigung verlangen.",
+     "en": "Demand confirmation."
+    }
+   ]
+  },
+  {
+   "id": "sc-0067",
+   "title": "Beim Elternabend",
+   "titleEn": "At the parents' evening",
+   "category": "Small talk",
+   "cefr": "B1",
+   "minutes": 7,
+   "setting": "A school hall before the meeting starts.",
+   "partner": "Mural is another parent.",
+   "goal": "Ins Gespräch kommen und etwas über die Klasse erfahren.",
+   "goalEn": "Get talking and learn about the class.",
+   "beats": [
+    {
+     "de": "Ein Gespräch eröffnen.",
+     "en": "Open a conversation."
+    },
+    {
+     "de": "Über die Kinder sprechen.",
+     "en": "Talk about the children."
+    },
+    {
+     "de": "Nach der Lehrerin fragen.",
+     "en": "Ask about the teacher."
+    },
+    {
+     "de": "Kontakt anbieten.",
+     "en": "Offer to stay in touch."
+    }
+   ]
+  },
+  {
+   "id": "sc-0068",
+   "title": "Wohnungsbesichtigung",
+   "titleEn": "Viewing a flat",
+   "category": "Home",
+   "cefr": "B1",
+   "minutes": 7,
+   "setting": "A viewing with several other applicants waiting.",
+   "partner": "Mural is the letting agent, in a hurry.",
+   "goal": "Die wichtigen Fragen stellen und im Rennen bleiben.",
+   "goalEn": "Ask the key questions and stay in the running.",
+   "beats": [
+    {
+     "de": "Dich kurz vorstellen.",
+     "en": "Introduce yourself briefly."
+    },
+    {
+     "de": "Nach Nebenkosten fragen.",
+     "en": "Ask about extra costs."
+    },
+    {
+     "de": "Nach dem Einzugstermin fragen.",
+     "en": "Ask about the move-in date."
+    },
+    {
+     "de": "Nach dem Verfahren fragen.",
+     "en": "Ask about the process."
+    },
+    {
+     "de": "Interesse bekunden.",
+     "en": "Express your interest."
+    }
+   ]
+  },
+  {
+   "id": "sc-0069",
+   "title": "Projekt übernehmen",
+   "titleEn": "Taking over a project",
+   "category": "Work",
+   "cefr": "B2",
+   "minutes": 8,
+   "setting": "A handover meeting for a project in poor shape.",
+   "partner": "Mural is the colleague leaving it behind.",
+   "goal": "Den wahren Stand erfahren und Bedingungen stellen.",
+   "goalEn": "Learn the real state and set conditions.",
+   "beats": [
+    {
+     "de": "Den Stand erfragen.",
+     "en": "Ask for the status."
+    },
+    {
+     "de": "Unklarheiten aufdecken.",
+     "en": "Expose the gaps."
+    },
+    {
+     "de": "Risiken benennen.",
+     "en": "Name the risks."
+    },
+    {
+     "de": "Bedingungen für die Übernahme stellen.",
+     "en": "Set conditions for taking it on."
+    },
+    {
+     "de": "Die Übergabe festhalten.",
+     "en": "Record the handover."
+    }
+   ]
+  },
+  {
+   "id": "sc-0070",
+   "title": "Beim Steuerberater",
+   "titleEn": "At the tax adviser",
+   "category": "Services",
+   "cefr": "B2",
+   "minutes": 8,
+   "setting": "A first meeting about a freelance tax return.",
+   "partner": "Mural is the adviser, thorough and quick.",
+   "goal": "Verstehen, was du tun musst, und die Kosten klären.",
+   "goalEn": "Understand what you must do and clarify the cost.",
+   "beats": [
+    {
+     "de": "Deine Lage schildern.",
+     "en": "Lay out your situation."
+    },
+    {
+     "de": "Die Fristen klären.",
+     "en": "Clarify deadlines."
+    },
+    {
+     "de": "Nach den Unterlagen fragen.",
+     "en": "Ask what documents are needed."
+    },
+    {
+     "de": "Das Honorar besprechen.",
+     "en": "Discuss the fee."
+    },
+    {
+     "de": "Den Auftrag abschließen.",
+     "en": "Close the engagement."
+    }
+   ]
+  },
+  {
+   "id": "sc-0071",
+   "title": "Alte Bekannte treffen",
+   "titleEn": "Running into an old acquaintance",
+   "category": "Party",
+   "cefr": "B2",
+   "minutes": 8,
+   "setting": "A street in town; someone the learner half-remembers says hello.",
+   "partner": "Mural is that acquaintance, warm and talkative.",
+   "goal": "Das Gespräch führen, ohne den Namen zu wissen.",
+   "goalEn": "Carry the conversation without knowing their name.",
+   "beats": [
+    {
+     "de": "Freundlich reagieren.",
+     "en": "React warmly."
+    },
+    {
+     "de": "Zeit gewinnen.",
+     "en": "Buy some time."
+    },
+    {
+     "de": "Erinnerungen abgleichen.",
+     "en": "Compare memories."
+    },
+    {
+     "de": "Elegant den Namen klären.",
+     "en": "Sort out the name gracefully."
+    },
+    {
+     "de": "Das Treffen beenden.",
+     "en": "End the meeting."
+    }
+   ]
+  },
+  {
+   "id": "sc-0072",
+   "title": "Meeting moderieren",
+   "titleEn": "Chairing a meeting",
+   "category": "Office",
+   "cefr": "B2",
+   "minutes": 8,
+   "setting": "A team meeting that always overruns.",
+   "partner": "Mural is the colleague who talks the most.",
+   "goal": "Zum Ergebnis kommen und die Zeit halten.",
+   "goalEn": "Reach a result and hold the time.",
+   "beats": [
+    {
+     "de": "Das Ziel setzen.",
+     "en": "Set the aim."
+    },
+    {
+     "de": "Die Runde führen.",
+     "en": "Run the round."
+    },
+    {
+     "de": "Abschweifungen begrenzen.",
+     "en": "Limit the digressions."
+    },
+    {
+     "de": "Entscheidungen festhalten.",
+     "en": "Record the decisions."
+    },
+    {
+     "de": "Mit Aufgaben schließen.",
+     "en": "Close with actions."
+    }
+   ]
+  },
+  {
+   "id": "sc-0073",
+   "title": "Ärger im Ferienhaus",
+   "titleEn": "Trouble at the holiday house",
+   "category": "Vacation",
+   "cefr": "B2",
+   "minutes": 8,
+   "setting": "A rented holiday house that does not match the listing.",
+   "partner": "Mural is the owner, defensive at first.",
+   "goal": "Mängel beheben lassen oder einen Nachlass erhalten.",
+   "goalEn": "Get the faults fixed or a reduction.",
+   "beats": [
+    {
+     "de": "Die Mängel benennen.",
+     "en": "Name the faults."
+    },
+    {
+     "de": "Belege anführen.",
+     "en": "Cite the evidence."
+    },
+    {
+     "de": "Eine Forderung stellen.",
+     "en": "Make a demand."
+    },
+    {
+     "de": "Auf Ausreden eingehen.",
+     "en": "Deal with the excuses."
+    },
+    {
+     "de": "Eine Einigung festhalten.",
+     "en": "Record an agreement."
+    }
+   ]
+  },
+  {
+   "id": "sc-0074",
+   "title": "Zweite Meinung",
+   "titleEn": "A second opinion",
+   "category": "Health",
+   "cefr": "B2",
+   "minutes": 8,
+   "setting": "A consultation after another doctor recommended surgery.",
+   "partner": "Mural is the second doctor, careful with words.",
+   "goal": "Die Empfehlung verstehen und Alternativen abwägen.",
+   "goalEn": "Understand the recommendation and weigh alternatives.",
+   "beats": [
+    {
+     "de": "Den Anlass schildern.",
+     "en": "Explain why you came."
+    },
+    {
+     "de": "Die Diagnose hinterfragen.",
+     "en": "Question the diagnosis."
+    },
+    {
+     "de": "Alternativen erfragen.",
+     "en": "Ask about alternatives."
+    },
+    {
+     "de": "Risiken abwägen.",
+     "en": "Weigh the risks."
+    },
+    {
+     "de": "Die Entscheidung offenlassen.",
+     "en": "Leave the decision open."
+    }
+   ]
+  },
+  {
+   "id": "sc-0075",
+   "title": "Mit dem Chef beim Mittagessen",
+   "titleEn": "Lunch with the boss",
+   "category": "Small talk",
+   "cefr": "B2",
+   "minutes": 8,
+   "setting": "A one-to-one lunch, half social and half not.",
+   "partner": "Mural is the boss, friendly and watchful.",
+   "goal": "Gut im Gespräch bleiben, ohne zu viel zu verraten.",
+   "goalEn": "Keep the conversation good without over-sharing.",
+   "beats": [
+    {
+     "de": "Leichten Einstieg finden.",
+     "en": "Find a light opening."
+    },
+    {
+     "de": "Über Arbeit sprechen, ohne zu klagen.",
+     "en": "Talk work without complaining."
+    },
+    {
+     "de": "Persönliches dosiert teilen.",
+     "en": "Share personal things in measure."
+    },
+    {
+     "de": "Das Gespräch gut beenden.",
+     "en": "End it well."
+    }
+   ]
+  },
+  {
+   "id": "sc-0076",
+   "title": "Kündigung einreichen",
+   "titleEn": "Handing in your notice",
+   "category": "Work",
+   "cefr": "C1",
+   "minutes": 10,
+   "setting": "A meeting the learner asked for; they are leaving for a competitor.",
+   "partner": "Mural is the manager, surprised and then persuasive.",
+   "goal": "Sauber kündigen und die Beziehung erhalten.",
+   "goalEn": "Resign cleanly and keep the relationship.",
+   "beats": [
+    {
+     "de": "Die Entscheidung mitteilen.",
+     "en": "Announce the decision."
+    },
+    {
+     "de": "Die Gründe maßvoll nennen.",
+     "en": "Give measured reasons."
+    },
+    {
+     "de": "Auf das Gegenangebot reagieren.",
+     "en": "Respond to the counter-offer."
+    },
+    {
+     "de": "Die Übergabe anbieten.",
+     "en": "Offer a handover."
+    },
+    {
+     "de": "Im Guten schließen.",
+     "en": "Close on good terms."
+    }
+   ]
+  },
+  {
+   "id": "sc-0077",
+   "title": "Beschwerde eskalieren",
+   "titleEn": "Escalating a complaint",
+   "category": "Services",
+   "cefr": "C1",
+   "minutes": 10,
+   "setting": "A third call about the same unresolved fault.",
+   "partner": "Mural is a supervisor who has heard it all.",
+   "goal": "Eine verbindliche Zusage und eine Entschädigung erreichen.",
+   "goalEn": "Secure a binding commitment and compensation.",
+   "beats": [
+    {
+     "de": "Die Vorgeschichte knapp zusammenfassen.",
+     "en": "Summarise the history briefly."
+    },
+    {
+     "de": "Die Verantwortung einfordern.",
+     "en": "Insist on responsibility."
+    },
+    {
+     "de": "Eine konkrete Forderung stellen.",
+     "en": "Make a concrete demand."
+    },
+    {
+     "de": "Auf Hinhalten reagieren.",
+     "en": "Counter the stalling."
+    },
+    {
+     "de": "Alles schriftlich sichern.",
+     "en": "Get it all in writing."
+    }
+   ]
+  },
+  {
+   "id": "sc-0078",
+   "title": "Gehalt für das Team verhandeln",
+   "titleEn": "Arguing a budget for the team",
+   "category": "Office",
+   "cefr": "C1",
+   "minutes": 10,
+   "setting": "A budget round; the learner must defend headcount.",
+   "partner": "Mural is the finance lead, numbers first.",
+   "goal": "Das Budget verteidigen und einen Kompromiss finden.",
+   "goalEn": "Defend the budget and find a compromise.",
+   "beats": [
+    {
+     "de": "Den Bedarf begründen.",
+     "en": "Justify the need."
+    },
+    {
+     "de": "Zahlen und Wirkung verbinden.",
+     "en": "Connect figures to impact."
+    },
+    {
+     "de": "Auf Kürzungsvorschläge reagieren.",
+     "en": "Respond to proposed cuts."
+    },
+    {
+     "de": "Eine Priorität opfern.",
+     "en": "Sacrifice one priority."
+    },
+    {
+     "de": "Die Einigung festhalten.",
+     "en": "Record the agreement."
+    }
+   ]
+  },
+  {
+   "id": "sc-0079",
+   "title": "Eine Freundschaft kitten",
+   "titleEn": "Mending a friendship",
+   "category": "Party",
+   "cefr": "C1",
+   "minutes": 10,
+   "setting": "A café meeting after months of silence following a falling-out.",
+   "partner": "Mural is the friend, hurt and guarded.",
+   "goal": "Das Verhältnis wiederherstellen, ehrlich und ohne Vorwürfe.",
+   "goalEn": "Restore the friendship honestly and without blame.",
+   "beats": [
+    {
+     "de": "Behutsam eröffnen.",
+     "en": "Open gently."
+    },
+    {
+     "de": "Deinen Anteil benennen.",
+     "en": "Name your own part."
+    },
+    {
+     "de": "Zuhören, ohne dich zu verteidigen.",
+     "en": "Listen without defending yourself."
+    },
+    {
+     "de": "Um einen Neuanfang bitten.",
+     "en": "Ask for a fresh start."
+    },
+    {
+     "de": "Etwas Konkretes verabreden.",
+     "en": "Arrange something concrete."
+    }
+   ]
+  },
+  {
+   "id": "sc-0080",
+   "title": "Reiseversicherung streiten",
+   "titleEn": "Fighting an insurance claim",
+   "category": "Vacation",
+   "cefr": "C1",
+   "minutes": 10,
+   "setting": "A phone call after a rejected claim for a cancelled trip.",
+   "partner": "Mural is a claims handler citing the small print.",
+   "goal": "Die Ablehnung anfechten und eine Prüfung erreichen.",
+   "goalEn": "Contest the rejection and get it reviewed.",
+   "beats": [
+    {
+     "de": "Den Fall sachlich darstellen.",
+     "en": "Present the case factually."
+    },
+    {
+     "de": "Die Begründung hinterfragen.",
+     "en": "Question their reasoning."
+    },
+    {
+     "de": "Die Bedingungen zitieren.",
+     "en": "Cite the terms."
+    },
+    {
+     "de": "Eine Überprüfung verlangen.",
+     "en": "Demand a review."
+    },
+    {
+     "de": "Fristen und Schritte festhalten.",
+     "en": "Record deadlines and steps."
+    }
+   ]
+  },
+  {
+   "id": "sc-0081",
+   "title": "Beim Empfang netzwerken",
+   "titleEn": "Working a reception",
+   "category": "Small talk",
+   "cefr": "C1",
+   "minutes": 10,
+   "setting": "A formal evening reception with people the learner wants to know.",
+   "partner": "Mural is a senior figure with five minutes to spare.",
+   "goal": "Einen Eindruck hinterlassen und anschlussfähig bleiben.",
+   "goalEn": "Make an impression and leave a door open.",
+   "beats": [
+    {
+     "de": "Sich elegant vorstellen.",
+     "en": "Introduce yourself elegantly."
+    },
+    {
+     "de": "Eine interessante Frage stellen.",
+     "en": "Ask an interesting question."
+    },
+    {
+     "de": "Eigene Arbeit knapp einordnen.",
+     "en": "Place your own work briefly."
+    },
+    {
+     "de": "Gemeinsamkeit finden.",
+     "en": "Find common ground."
+    },
+    {
+     "de": "Den Kontakt sichern.",
+     "en": "Secure the contact."
+    }
+   ]
+  },
+  {
+   "id": "sc-0082",
+   "title": "Auf dem Wochenmarkt",
+   "titleEn": "At the weekly market",
+   "category": "Shopping",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "A market stall with fruit and vegetables.",
+   "partner": "Mural is the stallholder.",
+   "goal": "Obst für die Woche kaufen.",
+   "goalEn": "Buy fruit for the week.",
+   "beats": [
+    {
+     "de": "Grüßen.",
+     "en": "Say hello."
+    },
+    {
+     "de": "Obst aussuchen.",
+     "en": "Choose the fruit."
+    },
+    {
+     "de": "Die Menge sagen.",
+     "en": "Say how much."
+    },
+    {
+     "de": "Bezahlen.",
+     "en": "Pay."
+    }
+   ]
+  },
+  {
+   "id": "sc-0083",
+   "title": "Frühstück bestellen",
+   "titleEn": "Ordering breakfast",
+   "category": "Food",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "A hotel breakfast room.",
+   "partner": "Mural is the waiter.",
+   "goal": "Frühstück und Kaffee bestellen.",
+   "goalEn": "Order breakfast and coffee.",
+   "beats": [
+    {
+     "de": "Platz nehmen und grüßen.",
+     "en": "Sit down and greet."
+    },
+    {
+     "de": "Kaffee bestellen.",
+     "en": "Order coffee."
+    },
+    {
+     "de": "Nach dem Buffet fragen.",
+     "en": "Ask about the buffet."
+    },
+    {
+     "de": "Dich bedanken.",
+     "en": "Say thanks."
+    }
+   ]
+  },
+  {
+   "id": "sc-0084",
+   "title": "Ein Taxi rufen",
+   "titleEn": "Calling a taxi",
+   "category": "Transport",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "On the phone to a taxi company in the evening.",
+   "partner": "Mural is the dispatcher.",
+   "goal": "Ein Taxi zur Adresse bestellen.",
+   "goalEn": "Order a taxi to your address.",
+   "beats": [
+    {
+     "de": "Die Adresse nennen.",
+     "en": "Give the address."
+    },
+    {
+     "de": "Das Ziel nennen.",
+     "en": "Give the destination."
+    },
+    {
+     "de": "Nach der Wartezeit fragen.",
+     "en": "Ask how long it will be."
+    },
+    {
+     "de": "Bestätigen.",
+     "en": "Confirm."
+    }
+   ]
+  },
+  {
+   "id": "sc-0085",
+   "title": "Nach dem Weg im Büro fragen",
+   "titleEn": "Finding your way in the office",
+   "category": "Work",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "A large office on the second day.",
+   "partner": "Mural is a colleague passing by.",
+   "goal": "Den Besprechungsraum finden.",
+   "goalEn": "Find the meeting room.",
+   "beats": [
+    {
+     "de": "Jemanden ansprechen.",
+     "en": "Approach someone."
+    },
+    {
+     "de": "Nach dem Raum fragen.",
+     "en": "Ask about the room."
+    },
+    {
+     "de": "Die Wegbeschreibung wiederholen.",
+     "en": "Repeat the directions."
+    },
+    {
+     "de": "Dich bedanken.",
+     "en": "Say thanks."
+    }
+   ]
+  },
+  {
+   "id": "sc-0086",
+   "title": "Die Waschküche",
+   "titleEn": "The laundry room",
+   "category": "Home",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "A shared laundry room in an apartment block.",
+   "partner": "Mural is a neighbour already using a machine.",
+   "goal": "Herausfinden, wann du waschen kannst.",
+   "goalEn": "Find out when you can wash.",
+   "beats": [
+    {
+     "de": "Grüßen.",
+     "en": "Say hello."
+    },
+    {
+     "de": "Nach der Maschine fragen.",
+     "en": "Ask about the machine."
+    },
+    {
+     "de": "Nach den Regeln fragen.",
+     "en": "Ask about the rules."
+    },
+    {
+     "de": "Eine Zeit vereinbaren.",
+     "en": "Agree a time."
+    }
+   ]
+  },
+  {
+   "id": "sc-0087",
+   "title": "Der Hund des Nachbarn",
+   "titleEn": "The neighbour's dog",
+   "category": "Small talk",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "In the park; the neighbour is walking their dog.",
+   "partner": "Mural is the dog's owner.",
+   "goal": "Ein kurzes Gespräch über den Hund führen.",
+   "goalEn": "Have a short chat about the dog.",
+   "beats": [
+    {
+     "de": "Grüßen.",
+     "en": "Say hello."
+    },
+    {
+     "de": "Den Hund loben.",
+     "en": "Compliment the dog."
+    },
+    {
+     "de": "Eine Frage stellen.",
+     "en": "Ask a question."
+    },
+    {
+     "de": "Dich verabschieden.",
+     "en": "Say goodbye."
+    }
+   ]
+  },
+  {
+   "id": "sc-0088",
+   "title": "Termin beim Friseur",
+   "titleEn": "An appointment at the hairdresser",
+   "category": "Health",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "A hair salon reception.",
+   "partner": "Mural is the receptionist.",
+   "goal": "Einen Termin für Freitag machen.",
+   "goalEn": "Make an appointment for Friday.",
+   "beats": [
+    {
+     "de": "Dein Anliegen nennen.",
+     "en": "Say what you want."
+    },
+    {
+     "de": "Einen Tag vorschlagen.",
+     "en": "Suggest a day."
+    },
+    {
+     "de": "Die Uhrzeit klären.",
+     "en": "Settle the time."
+    },
+    {
+     "de": "Deinen Namen geben.",
+     "en": "Give your name."
+    }
+   ]
+  },
+  {
+   "id": "sc-0089",
+   "title": "Briefmarken kaufen",
+   "titleEn": "Buying stamps",
+   "category": "Services",
+   "cefr": "A1",
+   "minutes": 5,
+   "setting": "A post office counter.",
+   "partner": "Mural is the clerk.",
+   "goal": "Briefmarken für einen Brief nach England kaufen.",
+   "goalEn": "Buy stamps for a letter to England.",
+   "beats": [
+    {
+     "de": "Dein Anliegen nennen.",
+     "en": "Say what you need."
+    },
+    {
+     "de": "Das Ziel nennen.",
+     "en": "Say where it is going."
+    },
+    {
+     "de": "Die Anzahl sagen.",
+     "en": "Say how many."
+    },
+    {
+     "de": "Bezahlen.",
+     "en": "Pay."
+    }
+   ]
+  },
+  {
+   "id": "sc-0090",
+   "title": "Die Besprechung vorbereiten",
+   "titleEn": "Preparing for the meeting",
+   "category": "Office",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "Half an hour before a meeting; slides are missing.",
+   "partner": "Mural is the colleague who has them.",
+   "goal": "Die Unterlagen rechtzeitig bekommen.",
+   "goalEn": "Get the materials in time.",
+   "beats": [
+    {
+     "de": "Das Problem nennen.",
+     "en": "Name the problem."
+    },
+    {
+     "de": "Um die Datei bitten.",
+     "en": "Ask for the file."
+    },
+    {
+     "de": "Eine Frist nennen.",
+     "en": "Give a deadline."
+    },
+    {
+     "de": "Dich bedanken.",
+     "en": "Say thanks."
+    }
+   ]
+  },
+  {
+   "id": "sc-0091",
+   "title": "Geschenk einpacken lassen",
+   "titleEn": "Getting a gift wrapped",
+   "category": "Shopping",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "A shop counter before a birthday.",
+   "partner": "Mural is the assistant.",
+   "goal": "Das Geschenk einpacken lassen.",
+   "goalEn": "Have the present wrapped.",
+   "beats": [
+    {
+     "de": "Um Geschenkpapier bitten.",
+     "en": "Ask for gift wrap."
+    },
+    {
+     "de": "Eine Farbe wählen.",
+     "en": "Choose a colour."
+    },
+    {
+     "de": "Nach einer Karte fragen.",
+     "en": "Ask about a card."
+    },
+    {
+     "de": "Bezahlen und danken.",
+     "en": "Pay and thank them."
+    }
+   ]
+  },
+  {
+   "id": "sc-0092",
+   "title": "Am Check-in-Schalter",
+   "titleEn": "At the check-in desk",
+   "category": "Travel",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "An airport check-in with a heavy bag.",
+   "partner": "Mural is the check-in agent.",
+   "goal": "Einchecken, ohne für Übergepäck zu zahlen.",
+   "goalEn": "Check in without paying for excess baggage.",
+   "beats": [
+    {
+     "de": "Die Buchung zeigen.",
+     "en": "Show the booking."
+    },
+    {
+     "de": "Das Gepäck aufgeben.",
+     "en": "Check the bag in."
+    },
+    {
+     "de": "Auf das Gewicht reagieren.",
+     "en": "Deal with the weight."
+    },
+    {
+     "de": "Den Platz klären.",
+     "en": "Sort out the seat."
+    },
+    {
+     "de": "Die Bordkarte nehmen.",
+     "en": "Take the boarding pass."
+    }
+   ]
+  },
+  {
+   "id": "sc-0093",
+   "title": "Verspätet ankommen",
+   "titleEn": "Arriving late",
+   "category": "Party",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "A dinner the learner reaches an hour late.",
+   "partner": "Mural is the host, a bit put out.",
+   "goal": "Dich entschuldigen und den Abend retten.",
+   "goalEn": "Apologise and save the evening.",
+   "beats": [
+    {
+     "de": "Dich entschuldigen.",
+     "en": "Apologise."
+    },
+    {
+     "de": "Den Grund nennen.",
+     "en": "Give the reason."
+    },
+    {
+     "de": "Etwas mitbringen oder anbieten.",
+     "en": "Offer what you brought."
+    },
+    {
+     "de": "Ins Gespräch finden.",
+     "en": "Join the conversation."
+    }
+   ]
+  },
+  {
+   "id": "sc-0094",
+   "title": "Rezept abholen",
+   "titleEn": "Collecting a prescription",
+   "category": "Health",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "A pharmacy; the prescription is not in the system.",
+   "partner": "Mural is the pharmacist.",
+   "goal": "Dein Medikament trotzdem bekommen.",
+   "goalEn": "Get your medicine anyway.",
+   "beats": [
+    {
+     "de": "Dein Anliegen nennen.",
+     "en": "State your business."
+    },
+    {
+     "de": "Das Problem klären.",
+     "en": "Sort out the problem."
+    },
+    {
+     "de": "Eine Lösung vorschlagen.",
+     "en": "Suggest a solution."
+    },
+    {
+     "de": "Den nächsten Schritt klären.",
+     "en": "Agree the next step."
+    }
+   ]
+  },
+  {
+   "id": "sc-0095",
+   "title": "Möbel liefern lassen",
+   "titleEn": "Arranging a delivery",
+   "category": "Home",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "On the phone about a sofa delivery.",
+   "partner": "Mural is the delivery coordinator.",
+   "goal": "Einen passenden Liefertermin bekommen.",
+   "goalEn": "Get a delivery slot that works.",
+   "beats": [
+    {
+     "de": "Die Bestellung nennen.",
+     "en": "Give the order."
+    },
+    {
+     "de": "Deine Zeiten nennen.",
+     "en": "Give your availability."
+    },
+    {
+     "de": "Auf den Vorschlag reagieren.",
+     "en": "Respond to their offer."
+    },
+    {
+     "de": "Den Termin bestätigen.",
+     "en": "Confirm the slot."
+    }
+   ]
+  },
+  {
+   "id": "sc-0096",
+   "title": "Kurs wechseln",
+   "titleEn": "Changing course",
+   "category": "Study",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "A course office; the class is too easy.",
+   "partner": "Mural is the course administrator.",
+   "goal": "In einen höheren Kurs wechseln.",
+   "goalEn": "Move up to a higher course.",
+   "beats": [
+    {
+     "de": "Dein Anliegen erklären.",
+     "en": "Explain what you want."
+    },
+    {
+     "de": "Deinen Stand begründen.",
+     "en": "Justify your level."
+    },
+    {
+     "de": "Nach dem Verfahren fragen.",
+     "en": "Ask about the procedure."
+    },
+    {
+     "de": "Den Wechsel festmachen.",
+     "en": "Settle the change."
+    }
+   ]
+  },
+  {
+   "id": "sc-0097",
+   "title": "Nach dem Weg zum Museum fragen",
+   "titleEn": "Asking the way to the museum",
+   "category": "Vacation",
+   "cefr": "A2",
+   "minutes": 6,
+   "setting": "A street corner in an unfamiliar city.",
+   "partner": "Mural is a local in a hurry.",
+   "goal": "Den Weg finden und ihn behalten.",
+   "goalEn": "Find the way and remember it.",
+   "beats": [
+    {
+     "de": "Höflich ansprechen.",
+     "en": "Approach politely."
+    },
+    {
+     "de": "Nach dem Weg fragen.",
+     "en": "Ask the way."
+    },
+    {
+     "de": "Die Beschreibung wiederholen.",
+     "en": "Repeat the directions."
+    },
+    {
+     "de": "Nach der Dauer fragen.",
+     "en": "Ask how long it takes."
+    }
+   ]
+  }
+ ]
+}
