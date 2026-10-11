@@ -113,6 +113,8 @@ pub struct Conv {
     // Coordinator tasks
     connection_task: Option<Task>,
     assessment_task: Option<Task>,
+    /// A turn arrived while an assessment was running; assess again once it finishes.
+    assessment_again: bool,
     delegation_tasks: HashMap<String, Task>,
     close_task: Option<Task>,
     duration_task: Option<Task>,
@@ -141,7 +143,8 @@ impl Default for Conv {
             recovery_task: None, ready_task: None,
             local_voice: false, local_notes: vec![], local_turn: None, local_turn_again: false,
             natural_voice: false, speech_task: None, prepare_task: None, preparing: None,
-            connection_task: None, assessment_task: None, delegation_tasks: HashMap::new(), close_task: None,
+            connection_task: None, assessment_task: None, assessment_again: false,
+            delegation_tasks: HashMap::new(), close_task: None,
             duration_task: None, save_task: None, reset_task: None, reset_deadline: None,
             activity: ConversationActivity::new(0.0), pace: ConversationPace::default(), plan: TeachingPlan::default(),
             last_language_check: String::new(), pending_commands: HashMap::new(), last_assessment_key: String::new(),
@@ -710,6 +713,13 @@ impl Mural {
             // Holding the microphone is engagement, even before any words arrive.
             if holding { c.activity.learner_engaged(uptime()); }
         }
+        if holding {
+            // The floor is theirs: stop Mural mid-sentence rather than swallow their opening words,
+            // which the recogniser would otherwise receive as a fragment and guess at.
+            if let Some(t) = conv.write_unchecked().speech_task.take() { t.cancel(); }
+            self.bridge_send(json!({"cmd": "barge_in"}));
+            voice::reset_listening();
+        }
         self.bridge_send(json!({"cmd": "mute", "muted": !holding}));
         let kind = if holding { "session.input_audio.unmute" } else { "session.input_audio.mute" };
         self.transport_send(json!({"type": kind, "event_id": new_id()}));
@@ -869,6 +879,9 @@ impl Mural {
             s.holding = holding;
             if holding { s.heard.clear(); s.result = None; }
         }
+        if holding {
+            self.bridge_send(json!({"cmd": "barge_in"}));
+        }
         self.bridge_send(json!({"cmd": "mute", "muted": !holding}));
         if holding { voice::reset_listening(); return; }
         spawn_forever(async move {
@@ -1013,7 +1026,7 @@ impl Mural {
             let mut c = conv.write_unchecked();
             c.state = ConnectionState::Closing;
             c.is_muted = true;
-            for t in [c.connection_task.take(), c.assessment_task.take(), c.duration_task.take()].into_iter().flatten() { t.cancel(); }
+            for t in [c.connection_task.take(), c.duration_task.take()].into_iter().flatten() { t.cancel(); }
             for (_, t) in c.delegation_tasks.drain() { t.cancel(); }
             c.working = false;
             if let Some(s) = c.session.as_mut() { s.end_reason = Some(reason.into()); }
@@ -1032,7 +1045,7 @@ impl Mural {
         if !conv.peek().is_running() { return; }
         {
             let mut c = conv.write_unchecked();
-            for t in [c.close_task.take(), c.duration_task.take(), c.connection_task.take(), c.assessment_task.take(), c.save_task.take()].into_iter().flatten() {
+            for t in [c.close_task.take(), c.duration_task.take(), c.connection_task.take(), c.save_task.take()].into_iter().flatten() {
                 t.cancel();
             }
             for (_, t) in c.delegation_tasks.drain() { t.cancel(); }
@@ -1637,6 +1650,35 @@ impl Mural {
         if expired { self.reset_conversation(); }
     }
 
+    /// Walks the arc forward: asks whether the next unfinished step has happened, and keeps
+    /// asking while the answer is yes, so a turn that covers two steps is not held back.
+    async fn check_beats(snapshot: SessionRecord, scenario: &'static Scenario, done: Vec<usize>) -> Vec<usize> {
+        let transcript = teaching::context(&snapshot, None);
+        let mut covered = vec![];
+        let mut next = (0..scenario.beats.len()).find(|i| !done.contains(i));
+        // Two steps in one turn is plausible; more usually means the model is agreeing with itself.
+        for _ in 0..2 {
+            let Some(index) = next else { break };
+            let answered = api::respond(&teaching::beat_check(scenario, index), &transcript, None, false).await;
+            let reached = match answered {
+                // One word is asked for; a sentence that starts with it is just as clear.
+                Ok(result) => {
+                    let said = result.text.trim().to_lowercase();
+                    said.starts_with("yes") || said.starts_with("ja")
+                }
+                Err(error) => {
+                    if tracing() { eprintln!("{:.1} beat check failed: {error}", uptime()); }
+                    false
+                }
+            };
+            if tracing() { eprintln!("{:.1} beat {index} reached: {reached}", uptime()); }
+            if !reached { break }
+            covered.push(index);
+            next = (index + 1 < scenario.beats.len()).then_some(index + 1);
+        }
+        covered
+    }
+
     /// Folds the beats a turn reached into the arc, and says so when the last one lands.
     fn scenario_progress(self, covered: Vec<usize>) {
         let Some(scenario) = self.conv.peek().scenario else { return };
@@ -1665,52 +1707,83 @@ impl Mural {
         }
     }
 
-    /// Chooses a scenario to play; the conversation itself starts from Talk.
+    /// Chooses a scenario to play. A conversation already running is moved to it, rather than
+    /// carrying on with the old situation while the screen shows the new one.
     pub fn choose_scenario(self, scenario: Option<&'static Scenario>) {
         let conv = self.conv;
         let (running, has_session) = { let c = conv.peek(); (c.is_running(), c.session.is_some()) };
         if !running && has_session { self.reset_conversation(); }
-        let mut c = conv.write_unchecked();
-        c.scenario = scenario;
-        c.beats_covered.clear();
-        c.wrapping_up = false;
-        if scenario.is_some() { c.selected_theme = None; c.pending_topic = None; }
+        {
+            let mut c = conv.write_unchecked();
+            c.scenario = scenario;
+            c.beats_covered.clear();
+            c.wrapping_up = false;
+            if scenario.is_some() { c.selected_theme = None; c.pending_topic = None; }
+        }
+        if conv.peek().state != ConnectionState::Active { return; }
+        let language = self.language();
+        {
+            let mut c = conv.write_unchecked();
+            if let Some(s) = c.session.as_mut() {
+                s.theme_id = scenario.map(|x| x.id.clone());
+                s.title = scenario.map(|x| x.title.clone()).unwrap_or_else(|| language.default_title());
+            }
+        }
+        self.append("instructions", &teaching::switch_scenario(language, scenario), None);
+        self.local_speak_now();
+        self.save();
     }
 
 
     // ---------- Assessment ----------
 
-    async fn assess(snapshot: SessionRecord, passage: Passage, scenario: Option<&'static Scenario>)
-        -> Result<(Assessment, Vec<usize>, Usage), String> {
+    async fn assess(snapshot: SessionRecord, passage: Passage) -> Result<(Assessment, Usage), String> {
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
         struct AssessmentResult { outcome: Outcome, suggested_level: i64, next_goal: String, capability: String, words: Vec<WordProposal>,
-            #[serde(default)] errors: Vec<ErrorProposal>, #[serde(default)] beats_covered: Vec<usize> }
+            #[serde(default)] errors: Vec<ErrorProposal> }
         let language = languages::module(&snapshot.language_id).ok_or("unsupported language")?;
-        let beats = scenario.map(|s| s.beats.len()).unwrap_or(0);
-        let mut prompt = teaching::assessment(language);
-        if let Some(scenario) = scenario { prompt.push_str(&teaching::beats_note(scenario)); }
-        let result = api::respond(&prompt, &teaching::context(&snapshot, Some(&passage)), Some(api::assessment_schema(language, beats)), false)
-            .await.map_err(|e| e.to_string())?;
-        let decoded: AssessmentResult = serde_json::from_str(&result.text).map_err(|e| e.to_string())?;
-        // A model can name a beat that does not exist; those are dropped rather than trusted.
-        let covered: Vec<usize> = decoded.beats_covered.into_iter()
-            .filter(|i| scenario.map(|s| s.valid_beat(*i)).unwrap_or(false))
-            .collect();
+        let result = api::respond(&teaching::assessment(language), &teaching::context(&snapshot, Some(&passage)),
+            Some(api::assessment_schema(language)), false).await.map_err(|e| e.to_string())?;
+        let decoded: AssessmentResult = match serde_json::from_str(&result.text) {
+            Ok(decoded) => decoded,
+            Err(error) => {
+                if tracing() { eprintln!("{:.1} assess could not read the reply: {error} in {}", uptime(), prefix(&result.text, 160)); }
+                return Err(error.to_string());
+            }
+        };
         let proposed = Assessment {
             passage_id: passage.id.clone(), revision_key: passage.revision_key(), outcome: decoded.outcome,
             suggested_level: decoded.suggested_level, next_goal: decoded.next_goal, capability: decoded.capability,
             words: decoded.words, errors: decoded.errors, created_at: Date::now(),
             context: snapshot.theme_id.clone().unwrap_or_else(|| "free".into()),
         };
-        Ok((proposed, covered, result.usage))
+        Ok((proposed, result.usage))
     }
 
+    /// Assesses the latest turn. A model on this computer can take a minute over it, so a running
+    /// assessment is never cancelled for a newer one: the newer turn waits and runs after it.
     fn schedule_assessment(self) {
         let conv = self.conv;
-        if let Some(t) = conv.write_unchecked().assessment_task.take() { t.cancel(); }
+        if conv.peek().assessment_task.is_some() {
+            conv.write_unchecked().assessment_again = true;
+            return;
+        }
         let task = spawn_forever(async move {
             sleep(1.5).await;
+            self.assess_turn().await;
+            let again = {
+                let mut c = self.conv.write_unchecked();
+                c.assessment_task = None;
+                std::mem::take(&mut c.assessment_again)
+            };
+            if again { self.schedule_assessment(); }
+        });
+        conv.write_unchecked().assessment_task = Some(task);
+    }
+
+    async fn assess_turn(self) {
+        {
             let conv = self.conv;
             let (snapshot, passage) = {
                 let c = conv.peek();
@@ -1720,10 +1793,19 @@ impl Mural {
                 (snapshot, p)
             };
             let Some(target) = languages::module(&snapshot.language_id) else { return };
+            if tracing() { eprintln!("{:.1} assessing passage {}", uptime(), prefix(&passage.text(), 40)); }
             // The passage remains saved without unverified learning evidence.
-            let scenario = conv.peek().scenario;
-            let Ok((assessment, covered, usage)) = Self::assess(snapshot.clone(), passage.clone(), scenario).await else { return };
-            self.scenario_progress(covered);
+            // Read the scenario out before awaiting: a borrow held across an await blocks every write.
+            let (scenario, done) = { let c = conv.peek(); (c.scenario, c.beats_covered.clone()) };
+            if let Some(scenario) = scenario {
+                let covered = Self::check_beats(snapshot.clone(), scenario, done).await;
+                self.scenario_progress(covered);
+            }
+            let assessed = Self::assess(snapshot.clone(), passage.clone()).await;
+            if let Err(error) = &assessed {
+                if tracing() { eprintln!("{:.1} assessment failed: {error}", uptime()); }
+            }
+            let Ok((assessment, usage)) = assessed else { return };
             let validated = {
                 let c = conv.peek();
                 let same = c.state == ConnectionState::Active && c.session.as_ref().map(|s| s.id == snapshot.id).unwrap_or(false)
@@ -1759,8 +1841,7 @@ impl Mural {
             self.append("thinking", &format!(
                 "Teaching context, not spoken text: challenge {}/5 in {}. Next goal: {}. Revisit naturally: {}.",
                 learner.challenge, target.name, learner.next_goal, learner.due_words(3)), None);
-        });
-        conv.write_unchecked().assessment_task = Some(task);
+        }
     }
 
     /// Finishes the latest unassessed user passage without owning the visible conversation.
@@ -1780,12 +1861,12 @@ impl Mural {
         let request = {
             let (token, session_id) = (token.clone(), session_id.clone());
             spawn_forever(async move {
-                let result = if consent { Self::assess(session.clone(), passage, None).await } else { Err(AI_CONSENT_REQUIRED.into()) };
+                let result = if consent { Self::assess(session.clone(), passage).await } else { Err(AI_CONSENT_REQUIRED.into()) };
                 let job_matches = self.conv.peek().final_jobs.get(&session_id).map(|j| j.token == token).unwrap_or(false);
                 if !job_matches { return; }
                 let job = self.conv.write_unchecked().final_jobs.remove(&session_id);
                 if let Some(job) = &job { job.timer.cancel(); }
-                let (Ok((assessment, _, usage)), Some(job)) = (result, job) else { return };
+                let (Ok((assessment, usage)), Some(job)) = (result, job) else { return };
                 if Date::now() > job.deadline { return; }
                 self.apply_final_assessment(&session_id, &session.language_id, assessment, usage);
             })

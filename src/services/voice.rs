@@ -189,6 +189,11 @@ struct State {
     history_start: usize,
 }
 
+/// Shorter than this is a breath, a click or a chair, and a multilingual recogniser will turn it
+/// into a confident sentence in the wrong language. The VAD already holds normal segments to
+/// 0.3s; this guards the flush on release, which has no such floor.
+const MIN_SPEECH: usize = (SAMPLE_RATE as usize) * 35 / 100;
+
 /// Silero reports speech slightly late; this much earlier audio keeps the first word intact.
 const LEAD_IN: usize = SAMPLE_RATE as usize * 2 / 5;
 const HISTORY: usize = SAMPLE_RATE as usize * 40;
@@ -351,6 +356,10 @@ impl State {
         let (Some(vad), Some(loaded)) = (&self.vad, &self.loaded) else { return vec![] };
         let mut heard = vec![];
         while let Some(segment) = vad.front() {
+            if segment.samples().len() < MIN_SPEECH {
+                vad.pop();
+                continue;
+            }
             let start = (segment.start().max(0) as usize).saturating_sub(LEAD_IN).max(self.history_start);
             let end = segment.start().max(0) as usize + segment.samples().len();
             let audio = self.history.get(start - self.history_start..end.saturating_sub(self.history_start).min(self.history.len()))
