@@ -50,6 +50,7 @@ struct Catalogue {
 /// under the same ids, adapted rather than translated.
 const CATALOGUES: &[(&str, &str)] = &[
     ("de", include_str!("../../assets/scenarios/de.json")),
+    ("es", include_str!("../../assets/scenarios/es.json")),
 ];
 
 pub fn all(language_id: &str) -> &'static [Scenario] {
