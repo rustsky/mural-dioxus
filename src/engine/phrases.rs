@@ -56,6 +56,7 @@ const CATALOGUES: &[(&str, &str)] = &[
     ("de", include_str!("../../assets/phrases/de.json")),
     ("es", include_str!("../../assets/phrases/es.json")),
     ("fr", include_str!("../../assets/phrases/fr.json")),
+    ("it", include_str!("../../assets/phrases/it.json")),
 ];
 
 /// Every phrase for a language, in catalogue order, or empty when there is no list yet.

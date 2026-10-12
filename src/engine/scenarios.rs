@@ -52,6 +52,7 @@ const CATALOGUES: &[(&str, &str)] = &[
     ("de", include_str!("../../assets/scenarios/de.json")),
     ("es", include_str!("../../assets/scenarios/es.json")),
     ("fr", include_str!("../../assets/scenarios/fr.json")),
+    ("it", include_str!("../../assets/scenarios/it.json")),
 ];
 
 pub fn all(language_id: &str) -> &'static [Scenario] {
