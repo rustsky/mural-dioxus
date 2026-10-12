@@ -108,9 +108,10 @@ mod tests {
                                    ("category", &s.category)] {
                 assert!(!value.trim().is_empty(), "{} has no {field}", s.id);
             }
-            // Five to ten minutes: long enough to go somewhere, short enough to finish.
-            assert!((5..=10).contains(&s.minutes), "{} runs {} minutes", s.id, s.minutes);
-            assert!((3..=6).contains(&s.beats.len()), "{} has {} beats", s.id, s.beats.len());
+            // Finer steps the higher the level, and about a minute for every two of them.
+            let expected = match s.cefr { Band::A1 => 12, Band::A2 => 15, Band::B1 => 18, Band::B2 => 21, Band::C1 => 25 };
+            assert_eq!(s.beats.len(), expected, "{} ({}) has {} beats", s.id, s.cefr.label(), s.beats.len());
+            assert_eq!(s.minutes as usize, expected.div_ceil(2), "{} runs {} minutes", s.id, s.minutes);
             for beat in &s.beats {
                 assert!(!beat.de.trim().is_empty() && !beat.en.trim().is_empty(), "{} has an empty beat", s.id);
             }
