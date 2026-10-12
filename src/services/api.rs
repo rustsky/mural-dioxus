@@ -275,10 +275,38 @@ pub async fn converse(messages: Vec<Value>) -> Result<ApiResult, ApiError> {
     if !settings.teacher.is_ollama() { return Err(ApiError::MissingKey); }
     let key = ollama_key(&settings)?;
     let _turn = VoiceTurn::begin();
-    match ollama_chat(&settings, key.as_deref(), messages.clone(), None, Some(Spoken { retry: false })).await {
-        Err(ApiError::Incomplete) => ollama_chat(&settings, key.as_deref(), messages, None, Some(Spoken { retry: true })).await,
+    // A schema keeps gpt-oss to one turn: without it, it often goes on to speak the learner's
+    // part and its own reasoning too.
+    let schema = Some(object(vec![("reply", json!({"type": "string"}))]));
+    let result = match ollama_chat(&settings, key.as_deref(), messages.clone(), schema.clone(), Some(Spoken { retry: false })).await {
+        Err(ApiError::Incomplete) => ollama_chat(&settings, key.as_deref(), messages, schema, Some(Spoken { retry: true })).await,
         other => other,
+    };
+    result.and_then(|mut r| {
+        r.text = first_turn(&spoken_reply(&r.text)).to_string();
+        if r.text.is_empty() { Err(ApiError::Incomplete) } else { Ok(r) }
+    })
+}
+
+/// The `reply` field of a spoken answer. Some models answer in plain text despite the schema.
+fn spoken_reply(text: &str) -> String {
+    match serde_json::from_str::<Value>(text) {
+        Ok(json) if json.is_object() => json["reply"].as_str().unwrap_or("").trim().to_string(),
+        _ => text.to_string(),
     }
+}
+
+/// The reply up to where the model starts a turn of its own. gpt-oss sometimes runs on past its
+/// turn, speaking the learner's part and its own reasoning too; the turn markers are stripped, so
+/// the seams show as a sentence glued to the next ("dazu?Möchtest") or a blank line.
+fn first_turn(text: &str) -> &str {
+    let mut chars = text.char_indices().peekable();
+    while let Some((i, c)) = chars.next() {
+        let Some(&(_, next)) = chars.peek() else { break };
+        if matches!(c, '.' | '!' | '?' | '…') && next.is_uppercase() { return &text[..i + c.len_utf8()]; }
+        if c == '\n' && next == '\n' { return text[..i].trim_end(); }
+    }
+    text
 }
 
 /// Context window for a model on this computer. Every request uses the same value, because
@@ -334,10 +362,23 @@ pub async fn ollama_models(teacher: Teacher) -> Result<Vec<String>, ApiError> {
     let (status, bytes) = ollama_send(&settings, request, key.as_deref()).await?;
     if !(200..300).contains(&status) { return Err(ApiError::Ollama { status, model: String::new() }); }
     let json: Value = serde_json::from_slice(&bytes).map_err(|_| ApiError::InvalidResponse)?;
+    // Local models load into this computer's memory next to Mural's own speech models; hide the ones that won't fit.
+    let budget = if teacher == Teacher::OllamaLocal { local_model_budget() } else { None };
     let mut names: Vec<String> = json["models"].as_array().into_iter().flatten()
+        .filter(|m| fits(m["size"].as_u64(), budget))
         .filter_map(|m| m["name"].as_str().or(m["model"].as_str()).map(String::from)).collect();
     names.sort();
     Ok(names)
+}
+
+fn fits(size: Option<u64>, budget: Option<u64>) -> bool {
+    match (size, budget) { (Some(size), Some(budget)) => size <= budget, _ => true }
+}
+
+/// Half of physical memory: room for the model's weights and context with the rest of the computer still usable.
+fn local_model_budget() -> Option<u64> {
+    let out = std::process::Command::new("/usr/sbin/sysctl").args(["-n", "hw.memsize"]).output().ok()?;
+    String::from_utf8(out.stdout).ok()?.trim().parse::<u64>().ok().map(|bytes| bytes / 2)
 }
 
 fn object(fields: Vec<(&str, Value)>) -> Value {
@@ -389,6 +430,15 @@ mod tests {
     use super::*;
 
     #[test]
+    fn hides_local_models_over_memory_budget() {
+        let budget = Some(8_000_000_000);
+        assert!(fits(Some(2_019_393_189), budget));
+        assert!(!fits(Some(13_793_441_244), budget));
+        assert!(fits(None, budget));
+        assert!(fits(Some(13_793_441_244), None));
+    }
+
+    #[test]
     fn parses_text_citations_and_usage() {
         let json = json!({
             "status": "completed",
@@ -409,6 +459,24 @@ mod tests {
         assert_eq!(parse_response(&json!({"status": "incomplete"})), Err(ApiError::Incomplete));
         let refused = json!({"status": "completed", "output": [{"content": [{"type": "refusal"}]}]});
         assert_eq!(parse_response(&refused), Err(ApiError::Refused));
+    }
+
+    #[test]
+    fn keeps_only_the_first_spoken_turn() {
+        assert_eq!(first_turn("Ein Sesambrötchen, verstanden. Und das Croissant dazu?Möchtest du das Croissant noch dazu?Ja, das Croissant wäre gut!"),
+            "Ein Sesambrötchen, verstanden. Und das Croissant dazu?");
+        assert_eq!(first_turn("Okay, dann 3 Euro, bitte.\n\nWe need to respond politely."), "Okay, dann 3 Euro, bitte.");
+        assert_eq!(first_turn("Hallo! Was möchtest du heute kaufen?"), "Hallo! Was möchtest du heute kaufen?");
+        assert_eq!(first_turn("Das kostet 2.50 Euro."), "Das kostet 2.50 Euro.");
+        assert_eq!(first_turn("你好！你想买什么？"), "你好！你想买什么？");
+    }
+
+    #[test]
+    fn reads_the_spoken_reply_field_or_plain_text() {
+        assert_eq!(spoken_reply(r#"{"reply": " Ein Sesambrötchen, gern. "}"#), "Ein Sesambrötchen, gern.");
+        assert_eq!(spoken_reply("Ein Sesambrötchen, gern."), "Ein Sesambrötchen, gern.");
+        assert_eq!(spoken_reply(r#"{"answer": "x"}"#), "");
+        assert_eq!(spoken_reply("3"), "3");
     }
 
     #[test]

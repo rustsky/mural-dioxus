@@ -368,13 +368,38 @@ impl State {
             let stream = loaded.recognizer.create_stream();
             stream.accept_waveform(SAMPLE_RATE, audio);
             loaded.recognizer.decode(&stream);
-            if let Some(text) = stream.get_result().map(|r| r.text.trim().to_string()).filter(|t| !t.is_empty()) {
-                heard.push(text);
-            }
+            let text = stream.get_result().map(|r| r.text.trim().to_string()).unwrap_or_default();
+            if std::env::var("MURAL_TRACE").is_ok() { keep_utterance(audio, &text); }
+            if !text.is_empty() { heard.push(text); }
             vad.pop();
         }
         heard
     }
+}
+
+/// Tracing only: saves what the recogniser heard as a 16-bit WAV next to its transcript, so
+/// recognisers can be compared on a learner's real voice rather than a synthetic one.
+fn keep_utterance(audio: &[f32], text: &str) {
+    let dir = LearningStore::directory().join("utterances");
+    if std::fs::create_dir_all(&dir).is_err() { return; }
+    let name = chrono::Local::now().format("%Y%m%d-%H%M%S%3f").to_string();
+    let data: Vec<u8> = audio.iter().flat_map(|s| ((s.clamp(-1.0, 1.0) * 32767.0) as i16).to_le_bytes()).collect();
+    let mut wav = Vec::with_capacity(44 + data.len());
+    wav.extend_from_slice(b"RIFF");
+    wav.extend_from_slice(&(36 + data.len() as u32).to_le_bytes());
+    wav.extend_from_slice(b"WAVEfmt ");
+    wav.extend_from_slice(&16u32.to_le_bytes());
+    wav.extend_from_slice(&1u16.to_le_bytes());
+    wav.extend_from_slice(&1u16.to_le_bytes());
+    wav.extend_from_slice(&(SAMPLE_RATE as u32).to_le_bytes());
+    wav.extend_from_slice(&(SAMPLE_RATE as u32 * 2).to_le_bytes());
+    wav.extend_from_slice(&2u16.to_le_bytes());
+    wav.extend_from_slice(&16u16.to_le_bytes());
+    wav.extend_from_slice(b"data");
+    wav.extend_from_slice(&(data.len() as u32).to_le_bytes());
+    wav.extend_from_slice(&data);
+    let _ = std::fs::write(dir.join(format!("{name}.wav")), wav);
+    let _ = std::fs::write(dir.join(format!("{name}.txt")), text);
 }
 
 /// Speaks `text`, sending each sentence's audio (samples, sample rate) as soon as it is ready.

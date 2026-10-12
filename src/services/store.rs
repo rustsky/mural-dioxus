@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::engine::languages::{self, LanguageModule};
 use crate::engine::learning::{LearnerState, LearningEngine};
-use crate::engine::models::{Archive, Preferences, SessionRecord, Speaker};
+use crate::engine::models::{Archive, KeptWord, Preferences, SessionRecord, Speaker};
 use crate::engine::text::prefix;
 use crate::engine::time::Date;
 
@@ -87,7 +87,8 @@ impl LearningStore {
     }
     pub fn session(&self, id: &str) -> Option<&SessionRecord> { self.archive.sessions.iter().find(|s| s.id == id) }
     pub fn learner(&self) -> LearnerState {
-        LearningEngine::project(&self.archive.sessions, self.language().id, &self.archive.preferences.hidden_words, Date::now())
+        LearningEngine::project(&self.archive.sessions, self.language().id,
+            &self.archive.preferences.hidden_words, &self.archive.preferences.kept_words, Date::now())
     }
     pub fn select_language(&mut self, id: &str) {
         if languages::module(id).is_none() { return; }
@@ -109,6 +110,27 @@ impl LearningStore {
         self.archive.sessions.retain(|s| s.id != id);
         self.persist();
     }
+    /// Keeps a looked-up word. It joins the list with no strength: the bars still have to be
+    /// earned by using the word in conversation.
+    pub fn keep_word(&mut self, lemma: &str, meaning: &str, example: &str) -> bool {
+        let language_id = self.language().id.to_string();
+        let word = KeptWord {
+            lemma: lemma.trim().to_string(),
+            meaning: meaning.trim().to_string(),
+            example: example.trim().to_string(),
+            language_id,
+            kept_at: Date::now(),
+        };
+        if word.lemma.is_empty() || word.meaning.is_empty() { return false; }
+        let key = word.key();
+        if self.archive.preferences.kept_words.iter().any(|w| w.key() == key) { return false; }
+        // Keeping a word the learner once removed is a change of mind, not a conflict.
+        self.archive.preferences.hidden_words.retain(|h| h != &key);
+        self.archive.preferences.kept_words.push(word);
+        self.persist();
+        true
+    }
+
     pub fn hide_word(&mut self, id: &str) {
         self.archive.preferences.hidden_words.push(id.into());
         self.persist();

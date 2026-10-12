@@ -292,7 +292,7 @@ fn TeacherSection(running: bool) -> Element {
         loading.set(true);
         spawn(async move {
             match api::ollama_models(teacher).await {
-                Ok(list) => { message.set(if list.is_empty() { Some("No models found. Run “ollama pull llama3.2” first, and pick a model that fits in this computer’s memory.".into()) } else { None }); models.set(list); }
+                Ok(list) => { message.set(if list.is_empty() { Some("No models found that fit in this computer’s memory. Run “ollama pull llama3.2” first.".into()) } else { None }); models.set(list); }
                 Err(e) => { models.set(vec![]); message.set(Some(e.to_string())); }
             }
             loading.set(false);

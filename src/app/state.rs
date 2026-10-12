@@ -115,6 +115,11 @@ pub struct Conv {
     assessment_task: Option<Task>,
     /// A turn arrived while an assessment was running; assess again once it finishes.
     assessment_again: bool,
+    /// The scenario checker: its own session beside the conversation and the assessment, on the
+    /// same teacher, so a long assessment never holds it back and ending the conversation never
+    /// cuts it off.
+    check_task: Option<Task>,
+    check_again: bool,
     delegation_tasks: HashMap<String, Task>,
     close_task: Option<Task>,
     duration_task: Option<Task>,
@@ -143,7 +148,7 @@ impl Default for Conv {
             recovery_task: None, ready_task: None,
             local_voice: false, local_notes: vec![], local_turn: None, local_turn_again: false,
             natural_voice: false, speech_task: None, prepare_task: None, preparing: None,
-            connection_task: None, assessment_task: None, assessment_again: false,
+            connection_task: None, assessment_task: None, assessment_again: false, check_task: None, check_again: false,
             delegation_tasks: HashMap::new(), close_task: None,
             duration_task: None, save_task: None, reset_task: None, reset_deadline: None,
             activity: ConversationActivity::new(0.0), pace: ConversationPace::default(), plan: TeachingPlan::default(),
@@ -203,7 +208,6 @@ pub enum Sheet {
     AiConsent,
     TypedReply,
     Transcript,
-    Lookup { word: String, sentence: String },
     CurrentTopic,
     WordDetail(String),
     History,
@@ -670,7 +674,7 @@ impl Mural {
         {
             let mut c = conv.write_unchecked();
             c.language_generation += 1;
-            for t in [c.connection_task.take(), c.close_task.take(), c.duration_task.take(), c.assessment_task.take(), c.save_task.take()].into_iter().flatten() {
+            for t in [c.connection_task.take(), c.close_task.take(), c.duration_task.take(), c.assessment_task.take(), c.check_task.take(), c.save_task.take()].into_iter().flatten() {
                 t.cancel();
             }
             for (_, t) in c.delegation_tasks.drain() { t.cancel(); }
@@ -957,6 +961,7 @@ impl Mural {
         {
             let mut c = self.conv.write_unchecked();
             if let Some(t) = c.assessment_task.take() { t.cancel(); }
+            if let Some(t) = c.check_task.take() { t.cancel(); }
             if let Some(t) = c.save_task.take() { t.cancel(); }
         }
         self.reset_conversation();
@@ -1183,6 +1188,7 @@ impl Mural {
                     if state == ConnectionState::Active { self.check_language(); }
                 } else if state == ConnectionState::Active {
                     self.schedule_assessment();
+                    self.schedule_check();
                 }
             }
             "session.delegation.created" => {
@@ -1431,6 +1437,15 @@ impl Mural {
                         messages.push(json!({"role": "user", "content": joined}));
                     }
                 }
+                // Nothing new to answer. Ending on Mural's own words makes the model continue them,
+                // and it soon starts speaking the learner's part too.
+                if messages.last().map(|m| m["role"] != "user").unwrap_or(true) {
+                    c.local_turn = None;
+                    c.local_turn_again = false;
+                    drop(c);
+                    self.local_listen();
+                    return;
+                }
                 (messages, session.id)
             };
             conv.write_unchecked().working = true;
@@ -1608,6 +1623,8 @@ impl Mural {
         self.meaning_reset();
         let mut c = conv.write_unchecked();
         if let Some(t) = c.save_task.take() { t.cancel(); }
+        if let Some(t) = c.check_task.take() { t.cancel(); }
+        c.check_again = false;
         c.language_generation += 1;
         c.session = None;
         c.selected_theme = None;
@@ -1650,15 +1667,14 @@ impl Mural {
         if expired { self.reset_conversation(); }
     }
 
-    /// Walks the arc forward: asks whether the next unfinished step has happened, and keeps
-    /// asking while the answer is yes, so a turn that covers two steps is not held back.
+    /// Asks about each unfinished step in turn. A skipped step doesn't hold back the ones after
+    /// it: learners often leave out the greeting and go straight to ordering.
     async fn check_beats(snapshot: SessionRecord, scenario: &'static Scenario, done: Vec<usize>) -> Vec<usize> {
-        let transcript = teaching::context(&snapshot, None);
+        let transcript = teaching::scenario_transcript(&snapshot);
         let mut covered = vec![];
-        let mut next = (0..scenario.beats.len()).find(|i| !done.contains(i));
-        // Two steps in one turn is plausible; more usually means the model is agreeing with itself.
-        for _ in 0..2 {
-            let Some(index) = next else { break };
+        for index in (0..scenario.beats.len()).filter(|i| !done.contains(i)) {
+            // Two steps in one turn is plausible; more usually means the model is agreeing with itself.
+            if covered.len() == 2 { break }
             let answered = api::respond(&teaching::beat_check(scenario, index), &transcript, None, false).await;
             let reached = match answered {
                 // One word is asked for; a sentence that starts with it is just as clear.
@@ -1672,9 +1688,7 @@ impl Mural {
                 }
             };
             if tracing() { eprintln!("{:.1} beat {index} reached: {reached}", uptime()); }
-            if !reached { break }
-            covered.push(index);
-            next = (index + 1 < scenario.beats.len()).then_some(index + 1);
+            if reached { covered.push(index); }
         }
         covered
     }
@@ -1782,6 +1796,45 @@ impl Mural {
         conv.write_unchecked().assessment_task = Some(task);
     }
 
+    /// Checks the scenario's steps after a learner turn, in the checker's own session. A turn that
+    /// arrives meanwhile is checked once this one finishes.
+    fn schedule_check(self) {
+        let conv = self.conv;
+        if conv.peek().scenario.is_none() { return; }
+        if conv.peek().check_task.is_some() {
+            conv.write_unchecked().check_again = true;
+            return;
+        }
+        let task = spawn_forever(async move {
+            sleep(1.0).await;
+            self.check_turn().await;
+            let again = {
+                let mut c = self.conv.write_unchecked();
+                c.check_task = None;
+                std::mem::take(&mut c.check_again)
+            };
+            if again { self.schedule_check(); }
+        });
+        conv.write_unchecked().check_task = Some(task);
+    }
+
+    async fn check_turn(self) {
+        // Read everything out before awaiting: a borrow held across an await blocks every write.
+        let (snapshot, scenario, done) = {
+            let c = self.conv.peek();
+            let (Some(snapshot), Some(scenario)) = (c.session.clone(), c.scenario) else { return };
+            (snapshot, scenario, c.beats_covered.clone())
+        };
+        if done.len() >= scenario.beats.len() { return; }
+        let covered = Self::check_beats(snapshot.clone(), scenario, done).await;
+        // The conversation may have ended meanwhile, which is fine; a different one is not.
+        let same = {
+            let c = self.conv.peek();
+            c.session.as_ref().map(|s| s.id == snapshot.id).unwrap_or(false) && c.scenario.map(|s| s.id == scenario.id).unwrap_or(false)
+        };
+        if same { self.scenario_progress(covered); }
+    }
+
     async fn assess_turn(self) {
         {
             let conv = self.conv;
@@ -1795,12 +1848,6 @@ impl Mural {
             let Some(target) = languages::module(&snapshot.language_id) else { return };
             if tracing() { eprintln!("{:.1} assessing passage {}", uptime(), prefix(&passage.text(), 40)); }
             // The passage remains saved without unverified learning evidence.
-            // Read the scenario out before awaiting: a borrow held across an await blocks every write.
-            let (scenario, done) = { let c = conv.peek(); (c.scenario, c.beats_covered.clone()) };
-            if let Some(scenario) = scenario {
-                let covered = Self::check_beats(snapshot.clone(), scenario, done).await;
-                self.scenario_progress(covered);
-            }
             let assessed = Self::assess(snapshot.clone(), passage.clone()).await;
             if let Err(error) = &assessed {
                 if tracing() { eprintln!("{:.1} assessment failed: {error}", uptime()); }
@@ -2036,10 +2083,23 @@ impl Mural {
                     c.inactivity_seconds = None;
                 }
                 self.schedule_assessment();
+                self.schedule_check();
                 self.save();
                 true
             }
         }
+    }
+
+    /// A short gloss for the word list, asked for separately so the list stays readable: the
+    /// explanation shown on screen is prose, and its first sentence is not always the meaning.
+    pub async fn gloss(self, word: String, sentence: String) -> Result<String, String> {
+        if !self.has_ai_consent() { return Err(AI_CONSENT_REQUIRED.into()); }
+        let meaning_language = self.store.peek().preferences().meaning_language.clone();
+        let result = api::respond(&teaching::gloss(self.language(), &meaning_language),
+            &format!("Selected: {word}\nSentence: {sentence}"), None, false)
+            .await.map_err(|e| e.to_string())?;
+        self.add_usage(result.usage);
+        Ok(result.text.trim().trim_end_matches('.').to_string())
     }
 
     pub async fn lookup(self, word: String, sentence: String) -> Result<String, String> {

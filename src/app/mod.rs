@@ -102,7 +102,6 @@ fn Main(store: Signal<Option<crate::services::store::LearningStore>>) -> Element
                         Sheet::AiConsent => rsx! { onboarding::AiConsentSheet {} },
                         Sheet::TypedReply => rsx! { talk::TypedReplySheet {} },
                         Sheet::Transcript => rsx! { library::TranscriptSheet {} },
-                        Sheet::Lookup { word, sentence } => rsx! { talk::LookupSheet { word, sentence } },
                         Sheet::CurrentTopic => rsx! { library::CurrentTopicSheet {} },
                         Sheet::WordDetail(id) => rsx! { library::WordDetailSheet { id } },
                         Sheet::History => rsx! { library::HistorySheet {} },

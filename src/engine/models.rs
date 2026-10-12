@@ -286,6 +286,27 @@ impl SessionRecord {
     }
 }
 
+/// A word the learner looked up and chose to keep. It carries no recall evidence: strength still
+/// has to be earned by using the word in conversation.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct KeptWord {
+    pub lemma: String,
+    pub meaning: String,
+    pub example: String,
+    #[serde(rename = "languageID")]
+    pub language_id: String,
+    pub kept_at: Date,
+}
+
+impl KeptWord {
+    /// The same key the projection uses, so a kept word and the same word earned in conversation
+    /// are one entry rather than two.
+    pub fn key(&self) -> String {
+        format!("{}|{}|{}", self.language_id, self.lemma.trim().to_lowercase(), self.meaning.to_lowercase())
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Preferences {
@@ -296,6 +317,8 @@ pub struct Preferences {
     pub session_minutes: i64,
     #[serde(default)]
     pub hidden_words: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub kept_words: Vec<KeptWord>,
     #[serde(default)]
     pub interests: String,
     #[serde(default)]
@@ -308,7 +331,8 @@ impl Default for Preferences {
     fn default() -> Self {
         Self {
             learning_language_id: DEFAULT_ID.into(), meaning_visible: true, meaning_language: "English".into(),
-            session_minutes: 15, hidden_words: vec![], interests: String::new(), has_onboarded: false, ai_consent_version: None,
+            session_minutes: 15, hidden_words: vec![], kept_words: vec![], interests: String::new(),
+            has_onboarded: false, ai_consent_version: None,
         }
     }
 }

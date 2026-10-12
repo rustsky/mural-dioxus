@@ -61,6 +61,10 @@ mod platform {
         get_generic_password(service, ACCOUNT).ok().and_then(|d| String::from_utf8(d).ok())
     }
     pub fn save(service: &str, value: &str) -> Result<(), KeyError> {
+        // Updating an item keeps its access list, which trusts only the build that created it.
+        // An ad-hoc signed rebuild is a different app to the Keychain and can't read it back, so
+        // replace the item and let this build create it.
+        let _ = delete(service);
         set_generic_password(service, ACCOUNT, value.as_bytes()).map_err(|_| KeyError::Save)
     }
     pub fn delete(service: &str) -> Result<(), KeyError> {
