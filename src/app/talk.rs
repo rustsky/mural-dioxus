@@ -112,7 +112,7 @@ pub fn TalkView() -> Element {
                                     onmouseenter: move |_| hovered.set(Some(i)),
                                     onmouseleave: move |_| hovered.set(None),
                                     if conv.beats_covered.contains(&i) { Icon { name: "checkmark.circle.fill", size: 12 } }
-                                    span { "{beat.de}" }
+                                    span { "{beat.text}" }
                                 }
                             }
                         }

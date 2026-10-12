@@ -27,7 +27,7 @@ pub fn ShadowView() -> Element {
         return rsx! {
             div { class: "page stack",
                 PageHeading { eyebrow: "Shadowing", title: "Not in {language.name}\nyet",
-                    subtitle: "Phrase drills are written per language. German has a list; the others follow." }
+                    subtitle: "Phrase drills are written per language, and this one has none yet." }
             }
         };
     }

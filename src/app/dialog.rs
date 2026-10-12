@@ -23,7 +23,7 @@ pub fn DialogView() -> Element {
         return rsx! {
             div { class: "page stack",
                 PageHeading { eyebrow: "Dialogues", title: "Not in {language.name}\nyet",
-                    subtitle: "Scenarios are written per language. German has a set; the others follow." }
+                    subtitle: "Scenarios are written per language, and this one has none yet." }
             }
         };
     }
@@ -177,7 +177,7 @@ fn Brief(scenario: String, on_back: EventHandler<()>) -> Element {
                     div { key: "{i}", class: "beat",
                         span { class: "beat-number", "{i + 1}" }
                         span {
-                            div { "{beat.de}" }
+                            div { "{beat.text}" }
                             if meaning_visible { div { class: "sub secondary", "{beat.en}" } }
                         }
                     }

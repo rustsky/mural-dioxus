@@ -10,10 +10,12 @@ use serde::Deserialize;
 
 use super::phrases::Band;
 
-/// One step of the arc. German for the learner, English underneath.
+/// One step of the arc: what to do in the language being learned, and in English underneath.
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct Beat {
-    pub de: String,
+    /// The German catalogue came first and calls this "de".
+    #[serde(alias = "de")]
+    pub text: String,
     pub en: String,
 }
 
@@ -44,17 +46,23 @@ struct Catalogue {
     scenarios: Vec<Scenario>,
 }
 
-const GERMAN: &str = include_str!("../../assets/scenarios/de.json");
+/// The catalogues that ship with the app, by language id. Every language has the same scenarios,
+/// under the same ids, adapted rather than translated.
+const CATALOGUES: &[(&str, &str)] = &[
+    ("de", include_str!("../../assets/scenarios/de.json")),
+];
 
 pub fn all(language_id: &str) -> &'static [Scenario] {
-    static GERMAN_SCENARIOS: OnceLock<Vec<Scenario>> = OnceLock::new();
-    match language_id {
-        "de" => GERMAN_SCENARIOS.get_or_init(|| {
-            serde_json::from_str::<Catalogue>(GERMAN).expect("German scenario catalogue").scenarios
-        }),
-        _ => &[],
-    }
+    static LOADED: OnceLock<Vec<(&'static str, Vec<Scenario>)>> = OnceLock::new();
+    let loaded = LOADED.get_or_init(|| CATALOGUES.iter().map(|(id, json)| {
+        let scenarios = serde_json::from_str::<Catalogue>(json).unwrap_or_else(|e| panic!("{id} scenario catalogue: {e}")).scenarios;
+        (*id, scenarios)
+    }).collect());
+    loaded.iter().find(|(id, _)| *id == language_id).map(|(_, s)| s.as_slice()).unwrap_or(&[])
 }
+
+/// The languages that have scenarios.
+pub fn languages() -> impl Iterator<Item = &'static str> { CATALOGUES.iter().map(|(id, _)| *id) }
 
 pub fn available(language_id: &str) -> bool { !all(language_id).is_empty() }
 
@@ -113,8 +121,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_german_catalogue_is_well_formed() {
-        let scenarios = all("de");
+    fn every_catalogue_is_well_formed() {
+        for language in languages() { catalogue_is_well_formed(language) }
+    }
+
+    fn catalogue_is_well_formed(language: &str) {
+        let scenarios = all(language);
         assert!(!scenarios.is_empty());
 
         let mut ids: Vec<&str> = scenarios.iter().map(|s| s.id.as_str()).collect();
@@ -140,7 +152,21 @@ mod tests {
             assert_eq!(s.beats.len(), expected, "{} ({}) has {} beats", s.id, s.cefr.label(), s.beats.len());
             assert_eq!(s.minutes as usize, expected.div_ceil(2), "{} runs {} minutes", s.id, s.minutes);
             for beat in &s.beats {
-                assert!(!beat.de.trim().is_empty() && !beat.en.trim().is_empty(), "{} has an empty beat", s.id);
+                assert!(!beat.text.trim().is_empty() && !beat.en.trim().is_empty(), "{} has an empty beat", s.id);
+            }
+        }
+    }
+
+    #[test]
+    fn every_language_has_the_same_scenarios_and_steps() {
+        // The progress record is keyed by scenario id alone, so the ids must mean the same
+        // situation in every language, at the same level and with the same number of steps.
+        let german = all("de");
+        for language in languages() {
+            let other = all(language);
+            assert_eq!(other.len(), german.len(), "{language}");
+            for (a, b) in german.iter().zip(other) {
+                assert_eq!((&a.id, a.cefr, a.beats.len(), &a.category), (&b.id, b.cefr, b.beats.len(), &b.category), "{language}");
             }
         }
     }

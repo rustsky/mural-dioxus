@@ -2,7 +2,8 @@
 //!
 //! Recognition is approximate and learners are not typists: case, punctuation and the usual
 //! German spelling variants must not count against them. What should count is whether the words
-//! came out, in the right order.
+//! came out, in the right order. Chinese is written without spaces, so there each character
+//! counts as a word.
 
 /// One word of the phrase, and whether the learner said it.
 #[derive(Clone, Debug, PartialEq)]
@@ -52,13 +53,31 @@ fn fold(word: &str) -> String {
     out
 }
 
-/// Words, stripped of the punctuation that speech has no sound for. Digits stay: "8 Uhr" is said.
-fn words(text: &str) -> Vec<String> {
-    text.split(|c: char| c.is_whitespace() || (!c.is_alphanumeric() && c != '\''))
-        .filter(|w| !w.is_empty())
-        .map(fold)
-        .collect()
+/// Chinese characters, which carry a syllable each and are written without spaces between words.
+fn is_han(c: char) -> bool {
+    matches!(c, '\u{3400}'..='\u{4DBF}' | '\u{4E00}'..='\u{9FFF}' | '\u{F900}'..='\u{FAFF}' | '\u{20000}'..='\u{2FA1F}')
 }
+
+/// The words as written, stripped of the punctuation that speech has no sound for. Digits stay:
+/// "8 Uhr" is said. Each Chinese character stands alone.
+fn tokens(text: &str) -> Vec<String> {
+    let mut out = vec![];
+    let mut word = String::new();
+    for c in text.chars() {
+        if is_han(c) {
+            if !word.is_empty() { out.push(std::mem::take(&mut word)); }
+            out.push(c.to_string());
+        } else if c.is_alphanumeric() || c == '\'' {
+            word.push(c);
+        } else if !word.is_empty() {
+            out.push(std::mem::take(&mut word));
+        }
+    }
+    if !word.is_empty() { out.push(word); }
+    out
+}
+
+fn words(text: &str) -> Vec<String> { tokens(text).iter().map(|w| fold(w)).collect() }
 
 /// Which words of the phrase turned up in what was heard, in order.
 ///
@@ -98,11 +117,7 @@ pub fn score(expected: &str, heard: &str) -> Attempt {
     let want = words(expected);
     let got = words(heard);
     // The display keeps the original spelling; only the comparison is folded.
-    let shown: Vec<String> = expected
-        .split_whitespace()
-        .map(|w| w.trim_matches(|c: char| !c.is_alphanumeric() && c != '\'').to_string())
-        .filter(|w| !w.is_empty())
-        .collect();
+    let shown = tokens(expected);
 
     if want.is_empty() {
         return Attempt { score: 0.0, words: vec![] };
@@ -218,6 +233,20 @@ mod tests {
     #[test]
     fn an_empty_phrase_cannot_be_scored() {
         assert_eq!(score("", "irgendwas"), Attempt { score: 0.0, words: vec![] });
+    }
+
+    #[test]
+    fn chinese_is_scored_character_by_character() {
+        let a = score("我想要一杯咖啡。", "我要一杯咖啡");
+        assert_eq!(missed(&a), vec!["想"]);
+        assert!(a.score > 0.8 && a.score < 1.0, "{}", a.score);
+        assert_eq!(score("你好吗？", "你好吗").score, 1.0);
+    }
+
+    #[test]
+    fn accents_and_apostrophes_of_other_languages_are_kept() {
+        assert_eq!(score("J'ai un rendez-vous à midi.", "j'ai un rendez vous à midi").score, 1.0);
+        assert_eq!(missed(&score("¿Dónde está la estación?", "dónde está estación")), vec!["la"]);
     }
 
     #[test]
