@@ -3289,6 +3289,7 @@ dependencies = [
  "core-foundation-sys",
  "dioxus",
  "dirs",
+ "futures-util",
  "keyring",
  "objc2",
  "objc2-app-kit",

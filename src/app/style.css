@@ -114,7 +114,13 @@ a { color: inherit; }
 .beat { display: flex; gap: 12px; align-items: flex-start; font-size: 14.5px; line-height: 1.35; }
 .beat-number { flex: none; width: 22px; height: 22px; border-radius: 50%; background: rgba(255,186,122,0.3); color: #8a5a32;
   font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
-.beat-strip { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 620px; margin-top: 6px; }
+.beat-panel { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; max-width: 640px; margin-top: 6px; }
+.beat-toggle { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: #3f7d4e; background: rgba(104,169,120,0.18);
+  border: none; border-radius: 999px; padding: 4px 11px; cursor: pointer; }
+.beat-strip { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-height: min(300px, 38vh); overflow-y: auto; padding: 2px; }
+.beat-dot.next { background: white; color: var(--primary, #362a22); box-shadow: 0 0 0 1px rgba(255,186,122,0.7); }
+.beat-dot:hover { box-shadow: 0 0 0 1px rgba(138,90,50,0.45); cursor: default; }
+.beat-meaning { font-size: 12px; min-height: 16px; color: #8a5a32; }
 .beat-dot { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--secondary);
   background: rgba(255,255,255,0.6); border-radius: 999px; padding: 4px 10px; }
 .beat-dot.done { background: rgba(104,169,120,0.18); color: #3f7d4e; }

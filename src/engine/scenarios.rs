@@ -81,6 +81,33 @@ impl Scenario {
     pub fn valid_beat(&self, index: usize) -> bool { index < self.beats.len() }
 }
 
+/// Steps checked after each turn. A scenario has up to 25, so asking about all of them would cost
+/// a request each; the conversation is only ever near a handful.
+pub const BEAT_WINDOW: usize = 5;
+/// Steps a single turn may tick off. Steps are small, so one turn can cover a few.
+pub const BEATS_PER_TURN: usize = 3;
+
+/// Reads the checklist answer ("2, 5, 7" or "none"): the steps it names, counted from zero, that
+/// exist and are not already done.
+pub fn parse_checklist(answer: &str, total: usize, done: &[usize]) -> Vec<usize> {
+    let mut found: Vec<usize> = answer.split(|c: char| !c.is_ascii_digit())
+        .filter_map(|n| n.parse::<usize>().ok())
+        .filter(|&n| n >= 1 && n <= total)
+        .map(|n| n - 1)
+        .filter(|i| !done.contains(i))
+        .collect();
+    found.sort_unstable();
+    found.dedup();
+    found
+}
+
+/// The unfinished steps worth asking about: the next few after the furthest one reached. Steps
+/// passed over earlier stay open, but no longer hold up the ones ahead.
+pub fn beat_window(total: usize, done: &[usize]) -> Vec<usize> {
+    let from = done.iter().max().map(|&i| i + 1).unwrap_or(0);
+    (from..total).filter(|i| !done.contains(i)).take(BEAT_WINDOW).collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -125,6 +152,23 @@ mod tests {
         assert!(s.valid_beat(s.beats.len() - 1));
         assert!(!s.valid_beat(s.beats.len()), "an index past the end is not a beat");
         assert!(!s.valid_beat(99));
+    }
+
+    #[test]
+    fn only_the_next_few_steps_are_checked() {
+        assert_eq!(beat_window(25, &[]), vec![0, 1, 2, 3, 4]);
+        // A skipped greeting stays open but no longer holds the window back.
+        assert_eq!(beat_window(25, &[1, 2]), vec![3, 4, 5, 6, 7]);
+        assert_eq!(beat_window(12, &[9, 10]), vec![11]);
+        assert!(beat_window(12, &[11]).is_empty());
+    }
+
+    #[test]
+    fn a_checklist_answer_names_new_steps_only() {
+        assert_eq!(parse_checklist("1, 2, 4,9", 12, &[1]), vec![0, 3, 8]);
+        assert_eq!(parse_checklist("none", 12, &[]), Vec::<usize>::new());
+        // Numbers outside the list are model slips, and repeats count once.
+        assert_eq!(parse_checklist("0, 3, 3, 13", 12, &[]), vec![2]);
     }
 
     #[test]

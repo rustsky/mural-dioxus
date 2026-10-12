@@ -13,7 +13,7 @@ use crate::engine::models::{Assessment, ErrorProposal, Fragment, Outcome, Passag
 use crate::engine::pace::ConversationPace;
 use crate::engine::phrases::{self, Phrase};
 use crate::engine::plan::TeachingPlan;
-use crate::engine::scenarios::Scenario;
+use crate::engine::scenarios::{beat_window, parse_checklist, Scenario, BEATS_PER_TURN};
 use crate::engine::shadow::{self as shadow_engine, Attempt as ShadowAttempt};
 use crate::engine::text::{char_count, prefix};
 use crate::engine::time::{new_id, uptime, Date};
@@ -1667,30 +1667,53 @@ impl Mural {
         if expired { self.reset_conversation(); }
     }
 
-    /// Asks about each unfinished step in turn. A skipped step doesn't hold back the ones after
-    /// it: learners often leave out the greeting and go straight to ordering.
+    /// Which unfinished steps the conversation has now reached. A capable teacher reads the whole
+    /// checklist in one request, so steps count in whatever order they happened; a small model on
+    /// this computer answers yes or no about each of the next few instead.
     async fn check_beats(snapshot: SessionRecord, scenario: &'static Scenario, done: Vec<usize>) -> Vec<usize> {
         let transcript = teaching::scenario_transcript(&snapshot);
-        let mut covered = vec![];
-        for index in (0..scenario.beats.len()).filter(|i| !done.contains(i)) {
-            // Two steps in one turn is plausible; more usually means the model is agreeing with itself.
-            if covered.len() == 2 { break }
-            let answered = api::respond(&teaching::beat_check(scenario, index), &transcript, None, false).await;
-            let reached = match answered {
-                // One word is asked for; a sentence that starts with it is just as clear.
+        if provider::current().teacher != provider::Teacher::OllamaLocal {
+            let instructions = teaching::beat_checklist(scenario);
+            let mut answered = api::respond(&instructions, &transcript, None, false).await;
+            if answered.is_err() {
+                // Usually a busy server: a step missed now would wait for the next turn.
+                sleep(3.0).await;
+                answered = api::respond(&instructions, &transcript, None, false).await;
+            }
+            return match answered {
                 Ok(result) => {
-                    let said = result.text.trim().to_lowercase();
-                    said.starts_with("yes") || said.starts_with("ja")
+                    if tracing() { eprintln!("{:.1} checklist: {}", uptime(), result.text.trim()); }
+                    parse_checklist(&result.text, scenario.beats.len(), &done)
                 }
                 Err(error) => {
-                    if tracing() { eprintln!("{:.1} beat check failed: {error}", uptime()); }
-                    false
+                    if tracing() { eprintln!("{:.1} checklist failed: {error}", uptime()); }
+                    vec![]
                 }
             };
-            if tracing() { eprintln!("{:.1} beat {index} reached: {reached}", uptime()); }
-            if reached { covered.push(index); }
         }
-        covered
+        let candidates = beat_window(scenario.beats.len(), &done);
+        let checks = candidates.iter().map(|&index| {
+            let transcript = &transcript;
+            async move {
+                let answered = api::respond(&teaching::beat_check(scenario, index), transcript, None, false).await;
+                let reached = match answered {
+                    // One word is asked for; a sentence that starts with it is just as clear.
+                    Ok(result) => {
+                        let said = result.text.trim().to_lowercase();
+                        said.starts_with("yes") || said.starts_with("ja")
+                    }
+                    Err(error) => {
+                        if tracing() { eprintln!("{:.1} beat check failed: {error}", uptime()); }
+                        false
+                    }
+                };
+                if tracing() { eprintln!("{:.1} beat {index} reached: {reached}", uptime()); }
+                reached
+            }
+        });
+        let answers = futures_util::future::join_all(checks).await;
+        // A few small steps in one turn is plausible; more usually means the model is agreeing with itself.
+        candidates.into_iter().zip(answers).filter(|(_, reached)| *reached).map(|(index, _)| index).take(BEATS_PER_TURN).collect()
     }
 
     /// Folds the beats a turn reached into the arc, and says so when the last one lands.

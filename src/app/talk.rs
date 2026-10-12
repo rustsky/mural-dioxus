@@ -7,6 +7,7 @@ use crate::engine::captions;
 use crate::engine::languages::meaning_greeting;
 use crate::engine::meaning_cache_key;
 use crate::engine::models::Speaker;
+use crate::engine::scenarios::beat_window;
 use crate::engine::text::prefix;
 
 /// Keeps the dialogue on the newest line, unless the learner has scrolled back to read earlier
@@ -77,6 +78,11 @@ pub fn TalkView() -> Element {
     };
 
     let mut peek = use_signal(|| None::<WordPeek>);
+    let mut tasks_open = use_signal(|| true);
+    let mut hovered = use_signal(|| None::<usize>);
+    let next: Vec<usize> = conv.scenario
+        .map(|s| beat_window(s.beats.len(), &conv.beats_covered).into_iter().take(3).collect())
+        .unwrap_or_default();
 
     // Reading the conversation here is what re-runs this as new lines arrive.
     let conv_signal = app.conv;
@@ -89,12 +95,32 @@ pub fn TalkView() -> Element {
         div { class: "talk",
             div { class: "talk-pill", "{title}" }
             if let Some(scenario) = conv.scenario {
-                div { class: "beat-strip",
-                    for (i, beat) in scenario.beats.iter().enumerate() {
-                        div { key: "{i}", class: if conv.beats_covered.contains(&i) { "beat-dot done" } else { "beat-dot" },
-                            title: "{beat.en}",
-                            if conv.beats_covered.contains(&i) { Icon { name: "checkmark.circle.fill", size: 13 } }
-                            span { "{beat.de}" }
+                // Every step, ticked as it happens, with the next few marked. The meaning of the one
+                // under the pointer shows beneath: a native tooltip doesn't appear in this webview.
+                div { class: "beat-panel",
+                    button { class: "beat-toggle", onclick: move |_| tasks_open.toggle(),
+                        Icon { name: "checkmark.circle.fill", size: 13 }
+                        span { "{conv.beats_covered.len()}/{scenario.beats.len()} tasks" }
+                        Icon { name: if tasks_open() { "chevron.up" } else { "chevron.down" }, size: 11 }
+                    }
+                    if tasks_open() {
+                        div { class: "beat-strip",
+                            for (i, beat) in scenario.beats.iter().enumerate() {
+                                div { key: "{i}",
+                                    class: if conv.beats_covered.contains(&i) { "beat-dot done" }
+                                        else if next.contains(&i) { "beat-dot next" } else { "beat-dot" },
+                                    onmouseenter: move |_| hovered.set(Some(i)),
+                                    onmouseleave: move |_| hovered.set(None),
+                                    if conv.beats_covered.contains(&i) { Icon { name: "checkmark.circle.fill", size: 12 } }
+                                    span { "{beat.de}" }
+                                }
+                            }
+                        }
+                        div { class: "beat-meaning",
+                            match hovered().and_then(|i| scenario.beats.get(i)) {
+                                Some(beat) => rsx! { "{beat.en}" },
+                                None => rsx! { span { class: "secondary", "Point at a task to see what it means." } },
+                            }
                         }
                     }
                 }
