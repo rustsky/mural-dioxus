@@ -9,6 +9,7 @@ use super::components::PageHeading;
 use super::icons::Icon;
 use super::state::{Mural, Sheet, Tab};
 use crate::engine::phrases::Band;
+use crate::engine::pinyin;
 use crate::engine::scenarios::{self, Scenario};
 use crate::engine::text::contains_ci;
 use crate::services::dialog_store;
@@ -178,6 +179,9 @@ fn Brief(scenario: String, on_back: EventHandler<()>) -> Element {
                         span { class: "beat-number", "{i + 1}" }
                         span {
                             div { "{beat.text}" }
+                            if language.id == "zh" {
+                                if let Some(reading) = pinyin::reading(&beat.text) { div { class: "sub secondary", "{reading}" } }
+                            }
                             if meaning_visible { div { class: "sub secondary", "{beat.en}" } }
                         }
                     }

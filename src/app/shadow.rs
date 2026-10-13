@@ -5,7 +5,7 @@
 
 use dioxus::prelude::*;
 
-use super::components::PageHeading;
+use super::components::{PageHeading, PinyinHelp};
 use super::icons::Icon;
 use super::state::{Mural, Tab};
 use crate::engine::phrases::{self, Band, Phrase};
@@ -188,6 +188,7 @@ fn Drill() -> Element {
             }
             div { class: "drill-card",
                 div { class: "drill-phrase selectable", "{phrase.text}" }
+                if language.id == "zh" { PinyinHelp { text: phrase.text.clone() } }
                 if meaning_visible { div { class: "meaning", "{phrase.meaning}" } }
                 div { class: "drill-meta",
                     span { class: "band-badge", "{phrase.cefr.label()}" }
