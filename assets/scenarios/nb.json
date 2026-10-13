@@ -1093,7 +1093,7 @@
   {
    "id": "sc-0017",
    "title": "På norskkurset",
-   "titleEn": "På norskkurset",
+   "titleEn": "At the Norwegian course",
    "category": "Study",
    "cefr": "A2",
    "minutes": 8,
@@ -1339,7 +1339,7 @@
   {
    "id": "sc-0020",
    "title": "Hos Skatteetaten",
-   "titleEn": "Hos Skatteetaten",
+   "titleEn": "At the tax office",
    "category": "Services",
    "cefr": "B1",
    "minutes": 9,
@@ -1855,7 +1855,7 @@
   {
    "id": "sc-0026",
    "title": "Gi kritiske tilbakemeldinger",
-   "titleEn": "Gi kritiske tilbakemeldinger",
+   "titleEn": "Criticism in the team",
    "category": "Office",
    "cefr": "B2",
    "minutes": 11,
@@ -2051,7 +2051,7 @@
   {
    "id": "sc-0028",
    "title": "Klage på strømregningen",
-   "titleEn": "Klage på strømregningen",
+   "titleEn": "Disputing a bill",
    "category": "Services",
    "cefr": "B2",
    "minutes": 11,
@@ -2443,7 +2443,7 @@
   {
    "id": "sc-0032",
    "title": "Si nei til et prosjekt",
-   "titleEn": "Si nei til et prosjekt",
+   "titleEn": "Declining a task",
    "category": "Office",
    "cefr": "B2",
    "minutes": 11,
@@ -2541,7 +2541,7 @@
   {
    "id": "sc-0033",
    "title": "Nettverk på messen",
-   "titleEn": "Nettverk på messen",
+   "titleEn": "Networking at a trade fair",
    "category": "Small talk",
    "cefr": "B2",
    "minutes": 11,
@@ -2867,7 +2867,7 @@
   {
    "id": "sc-0036",
    "title": "Klage på et vedtak",
-   "titleEn": "Klage på et vedtak",
+   "titleEn": "Appealing a decision",
    "category": "Services",
    "cefr": "C1",
    "minutes": 13,
@@ -2981,7 +2981,7 @@
   {
    "id": "sc-0037",
    "title": "Holde en tale",
-   "titleEn": "Holde en tale",
+   "titleEn": "Giving a speech",
    "category": "Party",
    "cefr": "C1",
    "minutes": 13,
@@ -4109,7 +4109,7 @@
   {
    "id": "sc-0051",
    "title": "Skriveren har papirstopp",
-   "titleEn": "Skriveren har papirstopp",
+   "titleEn": "The printer is broken",
    "category": "Office",
    "cefr": "A2",
    "minutes": 8,
@@ -4775,7 +4775,7 @@
   {
    "id": "sc-0060",
    "title": "Søke om ferie",
-   "titleEn": "Søke om ferie",
+   "titleEn": "Requesting leave",
    "category": "Office",
    "cefr": "B1",
    "minutes": 9,
@@ -4861,7 +4861,7 @@
   {
    "id": "sc-0061",
    "title": "Be en kollega om hjelp",
-   "titleEn": "Be en kollega om hjelp",
+   "titleEn": "Asking a colleague for help",
    "category": "Work",
    "cefr": "B1",
    "minutes": 9,
@@ -5033,7 +5033,7 @@
   {
    "id": "sc-0063",
    "title": "Være vert for en fest",
-   "titleEn": "Være vert for en fest",
+   "titleEn": "Being the host",
    "category": "Party",
    "cefr": "B1",
    "minutes": 9,
@@ -5119,7 +5119,7 @@
   {
    "id": "sc-0064",
    "title": "Endre billetten",
-   "titleEn": "Endre billetten",
+   "titleEn": "Rebooking at the counter",
    "category": "Travel",
    "cefr": "B1",
    "minutes": 9,
@@ -5205,7 +5205,7 @@
   {
    "id": "sc-0065",
    "title": "Hos fysioterapeuten",
-   "titleEn": "Hos fysioterapeuten",
+   "titleEn": "At the physiotherapist",
    "category": "Health",
    "cefr": "B1",
    "minutes": 9,
@@ -5291,7 +5291,7 @@
   {
    "id": "sc-0066",
    "title": "Si opp mobilabonnementet",
-   "titleEn": "Si opp mobilabonnementet",
+   "titleEn": "Cancelling a phone contract",
    "category": "Services",
    "cefr": "B1",
    "minutes": 9,
@@ -5377,7 +5377,7 @@
   {
    "id": "sc-0067",
    "title": "På foreldremøtet",
-   "titleEn": "På foreldremøtet",
+   "titleEn": "At the parents' evening",
    "category": "Small talk",
    "cefr": "B1",
    "minutes": 9,
@@ -5463,7 +5463,7 @@
   {
    "id": "sc-0068",
    "title": "På visning",
-   "titleEn": "På visning",
+   "titleEn": "At a flat viewing",
    "category": "Home",
    "cefr": "B1",
    "minutes": 9,
@@ -5647,7 +5647,7 @@
   {
    "id": "sc-0070",
    "title": "Hos regnskapsføreren",
-   "titleEn": "Hos regnskapsføreren",
+   "titleEn": "At the tax adviser",
    "category": "Services",
    "cefr": "B2",
    "minutes": 11,
@@ -5843,7 +5843,7 @@
   {
    "id": "sc-0072",
    "title": "Lede et møte",
-   "titleEn": "Lede et møte",
+   "titleEn": "Chairing a meeting",
    "category": "Office",
    "cefr": "B2",
    "minutes": 11,
@@ -5941,7 +5941,7 @@
   {
    "id": "sc-0073",
    "title": "Problemer med leiehytta",
-   "titleEn": "Problemer med leiehytta",
+   "titleEn": "Trouble at the holiday house",
    "category": "Vacation",
    "cefr": "B2",
    "minutes": 11,
@@ -6235,7 +6235,7 @@
   {
    "id": "sc-0076",
    "title": "Si opp jobben",
-   "titleEn": "Si opp jobben",
+   "titleEn": "Handing in your notice",
    "category": "Work",
    "cefr": "C1",
    "minutes": 13,
@@ -6463,7 +6463,7 @@
   {
    "id": "sc-0078",
    "title": "Forsvare teambudsjettet",
-   "titleEn": "Forsvare teambudsjettet",
+   "titleEn": "Arguing a budget for the team",
    "category": "Office",
    "cefr": "C1",
    "minutes": 13,
@@ -6691,7 +6691,7 @@
   {
    "id": "sc-0080",
    "title": "Klage på avslag fra reiseforsikringen",
-   "titleEn": "Klage på avslag fra reiseforsikringen",
+   "titleEn": "Fighting an insurance claim",
    "category": "Vacation",
    "cefr": "C1",
    "minutes": 13,
@@ -6805,7 +6805,7 @@
   {
    "id": "sc-0081",
    "title": "Mingle på en mottakelse",
-   "titleEn": "Mingle på en mottakelse",
+   "titleEn": "Working a reception",
    "category": "Small talk",
    "cefr": "C1",
    "minutes": 13,
@@ -6919,7 +6919,7 @@
   {
    "id": "sc-0082",
    "title": "På Bondens marked",
-   "titleEn": "På Bondens marked",
+   "titleEn": "At the weekly market",
    "category": "Shopping",
    "cefr": "A1",
    "minutes": 6,
@@ -7043,7 +7043,7 @@
   {
    "id": "sc-0084",
    "title": "Bestille taxi",
-   "titleEn": "Bestille taxi",
+   "titleEn": "Calling a taxi",
    "category": "Transport",
    "cefr": "A1",
    "minutes": 6,
@@ -7291,7 +7291,7 @@
   {
    "id": "sc-0088",
    "title": "Time hos frisøren",
-   "titleEn": "Time hos frisøren",
+   "titleEn": "An appointment at the hairdresser",
    "category": "Health",
    "cefr": "A1",
    "minutes": 6,
@@ -7637,7 +7637,7 @@
   {
    "id": "sc-0093",
    "title": "Komme for sent",
-   "titleEn": "Komme for sent",
+   "titleEn": "Arriving late",
    "category": "Party",
    "cefr": "A2",
    "minutes": 8,
@@ -7785,7 +7785,7 @@
   {
    "id": "sc-0095",
    "title": "Avtale levering",
-   "titleEn": "Avtale levering",
+   "titleEn": "Arranging a delivery",
    "category": "Home",
    "cefr": "A2",
    "minutes": 8,
@@ -7859,7 +7859,7 @@
   {
    "id": "sc-0096",
    "title": "Bytte klasse",
-   "titleEn": "Bytte klasse",
+   "titleEn": "Changing course",
    "category": "Study",
    "cefr": "A2",
    "minutes": 8,
@@ -8007,7 +8007,7 @@
   {
    "id": "sc-0098",
    "title": "Kjøpe is",
-   "titleEn": "Kjøpe is",
+   "titleEn": "Buying ice cream",
    "category": "Food",
    "cefr": "A1",
    "minutes": 6,
@@ -8069,7 +8069,7 @@
   {
    "id": "sc-0099",
    "title": "Brød og kake på bakeriet",
-   "titleEn": "Brød og kake på bakeriet",
+   "titleEn": "Bread and cake at the bakery",
    "category": "Food",
    "cefr": "A1",
    "minutes": 6,
@@ -8193,7 +8193,7 @@
   {
    "id": "sc-0101",
    "title": "Be om en annen størrelse",
-   "titleEn": "Be om en annen størrelse",
+   "titleEn": "Asking for a size",
    "category": "Shopping",
    "cefr": "A1",
    "minutes": 6,
@@ -8255,7 +8255,7 @@
   {
    "id": "sc-0102",
    "title": "I kassen",
-   "titleEn": "I kassen",
+   "titleEn": "At the checkout",
    "category": "Shopping",
    "cefr": "A1",
    "minutes": 6,
@@ -8379,7 +8379,7 @@
   {
    "id": "sc-0104",
    "title": "Finne T-banen",
-   "titleEn": "Finne T-banen",
+   "titleEn": "Finding the underground",
    "category": "Transport",
    "cefr": "A1",
    "minutes": 6,
@@ -8503,7 +8503,7 @@
   {
    "id": "sc-0106",
    "title": "Spørre om sporet",
-   "titleEn": "Spørre om sporet",
+   "titleEn": "Asking about the platform",
    "category": "Transport",
    "cefr": "A1",
    "minutes": 6,
@@ -8689,7 +8689,7 @@
   {
    "id": "sc-0109",
    "title": "Låne en penn",
-   "titleEn": "Låne en penn",
+   "titleEn": "Asking for a pen",
    "category": "Office",
    "cefr": "A1",
    "minutes": 6,
@@ -8751,7 +8751,7 @@
   {
    "id": "sc-0110",
    "title": "Ringe en låsesmed",
-   "titleEn": "Ringe en låsesmed",
+   "titleEn": "The locksmith",
    "category": "Home",
    "cefr": "A1",
    "minutes": 6,
@@ -8875,7 +8875,7 @@
   {
    "id": "sc-0112",
    "title": "Kildesortering",
-   "titleEn": "Kildesortering",
+   "titleEn": "Sorting the rubbish",
    "category": "Home",
    "cefr": "A1",
    "minutes": 6,
@@ -8937,7 +8937,7 @@
   {
    "id": "sc-0113",
    "title": "Hos optikeren",
-   "titleEn": "Hos optikeren",
+   "titleEn": "Registering at the eye doctor",
    "category": "Health",
    "cefr": "A1",
    "minutes": 6,
@@ -8999,7 +8999,7 @@
   {
    "id": "sc-0114",
    "title": "Kjøpe plaster",
-   "titleEn": "Kjøpe plaster",
+   "titleEn": "Buying plasters",
    "category": "Health",
    "cefr": "A1",
    "minutes": 6,
@@ -9185,7 +9185,7 @@
   {
    "id": "sc-0117",
    "title": "Oppbevare bagasjen",
-   "titleEn": "Oppbevare bagasjen",
+   "titleEn": "Leaving luggage",
    "category": "Travel",
    "cefr": "A1",
    "minutes": 6,
@@ -9247,7 +9247,7 @@
   {
    "id": "sc-0118",
    "title": "Låst ute av rommet",
-   "titleEn": "Låst ute av rommet",
+   "titleEn": "Forgotten room key",
    "category": "Travel",
    "cefr": "A1",
    "minutes": 6,
@@ -9309,7 +9309,7 @@
   {
    "id": "sc-0119",
    "title": "Kjøpe solkrem",
-   "titleEn": "Kjøpe solkrem",
+   "titleEn": "Buying sun cream",
    "category": "Vacation",
    "cefr": "A1",
    "minutes": 6,
@@ -9495,7 +9495,7 @@
   {
    "id": "sc-0122",
    "title": "Invitere på kaffe",
-   "titleEn": "Invitere på kaffe",
+   "titleEn": "Inviting for coffee",
    "category": "Party",
    "cefr": "A1",
    "minutes": 6,
@@ -9805,7 +9805,7 @@
   {
    "id": "sc-0127",
    "title": "Veksle penger",
-   "titleEn": "Veksle penger",
+   "titleEn": "Changing money",
    "category": "Money",
    "cefr": "A1",
    "minutes": 6,
@@ -9991,7 +9991,7 @@
   {
    "id": "sc-0130",
    "title": "Ringe tilbake",
-   "titleEn": "Ringe tilbake",
+   "titleEn": "Leaving a message",
    "category": "Phone",
    "cefr": "A1",
    "minutes": 6,
@@ -10053,7 +10053,7 @@
   {
    "id": "sc-0131",
    "title": "I svømmehallen",
-   "titleEn": "I svømmehallen",
+   "titleEn": "At the swimming pool",
    "category": "Leisure",
    "cefr": "A1",
    "minutes": 6,
@@ -10115,7 +10115,7 @@
   {
    "id": "sc-0132",
    "title": "Kjøpe kinobilletter",
-   "titleEn": "Kjøpe kinobilletter",
+   "titleEn": "Buying cinema tickets",
    "category": "Leisure",
    "cefr": "A1",
    "minutes": 6,
@@ -10239,7 +10239,7 @@
   {
    "id": "sc-0134",
    "title": "Hente i barnehagen",
-   "titleEn": "Hente i barnehagen",
+   "titleEn": "Collecting the children",
    "category": "Family",
    "cefr": "A1",
    "minutes": 6,
@@ -10363,7 +10363,7 @@
   {
    "id": "sc-0136",
    "title": "Hjelp med handleposene",
-   "titleEn": "Hjelp med handleposene",
+   "titleEn": "Help carrying",
    "category": "Neighbours",
    "cefr": "A1",
    "minutes": 6,
@@ -10425,7 +10425,7 @@
   {
    "id": "sc-0137",
    "title": "Bråk sent på kvelden",
-   "titleEn": "Bråk sent på kvelden",
+   "titleEn": "Noise in the evening",
    "category": "Neighbours",
    "cefr": "A1",
    "minutes": 6,
@@ -10487,7 +10487,7 @@
   {
    "id": "sc-0138",
    "title": "Veien til legevakten",
-   "titleEn": "Veien til legevakten",
+   "titleEn": "The way to the emergency clinic",
    "category": "Emergencies",
    "cefr": "A1",
    "minutes": 6,
@@ -10611,7 +10611,7 @@
   {
    "id": "sc-0140",
    "title": "Spørre om navnet igjen",
-   "titleEn": "Spørre om navnet igjen",
+   "titleEn": "Asking a name again",
    "category": "Work",
    "cefr": "A1",
    "minutes": 6,
@@ -10673,7 +10673,7 @@
   {
    "id": "sc-0141",
    "title": "Spørre om wifi",
-   "titleEn": "Spørre om wifi",
+   "titleEn": "Asking for the wifi",
    "category": "Office",
    "cefr": "A1",
    "minutes": 6,
@@ -10735,7 +10735,7 @@
   {
    "id": "sc-0142",
    "title": "Levere tilbake en skjorte",
-   "titleEn": "Levere tilbake en skjorte",
+   "titleEn": "Returning something",
    "category": "Shopping",
    "cefr": "A1",
    "minutes": 6,
@@ -10921,7 +10921,7 @@
   {
    "id": "sc-0145",
    "title": "Til legen med en venn",
-   "titleEn": "Til legen med en venn",
+   "titleEn": "Going along to the doctor",
    "category": "Health",
    "cefr": "A1",
    "minutes": 6,
@@ -11045,7 +11045,7 @@
   {
    "id": "sc-0147",
    "title": "Ordne stedfortreder",
-   "titleEn": "Ordne stedfortreder",
+   "titleEn": "Arranging cover",
    "category": "Office",
    "cefr": "A2",
    "minutes": 8,
@@ -11119,7 +11119,7 @@
   {
    "id": "sc-0148",
    "title": "Kollisjon i kalenderen",
-   "titleEn": "Kollisjon i kalenderen",
+   "titleEn": "A clash in the calendar",
    "category": "Office",
    "cefr": "A2",
    "minutes": 8,
@@ -11193,7 +11193,7 @@
   {
    "id": "sc-0149",
    "title": "Lære et nytt program",
-   "titleEn": "Lære et nytt program",
+   "titleEn": "Learning a new tool",
    "category": "Office",
    "cefr": "A2",
    "minutes": 8,
@@ -12303,7 +12303,7 @@
   {
    "id": "sc-0164",
    "title": "Bestille fjordcruise",
-   "titleEn": "Bestille fjordcruise",
+   "titleEn": "Booking a fjord cruise",
    "category": "Vacation",
    "cefr": "A2",
    "minutes": 8,
@@ -12451,7 +12451,7 @@
   {
    "id": "sc-0166",
    "title": "Hos fastlegen",
-   "titleEn": "Hos fastlegen",
+   "titleEn": "At the GP",
    "category": "Health",
    "cefr": "A2",
    "minutes": 8,
@@ -13265,7 +13265,7 @@
   {
    "id": "sc-0177",
    "title": "Melde deg opp til norskprøven",
-   "titleEn": "Melde deg opp til norskprøven",
+   "titleEn": "Registering for the Norwegian test",
    "category": "Study",
    "cefr": "A2",
    "minutes": 8,
@@ -13783,7 +13783,7 @@
   {
    "id": "sc-0184",
    "title": "Utviklingssamtale",
-   "titleEn": "Utviklingssamtale",
+   "titleEn": "A parent-teacher conference",
    "category": "Family",
    "cefr": "A2",
    "minutes": 8,
@@ -13931,7 +13931,7 @@
   {
    "id": "sc-0186",
    "title": "Dugnad i borettslaget",
-   "titleEn": "Dugnad i borettslaget",
+   "titleEn": "Spring work day at the co-op",
    "category": "Neighbours",
    "cefr": "A2",
    "minutes": 8,
@@ -14375,7 +14375,7 @@
   {
    "id": "sc-0192",
    "title": "Sjekke reklamasjonsretten",
-   "titleEn": "Sjekke reklamasjonsretten",
+   "titleEn": "Checking your complaint rights",
    "category": "Shopping",
    "cefr": "A2",
    "minutes": 8,
@@ -14695,7 +14695,7 @@
   {
    "id": "sc-0196",
    "title": "Ny i kollektivet",
-   "titleEn": "Ny i kollektivet",
+   "titleEn": "Choosing a housemate",
    "category": "Home",
    "cefr": "B1",
    "minutes": 9,
@@ -15297,7 +15297,7 @@
   {
    "id": "sc-0203",
    "title": "Sommerfest i borettslaget",
-   "titleEn": "Sommerfest i borettslaget",
+   "titleEn": "Summer party at the co-op",
    "category": "Neighbours",
    "cefr": "B1",
    "minutes": 9,
@@ -15837,7 +15837,7 @@
   {
    "id": "sc-0209",
    "title": "Hos Leieboerforeningen",
-   "titleEn": "Hos Leieboerforeningen",
+   "titleEn": "At the tenants' association",
    "category": "Services",
    "cefr": "B2",
    "minutes": 11,
@@ -16131,7 +16131,7 @@
   {
    "id": "sc-0212",
    "title": "Generalforsamlingen i borettslaget",
-   "titleEn": "Generalforsamlingen i borettslaget",
+   "titleEn": "The co-op annual meeting",
    "category": "Home",
    "cefr": "B2",
    "minutes": 11,
@@ -16621,7 +16621,7 @@
   {
    "id": "sc-0217",
    "title": "Planlegge kollektivfesten",
-   "titleEn": "Planlegge kollektivfesten",
+   "titleEn": "Planning the flat party",
    "category": "Party",
    "cefr": "B2",
    "minutes": 11,
