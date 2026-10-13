@@ -55,6 +55,7 @@ const CATALOGUES: &[(&str, &str)] = &[
     ("it", include_str!("../../assets/scenarios/it.json")),
     ("pt", include_str!("../../assets/scenarios/pt.json")),
     ("en", include_str!("../../assets/scenarios/en.json")),
+    ("nb", include_str!("../../assets/scenarios/nb.json")),
 ];
 
 pub fn all(language_id: &str) -> &'static [Scenario] {
@@ -204,10 +205,10 @@ mod tests {
 
     #[test]
     fn languages_without_a_list_are_simply_empty() {
-        assert!(all("nb").is_empty());
-        assert!(!available("nb"));
+        assert!(all("xx").is_empty());
+        assert!(!available("xx"));
         assert!(available("de"));
-        assert!(bands("nb").is_empty());
+        assert!(bands("xx").is_empty());
     }
 
     #[test]
