@@ -10925,7 +10925,7 @@
    "category": "Health",
    "cefr": "A1",
    "minutes": 6,
-   "setting": "Accompanying a friend who speaks little German.",
+   "setting": "Accompanying a friend who speaks little Portuguese.",
    "partner": "Mural is the receptionist.",
    "goal": "Fazer o cadastro do seu amigo por ele.",
    "goalEn": "Register on your friend's behalf.",
@@ -14785,7 +14785,7 @@
    "category": "Money",
    "cefr": "B1",
    "minutes": 9,
-   "setting": "A café with a good friend who borrowed 300 euros three months ago.",
+   "setting": "A café with a good friend who borrowed 1,500 reais three months ago.",
    "partner": "Mural is the friend, a little embarrassed and short of money.",
    "goal": "Falar do dinheiro sem estragar a amizade.",
    "goalEn": "Raise the money without harming the friendship.",
@@ -15512,7 +15512,7 @@
     },
     {
      "text": "Avaliar seu nível de português.",
-     "en": "Assess your German."
+     "en": "Assess your Portuguese."
     },
     {
      "text": "Perguntar sobre as atividades.",
