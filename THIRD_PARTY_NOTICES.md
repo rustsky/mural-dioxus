@@ -45,6 +45,11 @@ Rust crates compiled into the app, with their licences, are listed in `THIRD_PAR
 (generated from `Cargo.lock` by `scripts/rust-licenses.sh`). Their licence texts are in each
 crate's source, available from https://crates.io.
 
+One crate is included in this repository rather than fetched: [tao](https://github.com/tauri-apps/tao)
+0.37.1 (Apache-2.0), in `vendor/tao` with its licence. Its version number is changed to 0.34.99
+so it can stand in for the tao 0.34 that Dioxus asks for, which is why `THIRD_PARTY_RUST.txt` lists
+that number. The source is unchanged; `vendor/tao/MURAL.md` lists the two manifest edits.
+
 ## Voice models (downloaded on first use, not shipped in the app)
 
 | Model | Author | Licence | Used for |

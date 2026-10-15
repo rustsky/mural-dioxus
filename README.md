@@ -51,7 +51,27 @@ as GitHub releases.
 | macOS 13+ (arm64, x86_64) | `Mural-<version>-<arch>.dmg` | Ad-hoc signed, not notarized |
 | Windows x86_64 | `Mural-<version>-x86_64-setup.exe` | Per-user NSIS installer; unsigned, so SmartScreen asks for confirmation. Downloads WebView2 only if missing |
 | Linux x86_64 | `Mural-<version>-x86_64.AppImage` | WebKitGTK, GTK and GStreamer bundled; `chmod +x` before running |
+| Android (arm64) | `Mural-<version>-arm64-release.apk` | Signed with the standard debug key; allow installs from outside the Play Store |
+| iOS | `Mural-<version>-ios-unsigned.ipa` | Unsigned; sign it with your own Apple ID when installing (below) |
 | Source | `Mural-<version>-source.tar.gz` | |
+
+### Installing on an iPhone
+
+With a Mac and Xcode, [docs/ios-iphone.md](docs/ios-iphone.md) walks through signing and installing
+Mural with your own Apple ID in one command (`scripts/install-ios-device.sh`). Without Xcode:
+
+iOS only runs apps signed for your own Apple ID and phone, so the release `.ipa` is unsigned and you
+sign it as you install it. A free Apple ID is enough.
+
+1. Install [Sideloadly](https://sideloadly.io) (macOS or Windows) or [AltStore](https://altstore.io)
+   (macOS or Windows).
+2. Connect the iPhone with a cable, open the tool, choose `Mural-<version>-ios-unsigned.ipa` and
+   sign in with your Apple ID. The tool signs and installs it.
+3. On the iPhone, turn on Settings → Privacy & Security → Developer Mode (iOS 16 and later), and
+   trust your Apple ID under Settings → General → VPN & Device Management.
+
+With a free Apple ID, Apple lets the app run for 7 days before it has to be signed again (AltStore
+renews it over Wi-Fi; with Sideloadly, install it again), and up to 3 such apps at a time.
 
 ### Platform differences
 
@@ -130,10 +150,15 @@ cargo test    # engine, scoring, catalogues, archive and API tests
 | macOS | `./scripts/build-macos.sh` | `dist/Mural.app`, the `.dmg` and the source archive |
 | Linux | `./scripts/build-linux-appimage.sh` | `dist/Mural-<version>-<arch>.AppImage` (needs WebKitGTK 4.1, GTK 3 and GStreamer; package list in `.github/workflows/build.yml`) |
 | Windows | `./scripts/rust-licenses.sh && dx bundle --release --package-types nsis --out-dir target/installer` | `*-setup.exe` under `target/installer` (run from Git Bash) |
+| iOS | `./scripts/build-ios.sh` | `dist/Mural-<version>-ios-unsigned.ipa` (needs Xcode and `rustup target add aarch64-apple-ios`; `--sim` builds for the Simulator) |
+| iPhone (signed, installed) | `./scripts/install-ios-device.sh` | Mural on the connected iPhone, signed with your Xcode Apple ID ([docs/ios-iphone.md](docs/ios-iphone.md)) |
 | Android | `./scripts/build-android.sh --release` | `dist/Mural-<version>-arm64-release.apk` (about 23 MB; without `--release`, a debug APK) (needs Java 17, the Android SDK and NDK, and `rustup target add aarch64-linux-android`; early, see below) |
 
 The macOS script signs ad-hoc by default. Set `SIGN_IDENTITY="Developer ID Application: …"` to sign
 with a hardened runtime for distribution (notarization is a separate step).
+
+**iOS** runs the same app in a WKWebView, with the macOS keychain, language detection and pinyin
+code. Backups aren't available there yet either.
 
 **Android** runs the same app in an Android WebView. It saves to the app's private folder, keeps the
 API key in an owner-only file there (Android has no keychain Mural can reach yet), and asks for the

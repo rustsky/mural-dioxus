@@ -1,5 +1,5 @@
 /// Dominant language of a transcript and the recognizer's confidence, like NLLanguageRecognizer on iPhone.
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "ios"))]
 pub fn detect(text: &str) -> Option<(String, f64)> {
     use objc2_foundation::NSString;
     use objc2_natural_language::NLLanguageRecognizer;
@@ -19,5 +19,5 @@ pub fn detect(text: &str) -> Option<(String, f64)> {
     }
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(not(any(target_os = "macos", target_os = "ios")))]
 pub fn detect(_text: &str) -> Option<(String, f64)> { None }

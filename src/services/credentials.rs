@@ -52,7 +52,7 @@ impl Credential {
     pub fn delete(&self) -> Result<(), KeyError> { platform::delete(self.service) }
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "ios"))]
 mod platform {
     use super::*;
     use security_framework::passwords::{delete_generic_password, get_generic_password, set_generic_password};
@@ -120,7 +120,7 @@ mod platform {
     }
 }
 
-#[cfg(not(any(target_os = "macos", windows, target_os = "linux", target_os = "android")))]
+#[cfg(not(any(target_os = "macos", target_os = "ios", windows, target_os = "linux", target_os = "android")))]
 mod platform {
     use super::*;
     pub fn read(_service: &str) -> Option<String> { None }

@@ -23,13 +23,21 @@ bzip2 = "0.6"
 tar = "0.4"
 base64 = "0.22"
 
-# The desktop renderer and its file dialogs everywhere but Android, which uses the mobile renderer.
-[target.'cfg(not(target_os = "android"))'.dependencies]
+# The desktop renderer and its file dialogs on computers; phones use the mobile renderer.
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 dioxus = { version = "0.7", features = ["desktop"] }
 rfd = "0.15"
 
-[target.'cfg(target_os = "android")'.dependencies]
+[target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
 dioxus = { version = "0.7", features = ["mobile"] }
+
+# The Apple frameworks iOS shares with macOS: the keychain, language detection and pinyin readings.
+[target.'cfg(target_os = "ios")'.dependencies]
+security-framework = "3"
+core-foundation = "0.10"
+core-foundation-sys = "0.8"
+objc2-foundation = { version = "0.3", features = ["NSString", "NSDictionary", "NSValue", "NSLocale", "NSArray"] }
+objc2-natural-language = { version = "0.3", features = ["NLLanguage", "NLLanguageRecognizer"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 security-framework = "3"
@@ -54,3 +62,8 @@ webkit2gtk = { version = "2.0.1", features = ["v2_40"] }
 opt-level = 3
 lto = "thin"
 strip = true
+
+# tao 0.37 under the 0.34 number Dioxus 0.7 asks for: iOS 27 launches only scene-based apps, and
+# only tao 0.37 has scenes. See vendor/tao/MURAL.md.
+[patch.crates-io]
+tao = { path = "vendor/tao" }

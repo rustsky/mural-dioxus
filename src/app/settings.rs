@@ -10,7 +10,7 @@ use crate::services::credentials::{OLLAMA, OPENAI};
 use crate::services::provider::{self, Teacher, VoiceStyle};
 use crate::services::voice;
 
-const PLATFORM: &str = if cfg!(target_os = "macos") { "macOS" } else if cfg!(windows) { "Windows" } else if cfg!(target_os = "android") { "Android" } else { "Linux" };
+const PLATFORM: &str = if cfg!(target_os = "macos") { "macOS" } else if cfg!(windows) { "Windows" } else if cfg!(target_os = "android") { "Android" } else if cfg!(target_os = "ios") { "iOS" } else { "Linux" };
 
 #[component]
 pub fn SettingsSheet() -> Element {
@@ -204,8 +204,8 @@ pub fn SettingsSheet() -> Element {
                 section {
                     div { class: "section-title", "Your words belong to you" }
                     div { class: "group",
-                        // Android has no file dialogs here yet; its backups need the system's own picker.
-                        if cfg!(not(target_os = "android")) {
+                        // Phones have no file dialogs here yet; their backups need the system's own picker.
+                        if cfg!(not(any(target_os = "android", target_os = "ios"))) {
                             div { class: "form-row", button { class: "action row", onclick: export, Icon { name: "square.and.arrow.up", size: 16 } "Export learning backup" } }
                             div { class: "form-row", button { class: "action row", disabled: running, onclick: import, Icon { name: "square.and.arrow.down", size: 16 } "Import learning backup" } }
                         }
@@ -441,18 +441,18 @@ fn TeacherSection(running: bool) -> Element {
     }
 }
 
-#[cfg(not(target_os = "android"))]
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 fn backup_save_path() -> Option<std::path::PathBuf> {
     rfd::FileDialog::new().set_file_name("Mural-learning-backup.json").add_filter("JSON", &["json"]).save_file()
 }
 
-#[cfg(not(target_os = "android"))]
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 fn backup_open_path() -> Option<std::path::PathBuf> {
     rfd::FileDialog::new().add_filter("JSON", &["json"]).pick_file()
 }
 
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 fn backup_save_path() -> Option<std::path::PathBuf> { None }
 
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 fn backup_open_path() -> Option<std::path::PathBuf> { None }

@@ -310,7 +310,7 @@ syn v2.0.119: MIT OR Apache-2.0
 syn v3.0.5: MIT OR Apache-2.0
 sync_wrapper v1.0.2: Apache-2.0
 synstructure v0.14.0: MIT
-tao v0.34.8: Apache-2.0
+tao v0.34.99: Apache-2.0
 tar v0.4.46: MIT OR Apache-2.0
 tempfile v3.27.0: MIT OR Apache-2.0
 thiserror v2.0.20: MIT OR Apache-2.0

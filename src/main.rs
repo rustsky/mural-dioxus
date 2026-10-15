@@ -4,10 +4,10 @@ mod app;
 mod engine;
 mod services;
 
-/// The webview renderer. On Android it is the same crate under its mobile name.
-#[cfg(not(target_os = "android"))]
+/// The webview renderer. On Android and iOS it is the same crate under its mobile name.
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 pub use dioxus::desktop as renderer;
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 pub use dioxus::mobile as renderer;
 
 use crate::renderer::tao::dpi::LogicalSize;
@@ -46,10 +46,10 @@ fn main() {
     if let Err(e) = &store { eprintln!("Mural couldn't open its learning record: {e}"); }
     *app::STARTUP.lock().unwrap() = Some(store);
 
-    let window = WindowBuilder::new()
-        .with_title("Mural")
-        .with_inner_size(opening_size())
-        .with_min_inner_size(LogicalSize::new(520.0, 640.0));
+    let window = WindowBuilder::new().with_title("Mural");
+    // A phone's window is its screen; a size from here would make the page wider than it.
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    let window = window.with_inner_size(opening_size()).with_min_inner_size(LogicalSize::new(520.0, 640.0));
     let config = Config::new()
         .with_window(window)
         .with_background_color((255, 249, 238, 255))
@@ -64,8 +64,8 @@ fn main() {
         "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection \
          --unsafely-treat-insecure-origin-as-secure=http://dioxus.index.html",
     );
-    #[cfg(not(target_os = "android"))]
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
     dioxus::LaunchBuilder::desktop().with_cfg(config).launch(app::App);
-    #[cfg(target_os = "android")]
+    #[cfg(any(target_os = "android", target_os = "ios"))]
     dioxus::LaunchBuilder::mobile().with_cfg(config).launch(app::App);
 }

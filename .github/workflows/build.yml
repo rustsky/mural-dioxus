@@ -1,6 +1,6 @@
 name: Build
 
-# Builds Mural for Linux, macOS, Windows and Android on every push and pull request.
+# Builds Mural for Linux, macOS, Windows, Android and iOS on every push and pull request.
 # Pushing a tag like v0.1.0 also publishes the binaries and the source archive as a GitHub release
 # (Mural is GPL-3.0-or-later, so the source always ships with the binaries).
 
@@ -162,6 +162,30 @@ jobs:
           path: dist/*.apk
           if-no-files-found: error
 
+  ios:
+    name: iOS (unsigned)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ". -> target/ios/release"
+      - uses: cargo-bins/cargo-binstall@main
+      - name: Install Dioxus CLI
+        run: cargo binstall --no-confirm --force "dioxus-cli@${DIOXUS_CLI_VERSION}"
+      # Unsigned on purpose: no Apple account is needed here, and each user signs the .ipa with
+      # their own Apple ID when installing it (see the README).
+      - name: Build IPA
+        run: ./scripts/build-ios.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-unsigned
+          path: dist/*.ipa
+          if-no-files-found: error
+
   source:
     name: Source archive
     runs-on: ubuntu-24.04
@@ -182,7 +206,7 @@ jobs:
   release:
     name: Publish release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux, windows, macos, android, source]
+    needs: [linux, windows, macos, android, ios, source]
     runs-on: ubuntu-24.04
     permissions:
       contents: write

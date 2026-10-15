@@ -9,7 +9,7 @@ pub struct PronunciationToken {
 
 /// Uses the system's word readings so 银行 and 旅行 keep different readings of 行.
 /// Punctuation, spacing and unrecognized characters remain exactly as supplied.
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "ios"))]
 pub fn tokens(text: &str) -> Vec<PronunciationToken> {
     use core_foundation::base::{CFType, TCFType};
     use core_foundation::string::CFString;
@@ -67,7 +67,7 @@ pub fn tokens(text: &str) -> Vec<PronunciationToken> {
     result
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(not(any(target_os = "macos", target_os = "ios")))]
 pub fn tokens(text: &str) -> Vec<PronunciationToken> {
     if text.is_empty() { vec![] } else { vec![PronunciationToken { text: text.into(), pinyin: None }] }
 }
