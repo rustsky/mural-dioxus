@@ -1,14 +1,12 @@
 use dioxus::prelude::*;
 
-use super::components::{Orb, PinyinHelp, SheetFrame};
+use super::components::{LookupText, Orb, PinyinHelp, SheetFrame};
 use super::icons::Icon;
 use super::state::{ConnectionState, Mural, Sheet};
-use crate::engine::captions;
 use crate::engine::languages::meaning_greeting;
 use crate::engine::meaning_cache_key;
 use crate::engine::models::Speaker;
 use crate::engine::scenarios::beat_window;
-use crate::engine::text::prefix;
 
 /// Keeps the dialogue on the newest line, unless the learner has scrolled back to read earlier
 /// ones. Scrolling within 48px of the bottom follows again.
@@ -58,7 +56,6 @@ pub fn TalkView() -> Element {
     } else {
         String::new()
     };
-    let segments = captions::segments(&caption, language.id);
     let has_assistant = assistant.is_some();
     let passages = conv.session.as_ref().map(|s| s.passages()).unwrap_or_default();
     let newest_assistant = passages.iter().rev().find(|p| p.speaker == Speaker::Assistant).map(|p| p.id.clone());
@@ -77,7 +74,6 @@ pub fn TalkView() -> Element {
         _ => "Start conversation",
     };
 
-    let mut peek = use_signal(|| None::<WordPeek>);
     let mut tasks_open = use_signal(|| true);
     let mut hovered = use_signal(|| None::<usize>);
     let next: Vec<usize> = conv.scenario
@@ -139,9 +135,7 @@ pub fn TalkView() -> Element {
             div { class: "dialogue",
                 if !has_assistant {
                     div { class: "target-caption greeting",
-                        for (i, segment) in segments.into_iter().enumerate() {
-                            span { key: "{i}", "{segment.text}" }
-                        }
+                        LookupText { text: caption.clone(), language_id: language.id.to_string() }
                     }
                     if meaning_visible { div { class: "meaning", "{meaning_text}" } }
                 }
@@ -149,27 +143,7 @@ pub fn TalkView() -> Element {
                     div { key: "{passage.id}", class: if passage.speaker == Speaker::Assistant { "line mural" } else { "line you" },
                         if passage.speaker == Speaker::User { div { class: "who", "YOU" } }
                         div { class: "said selectable",
-                            for (i, segment) in captions::segments(&passage.text(), language.id).into_iter().enumerate() {
-                                if let (Speaker::Assistant, Some(word)) = (passage.speaker, segment.lookup.clone()) {
-                                    span { key: "{i}", class: "word-link", title: "Look up “{word}”",
-                                        onclick: {
-                                            let sentence = passage.text();
-                                            let word = word.clone();
-                                            move |e: Event<MouseData>| {
-                                                let at = e.client_coordinates();
-                                                peek.set(Some(WordPeek {
-                                                    word: word.clone(),
-                                                    sentence: sentence.clone(),
-                                                    x: at.x, y: at.y,
-                                                }));
-                                            }
-                                        },
-                                        "{segment.text}"
-                                    }
-                                } else {
-                                    span { key: "{i}", "{segment.text}" }
-                                }
-                            }
+                            LookupText { text: passage.text(), language_id: language.id.to_string() }
                         }
                         if language.id == "zh" && passage.speaker == Speaker::Assistant && Some(&passage.id) == newest_assistant.as_ref() {
                             PinyinHelp { text: passage.text() }
@@ -251,96 +225,8 @@ pub fn TalkView() -> Element {
                     button { onclick: move |_| app.reset_conversation(), Icon { name: "arrow.counterclockwise", size: 15 } "New conversation" }
                 }
             }
-            if let Some(open) = peek() {
-                WordCard { peek: open, on_close: move |_| peek.set(None) }
-            }
             if let Some(notice) = conv.notice.clone() {
                 div { class: "notice", "{notice}" }
-            }
-        }
-    }
-}
-
-/// Splits "dictionary form — meaning" into its two halves, falling back to the word as tapped
-/// when the answer does not arrive in that shape.
-fn split_gloss(answer: &str, word: &str) -> (String, String) {
-    let line = answer.lines().find(|l| !l.trim().is_empty()).unwrap_or("").trim();
-    let split = line.split_once('—').or_else(|| line.split_once(" - ")).or_else(|| line.split_once(':'));
-    match split {
-        Some((lemma, meaning)) if !lemma.trim().is_empty() && !meaning.trim().is_empty() => {
-            (prefix(lemma.trim(), 60), prefix(meaning.trim(), 80))
-        }
-        // No separator: whatever came back is the meaning, and the word stands as tapped.
-        _ if !line.is_empty() => (word.to_string(), prefix(line, 80)),
-        _ => (word.to_string(), String::new()),
-    }
-}
-
-/// A word the learner tapped, and where on screen it was.
-#[derive(Clone, Debug, PartialEq)]
-pub struct WordPeek {
-    pub word: String,
-    pub sentence: String,
-    pub x: f64,
-    pub y: f64,
-}
-
-/// The meaning of one word, shown beside it, with the option to keep it.
-#[component]
-fn WordCard(peek: WordPeek, on_close: EventHandler<()>) -> Element {
-    let app = use_context::<Mural>();
-    let mut kept = use_signal(|| false);
-    let mut keeping = use_signal(|| false);
-    let is_zh = app.store.read().language().id == "zh";
-    let (word, sentence) = (peek.word.clone(), peek.sentence.clone());
-    let meaning = use_resource(use_reactive!(|(word, sentence)| async move { app.lookup(word, sentence).await }));
-    // Keep the card on screen: beside the word, above it when there is no room below, clear of the
-    // toolbar, and in the middle when the event carried no position at all.
-    let placed = peek.x > 1.0 || peek.y > 1.0;
-    let left = if placed { peek.x.clamp(20.0, 760.0) } else { 330.0 };
-    let top = if !placed { 180.0 } else if peek.y < 520.0 { peek.y + 26.0 } else { peek.y - 250.0 };
-    let top = top.max(70.0);
-
-    rsx! {
-        div { class: "peek-catcher", onclick: move |_| on_close.call(()) }
-        div { class: "word-card", style: "left: {left}px; top: {top}px",
-            div { class: "word-card-head",
-                span { class: "big", "{peek.word}" }
-                span { class: "spacer" }
-                button { class: "text-button", onclick: move |_| on_close.call(()), "Close" }
-            }
-            if is_zh { PinyinHelp { text: peek.word.clone() } }
-            match &*meaning.read() {
-                Some(Ok(text)) => rsx! { div { class: "word-card-meaning selectable", "{text}" } },
-                Some(Err(error)) => rsx! { div { class: "secondary lookup-error", "{error}" } },
-                None => rsx! { div { class: "working", span { class: "spinner" } "Finding the meaning…" } },
-            }
-            div { class: "word-card-foot",
-                if kept() {
-                    span { class: "caption2 good", "Kept in your words" }
-                } else if keeping() {
-                    div { class: "working", span { class: "spinner" } "Keeping…" }
-                } else {
-                    button { class: "action row",
-                        onclick: {
-                            let (w, s) = (peek.word.clone(), peek.sentence.clone());
-                            move |_| {
-                                let (w, s) = (w.clone(), s.clone());
-                                keeping.set(true);
-                                spawn(async move {
-                                    // A line of its own, not the prose on screen: the list has to
-                                    // read as a list. If the request fails the word still goes in.
-                                    let answer = app.gloss(w.clone(), s.clone()).await.unwrap_or_default();
-                                    let (lemma, sense) = split_gloss(&answer, &w);
-                                    app.store.write_unchecked().keep_word(&lemma, &sense, &s);
-                                    keeping.set(false);
-                                    kept.set(true);
-                                });
-                            }
-                        },
-                        Icon { name: "book", size: 15 } "Keep this word"
-                    }
-                }
             }
         }
     }
@@ -381,34 +267,5 @@ pub fn TypedReplySheet() -> Element {
                 Icon { name: "arrow.up", size: 18 }
             }
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::split_gloss;
-
-    #[test]
-    fn a_gloss_splits_into_dictionary_form_and_meaning() {
-        assert_eq!(split_gloss("la sobremesa — conversation after a meal", "sobremesa"),
-            ("la sobremesa".into(), "conversation after a meal".into()));
-        // Some models answer with a hyphen or a colon instead.
-        assert_eq!(split_gloss("der Termin - the appointment", "Termin"),
-            ("der Termin".into(), "the appointment".into()));
-        assert_eq!(split_gloss("die Quittung: the receipt", "Quittung"),
-            ("die Quittung".into(), "the receipt".into()));
-    }
-
-    #[test]
-    fn an_answer_without_a_separator_is_treated_as_the_meaning() {
-        assert_eq!(split_gloss("the receipt", "Quittung"), ("Quittung".into(), "the receipt".into()));
-        // Chatter before the answer is ignored in favour of the first real line.
-        assert_eq!(split_gloss("\n\nder Zug — the train", "Zug"), ("der Zug".into(), "the train".into()));
-    }
-
-    #[test]
-    fn nothing_usable_still_keeps_the_word_as_tapped() {
-        assert_eq!(split_gloss("", "Quittung"), ("Quittung".into(), String::new()));
-        assert_eq!(split_gloss("   ", "Quittung"), ("Quittung".into(), String::new()));
     }
 }

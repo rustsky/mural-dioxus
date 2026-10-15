@@ -5,7 +5,7 @@
 
 use dioxus::prelude::*;
 
-use super::components::PageHeading;
+use super::components::{LookupText, PageHeading};
 use super::icons::Icon;
 use super::state::{Mural, Sheet, Tab};
 use crate::engine::phrases::Band;
@@ -151,7 +151,7 @@ fn Brief(scenario: String, on_back: EventHandler<()>) -> Element {
                 Icon { name: "chevron.left", size: 14 } "All situations"
             }
             div { class: "drill-card",
-                div { class: "drill-phrase selectable", "{scenario.title}" }
+                div { class: "drill-phrase selectable", LookupText { text: scenario.title.clone(), language_id: language.id.to_string() } }
                 if meaning_visible { div { class: "meaning", "{scenario.title_en}" } }
                 div { class: "drill-meta",
                     span { class: "band-badge", "{scenario.cefr.label()}" }
@@ -170,7 +170,7 @@ fn Brief(scenario: String, on_back: EventHandler<()>) -> Element {
                 div { class: "brief-row",
                     span { class: "brief-label", "You want" }
                     span {
-                        div { "{scenario.goal}" }
+                        div { class: "selectable", LookupText { text: scenario.goal.clone(), language_id: language.id.to_string() } }
                         if meaning_visible { div { class: "sub secondary", "{scenario.goal_en}" } }
                     }
                 }
@@ -181,7 +181,7 @@ fn Brief(scenario: String, on_back: EventHandler<()>) -> Element {
                     div { key: "{i}", class: "beat",
                         span { class: "beat-number", "{i + 1}" }
                         span {
-                            div { "{beat.text}" }
+                            div { class: "selectable", LookupText { text: beat.text.clone(), language_id: language.id.to_string() } }
                             if language.id == "zh" {
                                 if let Some(reading) = pinyin::reading(&beat.text) { div { class: "sub secondary", "{reading}" } }
                             }

@@ -440,3 +440,42 @@ fn an_error_the_learner_did_not_say_is_discarded() {
     let validated = LearningEngine::validate(&session.assessments[0], &session).expect("validated");
     assert!(validated.errors.is_empty());
 }
+
+#[test]
+fn a_lookup_reads_as_dictionary_form_meaning_and_note() {
+    let g = teaching::parse_gloss("heute — today\nAn adverb saying when: the day that is now ending.", "heute");
+    assert_eq!((g.lemma.as_str(), g.meaning.as_str()), ("heute", "today"));
+    assert_eq!(g.note, "An adverb saying when: the day that is now ending.");
+    let verb = teaching::parse_gloss("war — sein (to be)", "war");
+    assert_eq!(verb.lemma, "war");
+    assert_eq!(teaching::parse_gloss("ir - to go.", "fue").meaning, "to go");
+}
+
+#[test]
+fn markdown_and_bullets_in_a_lookup_are_cleaned_away() {
+    let g = teaching::parse_gloss("**der Tag** — **day**\n- Used here with *dein*.", "Tag");
+    assert_eq!((g.lemma.as_str(), g.meaning.as_str()), ("der Tag", "day"));
+    assert_eq!(g.note, "Used here with *dein*.");
+}
+
+#[test]
+fn a_lookup_in_the_wrong_shape_still_shows_something_useful() {
+    // What a model sent when asked for prose: no dictionary line, so it all becomes the note.
+    let answer = "**Explanation** In the sentence “Hallo! Wie war dein Tag heute?” the word **heute** is an adverb meaning “today.”";
+    let g = teaching::parse_gloss(answer, "heute");
+    assert_eq!((g.lemma.as_str(), g.meaning.as_str()), ("heute", ""));
+    assert!(g.note.starts_with("Explanation In the sentence"), "{}", g.note);
+    assert!(!g.note.contains("**"));
+    assert_eq!(teaching::parse_gloss("", "heute").lemma, "heute");
+}
+
+#[test]
+fn a_gloss_takes_a_hyphen_or_a_colon_beside_the_word() {
+    let g = |a: &str, w: &str| { let g = teaching::parse_gloss(a, w); (g.lemma, g.meaning) };
+    assert_eq!(g("la sobremesa — conversation after a meal", "sobremesa"), ("la sobremesa".into(), "conversation after a meal".into()));
+    assert_eq!(g("der Termin - the appointment", "Termin"), ("der Termin".into(), "the appointment".into()));
+    assert_eq!(g("die Quittung: the receipt", "Quittung"), ("die Quittung".into(), "the receipt".into()));
+    assert_eq!(g("Explanation: it means today", "heute"), ("heute".into(), String::new()), "a label is not the word");
+    // Blank lines before the answer are skipped.
+    assert_eq!(g("\n\nder Zug — the train", "Zug"), ("der Zug".into(), "the train".into()));
+}

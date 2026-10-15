@@ -5,7 +5,7 @@
 
 use dioxus::prelude::*;
 
-use super::components::{PageHeading, PinyinHelp};
+use super::components::{LookupText, PageHeading, PinyinHelp};
 use super::icons::Icon;
 use super::state::{Mural, Tab};
 use crate::engine::phrases::{self, Band, Phrase};
@@ -187,7 +187,7 @@ fn Drill() -> Element {
                 Icon { name: "chevron.left", size: 14 } "All phrases"
             }
             div { class: "drill-card",
-                div { class: "drill-phrase selectable", "{phrase.text}" }
+                div { class: "drill-phrase selectable", LookupText { text: phrase.text.clone(), language_id: language.id.to_string() } }
                 if language.id == "zh" { PinyinHelp { text: phrase.text.clone() } }
                 if meaning_visible { div { class: "meaning", "{phrase.meaning}" } }
                 div { class: "drill-meta",

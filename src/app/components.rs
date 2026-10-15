@@ -2,7 +2,10 @@ use dioxus::prelude::*;
 
 use super::icons::Icon;
 use super::state::Mural;
+use crate::engine::captions;
 use crate::engine::models::SourceLink;
+use crate::engine::teaching::parse_gloss;
+use crate::engine::text::prefix;
 use crate::engine::pinyin;
 use crate::engine::time::{new_id, Date};
 
@@ -263,5 +266,121 @@ mod tests {
         let kinds: Vec<&str> = parts.iter().map(|p| match p { Inline::Text(_) => "t", Inline::Bold(_) => "b", Inline::Link(..) => "l" }).collect();
         assert_eq!(kinds, ["t", "b", "t", "l", "t", "t"]);
         assert!(matches!(&parts[3], Inline::Link(l, u) if l == "NRK" && u == "https://www.nrk.no/"));
+    }
+}
+
+/// Text in the language being learned, where any word can be tapped to see what it means here.
+/// Chinese is split into words rather than characters. `sentence` is the context sent with the
+/// lookup, when the text is only part of it.
+#[component]
+pub fn LookupText(text: String, language_id: String, #[props(default)] sentence: Option<String>) -> Element {
+    let mut peek = use_signal(|| None::<WordPeek>);
+    let context = sentence.unwrap_or_else(|| text.clone());
+    rsx! {
+        for (i, segment) in captions::segments(&text, &language_id).into_iter().enumerate() {
+            if let Some(word) = segment.lookup.clone() {
+                span { key: "{i}", class: "word-link", title: "Look up “{word}”",
+                    onclick: {
+                        let sentence = context.clone();
+                        move |e: Event<MouseData>| {
+                            e.stop_propagation();
+                            let at = e.client_coordinates();
+                            peek.set(Some(WordPeek { word: word.clone(), sentence: sentence.clone(), x: at.x, y: at.y }));
+                        }
+                    },
+                    "{segment.text}"
+                }
+            } else {
+                span { key: "{i}", "{segment.text}" }
+            }
+        }
+        if let Some(open) = peek() {
+            WordCard { peek: open, on_close: move |_| peek.set(None) }
+        }
+    }
+}
+
+/// A word the learner tapped, and where on screen it was.
+#[derive(Clone, Debug, PartialEq)]
+pub struct WordPeek {
+    pub word: String,
+    pub sentence: String,
+    pub x: f64,
+    pub y: f64,
+}
+
+/// The meaning of one word, shown beside it, with the option to keep it.
+#[component]
+fn WordCard(peek: WordPeek, on_close: EventHandler<()>) -> Element {
+    let app = use_context::<Mural>();
+    let mut kept = use_signal(|| false);
+    let mut keeping = use_signal(|| false);
+    let is_zh = app.store.read().language().id == "zh";
+    let (word, sentence) = (peek.word.clone(), peek.sentence.clone());
+    let answer = use_resource(use_reactive!(|(word, sentence)| async move { app.lookup(word, sentence).await }));
+    let gloss = answer.read().as_ref().map(|r| r.as_ref().map(|text| parse_gloss(text, &peek.word)).map_err(|e| e.clone()));
+    // Keep the card on screen: beside the word, above it when there is no room below, clear of the
+    // toolbar, and in the middle when the event carried no position at all.
+    let placed = peek.x > 1.0 || peek.y > 1.0;
+    let left = if placed { peek.x.clamp(20.0, 760.0) } else { 330.0 };
+    let top = if !placed { 180.0 } else if peek.y < 520.0 { peek.y + 26.0 } else { peek.y - 250.0 };
+    let top = top.max(70.0);
+    let found = match &gloss { Some(Ok(g)) => Some(g.clone()), _ => None };
+    let headword = found.as_ref().map(|g| g.lemma.clone()).unwrap_or_else(|| peek.word.clone());
+    let tapped_differs = !headword.to_lowercase().contains(&peek.word.to_lowercase());
+    // Nothing to keep until the meaning has arrived, and nothing at all if the lookup failed.
+    let unkeepable = !matches!(gloss, Some(Ok(_)));
+
+    rsx! {
+        div { class: "peek-catcher", onclick: move |_| on_close.call(()) }
+        div { class: "word-card", style: "left: {left}px; top: {top}px",
+            div { class: "word-card-head",
+                span { class: "big selectable", "{headword}" }
+                span { class: "spacer" }
+                button { class: "text-button", onclick: move |_| on_close.call(()), "Close" }
+            }
+            if is_zh { PinyinHelp { text: headword.clone() } }
+            if tapped_differs { div { class: "caption2 secondary", "“{peek.word}” in this sentence" } }
+            match gloss {
+                Some(Ok(g)) => rsx! {
+                    if !g.meaning.is_empty() { div { class: "word-card-meaning selectable", "{g.meaning}" } }
+                    if !g.note.is_empty() { div { class: "word-card-note selectable", "{g.note}" } }
+                },
+                Some(Err(error)) => rsx! { div { class: "secondary lookup-error", "{error}" } },
+                None => rsx! { div { class: "working", span { class: "spinner" } "Finding the meaning…" } },
+            }
+            div { class: "word-card-foot",
+                if kept() {
+                    span { class: "caption2 good", "Kept in your words" }
+                } else if keeping() {
+                    div { class: "working", span { class: "spinner" } "Keeping…" }
+                } else {
+                    button { class: "action row", disabled: unkeepable,
+                        onclick: {
+                            let (w, s) = (peek.word.clone(), peek.sentence.clone());
+                            let found = found.clone();
+                            move |_| {
+                                let (w, s, found) = (w.clone(), s.clone(), found.clone());
+                                keeping.set(true);
+                                spawn(async move {
+                                    // The lookup already gave the list's line; only an answer out
+                                    // of shape needs the one-line request. If that fails too, the
+                                    // word still goes in as tapped.
+                                    let g = match found.filter(|g| !g.meaning.is_empty()) {
+                                        Some(g) => g,
+                                        None => parse_gloss(&app.gloss(w.clone(), s.clone()).await.unwrap_or_default(), &w),
+                                    };
+                                    let meaning = if g.meaning.is_empty() { prefix(&g.note, 80) } else { g.meaning };
+                                    app.store.write_unchecked().keep_word(&g.lemma, &meaning, &s);
+                                    keeping.set(false);
+                                    kept.set(true);
+                                });
+                            }
+                        },
+                        Icon { name: "book", size: 15 } "Keep this word"
+                    }
+                }
+            }
+        }
     }
 }
