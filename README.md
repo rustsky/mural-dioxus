@@ -149,7 +149,7 @@ cargo test    # engine, scoring, catalogues, archive and API tests
 | --- | --- | --- |
 | macOS | `./scripts/build-macos.sh` | `dist/Mural.app`, the `.dmg` and the source archive |
 | Linux | `./scripts/build-linux-appimage.sh` | `dist/Mural-<version>-<arch>.AppImage` (needs WebKitGTK 4.1, GTK 3 and GStreamer; package list in `.github/workflows/build.yml`) |
-| Windows | `./scripts/rust-licenses.sh && dx bundle --release --package-types nsis --out-dir target/installer` | `*-setup.exe` under `target/installer` (run from Git Bash) |
+| Windows | `./scripts/rust-licenses.sh && dx bundle --platform windows --release --package-types nsis --out-dir target/installer` | `*-setup.exe` under `target/installer` (run from Git Bash) |
 | iOS | `./scripts/build-ios.sh` | `dist/Mural-<version>-ios-unsigned.ipa` (needs Xcode and `rustup target add aarch64-apple-ios`; `--sim` builds for the Simulator) |
 | iPhone (signed, installed) | `./scripts/install-ios-device.sh` | Mural on the connected iPhone, signed with your Xcode Apple ID ([docs/ios-iphone.md](docs/ios-iphone.md)) |
 | Android | `./scripts/build-android.sh --release` | `dist/Mural-<version>-arm64-release.apk` (about 23 MB; without `--release`, a debug APK) (needs Java 17, the Android SDK and NDK, and `rustup target add aarch64-linux-android`; early, see below) |

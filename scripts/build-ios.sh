@@ -13,13 +13,26 @@ cd "$(dirname "$0")/.."
 
 target=aarch64-apple-ios
 slice=ios-arm64
+libdir=lib
 sim=false
-if [ "${1:-}" = "--sim" ]; then target=aarch64-apple-ios-sim; slice=ios-arm64_x86_64-simulator; sim=true; fi
+if [ "${1:-}" = "--sim" ]; then target=aarch64-apple-ios-sim; slice=ios-arm64_x86_64-simulator; libdir=lib-sim; sim=true; fi
 
 # sherpa-onnx-sys finds its output folder by looking for a directory named after Cargo's profile
 # above its OUT_DIR, but dx builds iOS under ios-release; a target directory ending in "release"
 # satisfies it (the same workaround as scripts/build-android.sh).
 export CARGO_TARGET_DIR="$PWD/target/ios/release"
+
+# sherpa-onnx-sys unpacks the library this build links against into sherpa-onnx-prebuilt, but Cargo
+# can believe that done when it isn't: CI's build cache restores Cargo's record without the folder,
+# a device build unpacks afresh without the Simulator's lib-sim, and the library is a symlink into
+# the downloaded framework that the cache can bring back dangling. Then Cargo skips the build
+# script and linking fails, so without the library, forget the record and the script runs again.
+if [ -z "$(find -L "$CARGO_TARGET_DIR/sherpa-onnx-prebuilt" -type f -path "*/$libdir/libsherpa-onnx-c-api.dylib" 2>/dev/null | head -1)" ]; then
+  # The cache can also bring back the folders empty, and the script takes an existing folder as
+  # already unpacked, so it has to go too.
+  rm -rf "${CARGO_TARGET_DIR:?}/sherpa-onnx-prebuilt"
+  find "$CARGO_TARGET_DIR" -path "*/.fingerprint/sherpa-onnx-sys-*" -prune -exec rm -rf {} + 2>/dev/null || true
+fi
 
 # Without --codesign or a device, dx leaves the app unsigned.
 dx build --platform ios --target "$target" --release
