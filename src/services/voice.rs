@@ -40,9 +40,9 @@ const FASTCONFORMER_DE: Pack = Pack { name: "sherpa-onnx-nemo-transducer-stt_de_
 const SENSEVOICE: Pack = Pack { name: "sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2025-09-09", url: "asr-models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2025-09-09.tar.bz2", megabytes: 158, archive: true };
 /// The archive also holds full-precision weights, which are skipped when unpacking.
 const WHISPER_SMALL: Pack = Pack { name: "sherpa-onnx-whisper-small", url: "asr-models/sherpa-onnx-whisper-small.tar.bz2", megabytes: 609, archive: true };
-/// The National Library of Norway's NB-Whisper base (Apache-2.0), converted for sherpa-onnx.
-/// Mural converts it itself and publishes it beside the app.
-const NB_WHISPER: Pack = Pack { name: "nb-whisper-base-int8", url: "https://github.com/rustsky/mural-dioxus/releases/download/voice-models/nb-whisper-base-int8.tar.bz2", megabytes: 133, archive: true };
+/// The National Library of Norway's NB-Whisper base (Apache-2.0). Mural never downloads it: each
+/// learner who wants it builds it with `scripts/convert-nb-whisper.sh`, which installs it here.
+const NB_WHISPER: Pack = Pack { name: "nb-whisper-base-int8", url: "", megabytes: 0, archive: true };
 const KOKORO: Pack = Pack { name: "kokoro-multi-lang-v1_0", url: "tts-models/kokoro-multi-lang-v1_0.tar.bz2", megabytes: 334, archive: true };
 const PIPER_DE: Pack = Pack { name: "vits-piper-de_DE-thorsten-high", url: "tts-models/vits-piper-de_DE-thorsten-high.tar.bz2", megabytes: 110, archive: true };
 const PIPER_NO: Pack = Pack { name: "vits-piper-no_NO-talesyntese-medium", url: "tts-models/vits-piper-no_NO-talesyntese-medium.tar.bz2", megabytes: 64, archive: true };
@@ -96,7 +96,10 @@ fn setup(language_id: &str) -> Option<Setup> {
         "pt" => (SMALL("pt"), None, Speaker::Kokoro(42, "pt-br")),                 // pf_dora
         "zh" => (SenseVoice, None, Speaker::Kokoro(47, "zh")),                     // zf_xiaoxiao
         "de" => (Transducer(&FASTCONFORMER_DE), None, Speaker::Piper(&PIPER_DE, "de_DE-thorsten-high.onnx")),
-        "nb" => (Whisper(&NB_WHISPER, "nb-base", "no"), None, Speaker::Piper(&PIPER_NO, "no_NO-talesyntese-medium.onnx")),
+        // NB-Whisper heard Norwegian learners far better (65% of words against 43%), but only a
+        // learner who built it has it; otherwise Whisper small, told it is Norwegian.
+        "nb" => (if path(&NB_WHISPER).exists() { Whisper(&NB_WHISPER, "nb-base", "no") } else { SMALL("no") },
+                 None, Speaker::Piper(&PIPER_NO, "no_NO-talesyntese-medium.onnx")),
         _ => return None,
     };
     Some(Setup { listener, second, speaker })
@@ -546,15 +549,15 @@ mod tests {
         assert!(packs("xx").is_empty());
         assert_eq!(packs("de"), vec![&VAD, &FASTCONFORMER_DE, &PIPER_DE]);
         assert_eq!(packs("zh")[1], &SENSEVOICE);
-        assert_eq!(packs("nb")[1], &NB_WHISPER);
+        // Never downloaded: NB-Whisper when the learner built it, Whisper small otherwise.
+        assert!(packs("nb")[1] == &NB_WHISPER || packs("nb")[1] == &WHISPER_SMALL);
         // Parakeet guesses the language; where it guessed wrong in testing, forced Whisper hears it again.
         assert_eq!(packs("es"), vec![&VAD, &PARAKEET, &WHISPER_SMALL, &KOKORO]);
     }
 
     #[test]
     fn whisper_listens_for_the_language_being_learned() {
-        let s = setup("nb").unwrap();
-        assert_eq!(s.listener, Listener::Whisper(&NB_WHISPER, "nb-base", "no"));
+        assert!(matches!(setup("nb").unwrap().listener, Listener::Whisper(_, _, "no")));
         assert_eq!(setup("pt").unwrap().listener, Listener::Whisper(&WHISPER_SMALL, "small", "pt"));
         assert_eq!(setup("fr").unwrap().second, Some(Listener::Whisper(&WHISPER_SMALL, "small", "fr")));
     }
@@ -582,7 +585,8 @@ mod tests {
     }
 
     /// Mural speaks a sentence in each language and the same recogniser the learner gets hears it
-    /// back through the VAD. Needs the downloaded models: `MURAL_VOICE_LANGS=es,de cargo test -- --ignored round_trip`.
+    /// back through the VAD, after downloading whatever is missing through the app's own install
+    /// path: `MURAL_VOICE_LANGS=es,de cargo test --release -- --ignored round_trip`.
     #[test]
     #[ignore]
     fn round_trip() {
@@ -597,15 +601,22 @@ mod tests {
             ("zh", "你好，我想要一杯加牛奶的咖啡。"),
         ];
         let only = std::env::var("MURAL_VOICE_LANGS").ok();
+        let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
         let mut failures = vec![];
         for (id, sentence) in sentences {
             if only.as_ref().is_some_and(|o| !o.split(',').any(|l| l == id)) { continue; }
-            if missing_megabytes(id) > 0 { println!("{id}: models not downloaded, skipped"); continue; }
+            if missing_megabytes(id) > 0 {
+                println!("{id}: downloading {} MB", missing_megabytes(id));
+                if let Err(e) = runtime.block_on(install(id, |_| {})) { failures.push(format!("{id}: download: {e}")); continue; }
+            }
             let loaded = match load(id) { Ok(l) => l, Err(e) => { failures.push(format!("{id}: load: {e}")); continue } };
             let audio = loaded.tts.generate_with_config(sentence, &GenerationConfig { sid: loaded.sid, speed: 0.95, ..Default::default() }, None::<fn(&[f32], f32) -> bool>);
             let Some(audio) = audio else { failures.push(format!("{id}: no speech generated")); continue };
-            let mut samples = resample(audio.samples(), audio.sample_rate(), SAMPLE_RATE);
-            let seconds = samples.len() as f32 / SAMPLE_RATE as f32;
+            // A held turn: the microphone opens a moment before the learner speaks.
+            let spoken = resample(audio.samples(), audio.sample_rate(), SAMPLE_RATE);
+            let seconds = spoken.len() as f32 / SAMPLE_RATE as f32;
+            let mut samples = vec![0.0; SAMPLE_RATE as usize / 2];
+            samples.extend(spoken);
             samples.extend(std::iter::repeat_n(0.0, SAMPLE_RATE as usize * 2));
             let mut state = State { loaded: Some(loaded), vad: new_vad(), ..Default::default() };
             let mut heard = vec![];
@@ -614,8 +625,7 @@ mod tests {
                 state.vad.as_ref().unwrap().accept_waveform(chunk);
                 heard.extend(state.drain());
             }
-            state.vad.as_ref().unwrap().flush();
-            heard.extend(state.drain());
+            heard.extend(state.finish_turn());
             let text = heard.join(" ");
             let score = if id == "zh" {
                 let want: Vec<char> = sentence.chars().filter(|c| c.is_alphanumeric()).collect();
@@ -643,13 +653,21 @@ mod tests {
             .lines().filter_map(|l| { let mut p = l.splitn(3, '\t'); Some((p.next()?.to_string(), p.nth(1)?.to_string())) }).collect();
         let mut files: Vec<_> = std::fs::read_dir(&dir).unwrap().flatten().map(|e| e.path()).filter(|p| p.extension().is_some_and(|e| e == "wav")).collect();
         files.sort();
+        let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
         let mut loaded: Option<Loaded> = None;
         let mut totals: std::collections::BTreeMap<String, (f64, usize, f64, f64)> = Default::default();
         for file in files {
             let name = file.file_name().unwrap().to_string_lossy().into_owned();
             let id = name.split(['-', '.']).next().unwrap().to_string();
-            if missing_megabytes(&id) > 0 { println!("{id}: models not downloaded, skipped"); continue; }
-            if loaded.as_ref().map(|l| l.language_id != id).unwrap_or(true) { loaded = None; loaded = Some(load(&id).unwrap()); }
+            if loaded.as_ref().map(|l| l.language_id != id).unwrap_or(true) {
+                loaded = None;
+                // The app's own download path, so this also checks the models arrive on this OS.
+                if missing_megabytes(&id) > 0 {
+                    println!("{id}: downloading {} MB", missing_megabytes(&id));
+                    runtime.block_on(install(&id, |_| {})).unwrap_or_else(|e| panic!("{id}: {e}"));
+                }
+                loaded = Some(load(&id).unwrap_or_else(|e| panic!("{id}: {e}")));
+            }
             let Some(wave) = sherpa_onnx::Wave::read(&file.to_string_lossy()) else { continue };
             // A microphone is already open before the learner speaks.
             let mut samples = vec![0.0; SAMPLE_RATE as usize];

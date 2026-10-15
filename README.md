@@ -82,9 +82,9 @@ The **Natural** voice runs open models through
 | End of turn | Silero VAD | all |
 | Listening | NVIDIA Parakeet TDT 0.6B v3 (int8) | en, es, fr, it |
 | Listening, second opinion | OpenAI Whisper small (int8), told the language | es, fr, it |
-| Listening | OpenAI Whisper small (int8), told the language | pt |
+| Listening | OpenAI Whisper small (int8), told the language | pt, nb |
 | Listening | NVIDIA FastConformer German (int8) | de |
-| Listening | NB-Whisper base by the National Library of Norway (int8) | nb |
+| Listening, optional | NB-Whisper base by the National Library of Norway (int8), built by the learner | nb |
 | Listening | SenseVoice Small (int8) | zh |
 | Speaking | Kokoro-82M v1.0 | en, es, fr, it, pt, zh |
 | Speaking | Piper (thorsten-high, talesyntese-medium) | de, nb |
@@ -102,9 +102,11 @@ The webview captures the microphone with echo cancellation and streams 16 kHz PC
 streams synthesized audio back sentence by sentence. Models download on first use per language
 (about 300 MB to 1.4 GB) into `voice-models` in the data directory, and can be deleted in Settings.
 
-NB-Whisper is converted by Mural (Hugging Face → original Whisper layout → sherpa-onnx's
-`scripts/whisper/export-onnx.py`, int8) and downloaded from this repository's `voice-models`
-release as `nb-whisper-base-int8.tar.bz2`.
+NB-Whisper hears Norwegian learners far better than Whisper small (about 65% of words against
+43%), but Mural neither ships nor downloads it. `scripts/convert-nb-whisper.sh` builds it on the
+learner's own computer from the National Library's weights (original Whisper layout, then
+sherpa-onnx's `scripts/whisper/export-onnx.py`, int8) and installs it as
+`voice-models/nb-whisper-base-int8`; Mural uses it whenever that folder exists.
 
 **Hold to speak** (Settings) keeps the microphone closed between turns and opens it only while you
 hold it, so a pause is thinking time rather than the end of your turn. Releasing flushes the

@@ -51,8 +51,7 @@ crate's source, available from https://crates.io.
 | --- | --- | --- | --- |
 | [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), int8 ONNX export by sherpa-onnx | NVIDIA | **CC-BY-4.0** | Listening: en, es, fr, it |
 | [FastConformer Hybrid Large German](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/nemo/models/stt_de_fastconformer_hybrid_large_pc) (stt_de_fastconformer_hybrid_large_pc), int8 ONNX export by sherpa-onnx | NVIDIA | **CC-BY-4.0** | Listening: de |
-| [Whisper small](https://github.com/openai/whisper), int8 ONNX export by sherpa-onnx | OpenAI | MIT | Listening: pt; second opinion for es, fr, it |
-| [NB-Whisper base](https://huggingface.co/NbAiLab/nb-whisper-base), int8 ONNX conversion by Mural | National Library of Norway | Apache-2.0 | Listening: nb |
+| [Whisper small](https://github.com/openai/whisper), int8 ONNX export by sherpa-onnx | OpenAI | MIT | Listening: pt, nb; second opinion for es, fr, it |
 | [SenseVoice Small](https://github.com/FunAudioLLM/SenseVoice), int8 ONNX export by sherpa-onnx | FunAudioLLM (Alibaba) | [FunASR Model License](https://github.com/modelscope/FunASR/blob/main/MODEL_LICENSE) | Listening: zh |
 | [Kokoro-82M v1.0](https://huggingface.co/hexgrad/Kokoro-82M) | hexgrad | Apache-2.0 | Speaking: en, es, fr, it, pt, zh |
 | [Piper](https://huggingface.co/rhasspy/piper-voices) voice “thorsten (high)”, trained on the [Thorsten-Voice](https://github.com/thorstenMueller/Thorsten-Voice) dataset (CC0) | Rhasspy / Thorsten Müller | MIT | Speaking: de |
@@ -64,6 +63,6 @@ Parakeet TDT 0.6B v3 and FastConformer Hybrid Large German are © NVIDIA and lic
 Creative Commons Attribution 4.0 International licence (https://creativecommons.org/licenses/by/4.0/).
 Mural uses quantized ONNX conversions published by the sherpa-onnx project; no other changes were made.
 
-NB-Whisper base is © the National Library of Norway, licensed under the Apache License 2.0. Mural
-converted its weights unchanged to the original Whisper layout, exported them with sherpa-onnx and
-quantized them to int8; the download carries the licence and a note of these changes.
+NB-Whisper base (© the National Library of Norway, Apache-2.0) is not distributed with Mural. A
+learner may build it with `scripts/convert-nb-whisper.sh`, which downloads it from the National
+Library and converts it on their own computer.
