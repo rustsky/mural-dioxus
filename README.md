@@ -80,16 +80,31 @@ The **Natural** voice runs open models through
 | Step | Model | Languages |
 | --- | --- | --- |
 | End of turn | Silero VAD | all |
-| Listening | NVIDIA Parakeet TDT 0.6B v3 (int8) | de, en, es, fr, it, pt |
-| Listening | Meta Omnilingual ASR 300M CTC (int8) | nb, zh |
+| Listening | NVIDIA Parakeet TDT 0.6B v3 (int8) | en, es, fr, it |
+| Listening, second opinion | OpenAI Whisper small (int8), told the language | es, fr, it |
+| Listening | OpenAI Whisper small (int8), told the language | pt |
+| Listening | NVIDIA FastConformer German (int8) | de |
+| Listening | NB-Whisper base by the National Library of Norway (int8) | nb |
+| Listening | SenseVoice Small (int8) | zh |
 | Speaking | Kokoro-82M v1.0 | en, es, fr, it, pt, zh |
 | Speaking | Piper (thorsten-high, talesyntese-medium) | de, nb |
+
+Each language's recogniser was chosen by `benchmark_recognisers` in `src/services/voice.rs`:
+native and accented recordings of Shadow phrases, scored as Shadow scores a repeat, for at least
+60% of words heard in under a second. Multilingual recognisers that guess the language drifted
+into neighbouring ones (Spanish heard as Portuguese, Chinese and Norwegian in other scripts), so
+single-language models are used where they exist. Parakeet guesses the language; for es, fr and it,
+when it hears nothing or (on macOS) confidently another language, Whisper small hears the same
+utterance again.
 
 The webview captures the microphone with echo cancellation and streams 16 kHz PCM to Rust
 (`src/services/voice.rs`), which transcribes each utterance, asks the teacher for a reply, and
 streams synthesized audio back sentence by sentence. Models download on first use per language
-(about 340–800 MB; German is ~575 MB) into `voice-models` in the data directory, and can be
-deleted in Settings.
+(about 300 MB to 1.4 GB) into `voice-models` in the data directory, and can be deleted in Settings.
+
+NB-Whisper is converted by Mural (Hugging Face → original Whisper layout → sherpa-onnx's
+`scripts/whisper/export-onnx.py`, int8) and downloaded from this repository's `voice-models`
+release as `nb-whisper-base-int8.tar.bz2`.
 
 **Hold to speak** (Settings) keeps the microphone closed between turns and opens it only while you
 hold it, so a pause is thinking time rather than the end of your turn. Releasing flushes the

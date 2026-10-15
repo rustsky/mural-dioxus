@@ -179,6 +179,21 @@ mod tests {
     }
 
     #[test]
+    fn no_scenario_repeats_a_step() {
+        // Each beat is a step of its own; the same task twice in one scenario is a slip.
+        for language in languages() {
+            for s in all(language) {
+                for (i, a) in s.beats.iter().enumerate() {
+                    for b in &s.beats[i + 1..] {
+                        assert!(a.text.trim() != b.text.trim() && a.en.trim() != b.en.trim(),
+                                "{language} {} repeats the beat “{}”", s.id, a.en);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn beats_are_addressed_by_index() {
         let s = &all("de")[0];
         assert!(s.valid_beat(0));

@@ -46,5 +46,13 @@ fn main() {
         .with_data_directory(services::store::LearningStore::directory().join("WebView"))
         .with_custom_head(format!("<meta name=\"color-scheme\" content=\"light\"><style>{}</style>", app::STYLE))
         .with_disable_context_menu(!cfg!(debug_assertions));
+    // On Windows, Dioxus serves the page from plain http://dioxus.index.html/, which is not a
+    // secure context, so WebView2 hides navigator.mediaDevices and voice can't reach the
+    // microphone. Mark that origin as secure. Setting args replaces wry's defaults, so keep them.
+    #[cfg(target_os = "windows")]
+    let config = config.with_windows_browser_args(
+        "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection \
+         --unsafely-treat-insecure-origin-as-secure=http://dioxus.index.html",
+    );
     dioxus::LaunchBuilder::desktop().with_cfg(config).launch(app::App);
 }

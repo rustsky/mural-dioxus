@@ -1,6 +1,6 @@
 [package]
 name = "mural"
-version = "0.2.2"
+version = "0.3.0"
 edition = "2021"
 description = "Mural for macOS: learn a language through conversation (Dioxus port)"
 license = "GPL-3.0-or-later"

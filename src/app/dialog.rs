@@ -100,6 +100,8 @@ fn ScenarioList(on_pick: EventHandler<String>) -> Element {
                         for scenario in rows {
                             {
                                 let progress = record.get(&scenario.id);
+                                // A scenario can lose beats in a catalogue update; never show more reached than exist.
+                                let reached = progress.best_beats.min(scenario.beats.len());
                                 let id = scenario.id.clone();
                                 rsx! {
                                     button { key: "{scenario.id}", class: "phrase-row",
@@ -112,7 +114,7 @@ fn ScenarioList(on_pick: EventHandler<String>) -> Element {
                                         div { class: if progress.completed { "phrase-mark settled" } else { "phrase-mark" },
                                             span { class: "band-badge", "{scenario.cefr.label()}" }
                                             if progress.completed { Icon { name: "checkmark.circle.fill", size: 17 } }
-                                            else if progress.runs > 0 { span { class: "caption2 secondary", "{progress.best_beats}/{scenario.beats.len()}" } }
+                                            else if progress.runs > 0 { span { class: "caption2 secondary", "{reached}/{scenario.beats.len()}" } }
                                         }
                                     }
                                 }
@@ -134,6 +136,7 @@ fn Brief(scenario: String, on_back: EventHandler<()>) -> Element {
         return rsx! { div { class: "page stack", "That situation has gone." } };
     };
     let progress = dialog_store::current().get(&scenario.id);
+    let reached = progress.best_beats.min(scenario.beats.len());
     let running = app.conv.read().is_running();
 
     let start = move |_| {
@@ -194,7 +197,7 @@ fn Brief(scenario: String, on_back: EventHandler<()>) -> Element {
             if progress.runs > 0 {
                 div { class: "caption2 secondary",
                     if progress.completed { "You have been through this one." }
-                    else { "Played {progress.runs} times, {progress.best_beats} of {scenario.beats.len()} beats so far." }
+                    else { "Played {progress.runs} times, {reached} of {scenario.beats.len()} beats so far." }
                 }
             }
         }

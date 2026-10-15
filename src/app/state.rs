@@ -394,6 +394,7 @@ impl Mural {
             BridgeMessage::Error { attempt, code } => {
                 if !self.current_attempt(&attempt) { return; }
                 let message = match code.as_str() {
+                    "microphone" if cfg!(target_os = "windows") => "Allow microphone access in Settings → Privacy & security → Microphone (turn on “Let desktop apps access your microphone”), then start again.",
                     "microphone" => "Allow microphone access in System Settings → Privacy & Security → Microphone → Mural to start a conversation.",
                     "speech" => "Allow speech recognition in System Settings → Privacy & Security → Speech Recognition → Mural, then start again.",
                     "speech-disabled" => "Speech recognition needs Dictation. Turn it on in System Settings → Keyboard → Dictation (Siri can stay off), then start again.",
@@ -402,6 +403,7 @@ impl Mural {
                     "speech-unsupported" => "Speech recognition isn’t available on this computer. On a Mac, turn on Dictation in System Settings, or type your replies.",
                     "speech-network" => "Speech recognition couldn’t reach Apple’s service. Check your connection, or turn on on-device Dictation in System Settings.",
                     "timeout" => "The voice connection took too long. Please try again.",
+                    "unsupported" if !cfg!(target_os = "macos") => "Voice couldn’t reach the microphone on this computer. Check that a microphone is connected and try again.",
                     "unsupported" => "Voice needs microphone access, which is only available when Mural runs as an app bundle. Open Mural.app and try again.",
                     _ => "The voice connection couldn’t be established. Check your connection and try again.",
                 };
