@@ -22,6 +22,7 @@ fn paths(name: &str) -> &'static str {
         "chevron.down" => r#"<path d="M6 9l6 6 6-6"/>"#,
         "chevron.up" => r#"<path d="M18 15l-6-6-6 6"/>"#,
         "xmark" => r#"<path d="M18 6L6 18M6 6l12 12"/>"#,
+        "plus" => r#"<path d="M12 5v14M5 12h14"/>"#,
         "checkmark.circle.fill" => r#"<circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M8 12.5l2.7 2.7L16.5 9" stroke="white"/>"#,
         "circle" => r#"<circle cx="12" cy="12" r="10"/>"#,
         "leaf" => r#"<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10z"/><path d="M2 21c0-3 1.9-5.4 5.1-6C9.5 14.5 12 13 13 12"/>"#,

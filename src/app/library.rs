@@ -3,7 +3,10 @@ use dioxus::prelude::*;
 use super::components::{Dialog, DialogButton, Markdown, PageHeading, PinyinHelp, RecallBars, SheetFrame, SourcesView};
 use super::icons::Icon;
 use super::state::{Mural, Sheet, Tab};
+use crate::engine::flashcards::{self, Rating, Schedule};
 use crate::engine::meaning_cache_key;
+use crate::engine::time::Date;
+use crate::services::flashcard_store;
 use crate::engine::models::{SessionRecord, Speaker, TopicBrief};
 use crate::engine::text::contains_ci;
 
@@ -66,24 +69,62 @@ pub fn CurrentTopicSheet() -> Element {
 pub fn WordsView() -> Element {
     let app = use_context::<Mural>();
     let mut search = use_signal(String::new);
+    let mut reviewing = use_signal(|| false);
+    if reviewing() {
+        return rsx! { Review { on_close: move |_| reviewing.set(false) } };
+    }
     let store = app.store.read();
     let language = store.language();
     let learner = store.learner();
+    let record = flashcard_store::current();
+    let now = Date::now();
+    let cards: Vec<(&str, Option<&Schedule>)> = learner.words.iter().map(|w| (w.id.as_str(), record.get(&w.id))).collect();
+    let queue = flashcards::queue(&cards, now);
+    let new_count = queue.iter().filter(|id| record.get(id).is_none()).count();
+    let due_count = queue.iter().filter(|id| record.get(id).is_some_and(|c| c.due <= now)).count();
+    // Learning cards coming back within minutes; the session shows them at the end.
+    let learning_count = queue.len() - new_count - due_count;
+    let next = flashcards::next_due(&cards).filter(|d| *d > now);
     let query = search.read().clone();
     let words: Vec<_> = learner.words.iter().filter(|w| query.is_empty() || contains_ci(&w.lemma, &query) || contains_ci(&w.meaning, &query)).cloned().collect();
     rsx! {
         div { class: "page stack",
             PageHeading { eyebrow: "Little by little · {language.name}", title: "Your words.", subtitle: "Familiar words, ready for another conversation." }
-            div { class: "search",
-                Icon { name: "magnifyingglass", size: 15 }
-                input { r#type: "search", placeholder: "Find a word", value: "{search}", oninput: move |e| search.set(e.value()) }
+            if !learner.words.is_empty() {
+                div { class: "review-panel",
+                    div { class: "review-summary",
+                        if queue.is_empty() {
+                            span { class: "review-count", "All caught up" }
+                            span { class: "sub secondary",
+                                if let Some(next) = next { "The next card is due in {flashcards::wait_label(next.since(now))}." }
+                                else { "Review your words as flash cards." }
+                            }
+                        } else {
+                            span { class: "review-count",
+                                "{due_count} due · {new_count} new"
+                                if learning_count > 0 { " · {learning_count} learning" }
+                            }
+                            span { class: "sub secondary", "See the word, recall its meaning, say how it went." }
+                        }
+                    }
+                    button { class: "pill-button center review-start", disabled: queue.is_empty(), onclick: move |_| reviewing.set(true),
+                        Icon { name: "leaf", size: 16 } "Review"
+                    }
+                }
+            }
+            div { class: "row",
+                div { class: "search", style: "flex: 1",
+                    Icon { name: "magnifyingglass", size: 15 }
+                    input { r#type: "search", placeholder: "Find a word", value: "{search}", oninput: move |e| search.set(e.value()) }
+                }
+                button { class: "plain-action", onclick: move |_| app.open_sheet(Sheet::AddWord), Icon { name: "plus", size: 15 } "Add a word" }
             }
             if words.is_empty() {
                 div { class: "card panel-2",
                     Icon { name: "leaf", size: 34, weight: 1.2 }
                     h2 { if query.is_empty() { "They’ll grow from here." } else { "No matching words yet." } }
                     div { class: "sub secondary",
-                        if query.is_empty() { "As we talk, useful words and phrases find a home here. Their strength grows when you recall them over time." }
+                        if query.is_empty() { "As we talk, useful words and phrases find a home here, and each becomes a flash card. You can also add your own." }
                         else { "Try another {language.name} word or English meaning." }
                     }
                 }
@@ -99,13 +140,14 @@ pub fn WordsView() -> Element {
                             div { style: "display: flex; flex-direction: column; align-items: flex-end; gap: 8px",
                                 RecallBars { count: word.bars }
                                 span { class: "caption2 secondary", "{word.label()}" }
+                                span { class: "caption2 secondary", "{card_status(record.get(&word.id), now)}" }
                             }
                         }
                     }
                 }
             }
             div { class: "legend", span { "1 · Fragile" } span { "2 · Growing" } span { "3 · Steady" } }
-            div { class: "footnote secondary", "The bars estimate spoken recall, not permanent mastery. Using a word with visible meanings counts as supported practice." }
+            div { class: "footnote secondary", "The bars estimate spoken recall in conversation, not permanent mastery, and using a word with visible meanings counts as supported practice. Flash cards are scheduled on their own." }
             if !learner.capabilities.is_empty() {
                 div { class: "capabilities",
                     h3 { "Finding your voice" }
@@ -122,6 +164,168 @@ pub fn WordsView() -> Element {
     }
 }
 
+/// A word's flash card in a few words: new, due, or when it comes back.
+fn card_status(card: Option<&Schedule>, now: Date) -> String {
+    match card {
+        None => "New card".into(),
+        Some(card) if card.due <= now => "Card due".into(),
+        Some(card) => format!("Card in {}", flashcards::wait_label(card.due.since(now))),
+    }
+}
+
+/// One review session: the word, then its meaning, then how it went. Space shows the answer and
+/// 1–4 answer it, as in Anki; Escape leaves.
+#[component]
+fn Review(on_close: EventHandler<()>) -> Element {
+    let app = use_context::<Mural>();
+    let mut revealed = use_signal(|| false);
+    let mut reviewed = use_signal(|| 0usize);
+    let mut error = use_signal(|| None::<String>);
+    // The card store isn't a signal; this re-reads it after each answer.
+    let mut answered = use_signal(|| 0u32);
+    let _ = answered();
+
+    let store = app.store.read();
+    let is_zh = store.language().id == "zh";
+    let words = store.learner().words;
+    let record = flashcard_store::current();
+    let now = Date::now();
+    let cards: Vec<(&str, Option<&Schedule>)> = words.iter().map(|w| (w.id.as_str(), record.get(&w.id))).collect();
+    let queue = flashcards::queue(&cards, now);
+    let left = queue.len();
+    let current = queue.first().and_then(|id| words.iter().find(|w| w.id == *id)).cloned();
+    let next = flashcards::next_due(&cards).filter(|d| *d > now);
+
+    let mut answer = move |id: String, rating: Rating| {
+        match flashcard_store::update(|r| { r.review(&id, rating, Date::now()); }) {
+            Ok(_) => { revealed.set(false); reviewed += 1; error.set(None); }
+            Err(e) => error.set(Some(e)),
+        }
+        answered += 1;
+    };
+
+    let Some(word) = current else {
+        return rsx! {
+            div { class: "page stack drill",
+                button { class: "text-button row", onclick: move |_| on_close.call(()), Icon { name: "chevron.left", size: 14 } "Your words" }
+                div { class: "drill-card",
+                    Icon { name: "leaf", size: 34, weight: 1.2 }
+                    div { class: "drill-phrase", "All done for now." }
+                    div { class: "meaning",
+                        if reviewed() > 0 { "{reviewed} cards reviewed. " }
+                        if let Some(next) = next { "The next card is due in {flashcards::wait_label(next.since(now))}." }
+                    }
+                }
+                button { class: "pill-button center", onclick: move |_| on_close.call(()), "Back to your words" }
+            }
+        };
+    };
+
+    let schedule = record.get(&word.id).cloned();
+    let choices: Vec<(Rating, String)> = Rating::ALL.iter()
+        .map(|r| (*r, flashcards::wait_label(flashcards::review(schedule.as_ref(), *r, now).due.since(now))))
+        .collect();
+    let state = match &schedule { None => "New", Some(s) if s.is_learning() => "Learning", Some(_) => "Review" };
+    let id = word.id.clone();
+
+    rsx! {
+        div { class: "page stack drill review", tabindex: "0",
+            onmounted: move |e| async move { let _ = e.set_focus(true).await; },
+            onkeydown: {
+                let id = id.clone();
+                move |e: Event<KeyboardData>| {
+                    let key = e.key();
+                    if key == Key::Escape { e.stop_propagation(); on_close.call(()); return; }
+                    if !revealed() {
+                        if key == Key::Enter || key == Key::Character(" ".into()) { e.prevent_default(); revealed.set(true); }
+                        return;
+                    }
+                    if let Key::Character(c) = &key {
+                        if let Some(rating) = Rating::ALL.into_iter().find(|r| r.key() == c) { e.prevent_default(); answer(id.clone(), rating); }
+                    }
+                }
+            },
+            div { class: "review-top",
+                button { class: "text-button row", onclick: move |_| on_close.call(()), Icon { name: "chevron.left", size: 14 } "Your words" }
+                span { class: "caption2 secondary", "{left} left" }
+            }
+            div { class: "drill-card flash-card",
+                span { class: "band-badge", "{state}" }
+                div { class: "drill-phrase selectable", "{word.lemma}" }
+                if revealed() {
+                    div { class: "flash-answer",
+                        if is_zh { PinyinHelp { text: word.lemma.clone() } }
+                        div { class: "flash-meaning selectable", "{word.meaning}" }
+                        if !word.example.is_empty() { div { class: "quote selectable", "“{word.example}”" } }
+                    }
+                }
+            }
+            if revealed() {
+                div { class: "grade-buttons",
+                    for (rating, wait) in choices {
+                        button { key: "{rating.label()}", class: "grade grade-{rating.key()}",
+                            onclick: { let id = id.clone(); move |_| answer(id.clone(), rating) },
+                            span { class: "grade-wait", "{wait}" }
+                            span { "{rating.label()}" }
+                        }
+                    }
+                }
+                div { class: "caption2 secondary center", "Keys 1–4" }
+            } else {
+                button { class: "pill-button center", onclick: move |_| revealed.set(true), "Show answer" }
+                div { class: "caption2 secondary center", "Space" }
+            }
+            if let Some(e) = error() { div { class: "footnote danger", "{e}" } }
+        }
+    }
+}
+
+/// Adds a word of the learner's own. It joins the list, and the flash cards, like a kept word.
+#[component]
+pub fn AddWordSheet() -> Element {
+    let app = use_context::<Mural>();
+    let mut lemma = use_signal(String::new);
+    let mut meaning = use_signal(String::new);
+    let mut example = use_signal(String::new);
+    let mut error = use_signal(|| None::<String>);
+    let language = app.store.read().language();
+    let meaning_language = app.store.read().preferences().meaning_language.clone();
+    let mut save = move || {
+        if lemma.read().trim().is_empty() || meaning.read().trim().is_empty() {
+            error.set(Some("A word and its meaning are both needed.".into()));
+            return;
+        }
+        if app.store.write_unchecked().keep_word(&lemma.read(), &meaning.read(), &example.read()) {
+            app.close_sheet();
+        } else {
+            error.set(Some("That word, with that meaning, is already in your list.".into()));
+        }
+    };
+    rsx! {
+        SheetFrame { title: "Add a word",
+            leading: Some(("Cancel".to_string(), EventHandler::new(move |_| app.close_sheet()))),
+            trailing: Some(("Add".to_string(), EventHandler::new(move |_| save()))),
+            div { class: "stack",
+                label { class: "stack",
+                    span { class: "sub", "{language.name} word or phrase" }
+                    input { class: "field", value: "{lemma}", autofocus: true, oninput: move |e| lemma.set(e.value()) }
+                }
+                label { class: "stack",
+                    span { class: "sub", "Meaning in {meaning_language}" }
+                    input { class: "field", value: "{meaning}", oninput: move |e| meaning.set(e.value()),
+                        onkeydown: move |e: Event<KeyboardData>| if e.key() == Key::Enter { save() } }
+                }
+                label { class: "stack",
+                    span { class: "sub", "An example sentence (optional)" }
+                    textarea { class: "field", rows: 2, value: "{example}", oninput: move |e| example.set(e.value()) }
+                }
+                if let Some(e) = error() { div { class: "footnote danger", "{e}" } }
+                div { class: "footnote secondary", "It joins your words and your flash cards. Its bars still grow only from using it in conversation." }
+            }
+        }
+    }
+}
+
 #[component]
 pub fn WordDetailSheet(id: String) -> Element {
     let app = use_context::<Mural>();
@@ -129,6 +333,11 @@ pub fn WordDetailSheet(id: String) -> Element {
     let is_zh = store.language().id == "zh";
     let Some(word) = store.learner().words.into_iter().find(|w| w.id == id) else {
         return rsx! { SheetFrame { div { class: "secondary", "This word is no longer in your list." } } };
+    };
+    let card_line = match flashcard_store::current().get(&word.id) {
+        None => "Flash card: new, not reviewed yet".to_string(),
+        Some(card) => format!("Flash card: {} · reviewed {} times{}", card_status(Some(card), Date::now()).to_lowercase().replace("card ", ""),
+                              card.reviews, if card.lapses > 0 { format!(", forgotten {}", card.lapses) } else { String::new() }),
     };
     rsx! {
         SheetFrame {
@@ -139,6 +348,7 @@ pub fn WordDetailSheet(id: String) -> Element {
             div { style: "font-size: 15px", "{word.explanation()}" }
             div { class: "quote selectable", "“{word.example}”" }
             div { class: "footnote secondary", "{word.independent_count} independent uses · Last seen {word.last_seen.abbreviated()}" }
+            div { class: "footnote secondary", "{card_line}" }
             div {
                 button { class: "footnote danger",
                     onclick: move |_| { app.store.write_unchecked().hide_word(&id); app.close_sheet(); },

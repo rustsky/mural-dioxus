@@ -210,6 +210,7 @@ pub enum Sheet {
     Transcript,
     CurrentTopic,
     WordDetail(String),
+    AddWord,
     History,
     EditableTranscript(String),
     Notices,
@@ -967,9 +968,10 @@ impl Mural {
             if let Some(t) = c.save_task.take() { t.cancel(); }
         }
         self.reset_conversation();
-        // Shadowing progress is learning data too, even though it lives in its own file.
+        // Shadowing, dialogue and flash card progress is learning data too, though each has its own file.
         if let Err(error) = shadow_store::remove_all() { self.conv.write_unchecked().notice = Some(error); }
         if let Err(error) = dialog_store::remove_all() { self.conv.write_unchecked().notice = Some(error); }
+        if let Err(error) = crate::services::flashcard_store::remove_all() { self.conv.write_unchecked().notice = Some(error); }
         *self.shadow.write_unchecked() = Shadow::default();
         let ids = self.store.write_unchecked().delete_all();
         for id in ids { self.cancel_final_assessment(&id); }

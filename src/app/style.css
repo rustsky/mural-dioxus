@@ -321,3 +321,23 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* Flash cards on the Words tab */
+.review-panel { display: flex; align-items: center; gap: 16px; padding: 18px 20px; border-radius: 22px; background: var(--sage); }
+.review-summary { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.review-count { font-family: var(--rounded); font-weight: 600; font-size: 19px; }
+.review-start { width: auto; padding: 13px 22px; gap: 8px; }
+.review { outline: none; }
+.review-top { display: flex; align-items: center; justify-content: space-between; }
+.flash-card { min-height: 220px; justify-content: center; align-items: center; gap: 14px; }
+.flash-answer { display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%; padding-top: 14px; border-top: 1px solid var(--peach); }
+.flash-meaning { font-size: 20px; line-height: 1.35; }
+.grade-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.grade { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 12px 6px; border-radius: 16px; background: white; font-weight: 600; font-size: 14px; }
+.grade:hover { filter: brightness(0.97); }
+.grade-wait { font-size: 11px; font-weight: 400; color: var(--secondary); }
+.grade-1 { background: rgba(214,106,86,0.14); }
+.grade-2 { background: rgba(255,196,99,0.22); }
+.grade-3 { background: rgba(104,169,120,0.18); }
+.grade-4 { background: rgba(110,150,210,0.18); }
+.center { text-align: center; }

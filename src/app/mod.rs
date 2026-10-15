@@ -104,6 +104,7 @@ fn Main(store: Signal<Option<crate::services::store::LearningStore>>) -> Element
                         Sheet::Transcript => rsx! { library::TranscriptSheet {} },
                         Sheet::CurrentTopic => rsx! { library::CurrentTopicSheet {} },
                         Sheet::WordDetail(id) => rsx! { library::WordDetailSheet { id } },
+                        Sheet::AddWord => rsx! { library::AddWordSheet {} },
                         Sheet::History => rsx! { library::HistorySheet {} },
                         Sheet::EditableTranscript(session_id) => rsx! { library::EditableTranscriptSheet { session_id } },
                         Sheet::Notices => rsx! { settings::NoticesSheet {} },
