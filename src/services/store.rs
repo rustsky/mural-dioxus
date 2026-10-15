@@ -14,10 +14,24 @@ pub struct LearningStore {
     path: Option<PathBuf>,
 }
 
+/// The app's private files folder, which Android keeps from other apps and clears on uninstall.
+/// There is no data directory in the environment, and the temp fallback isn't writable; the
+/// package name in the process's command line names the folder without a call into Java.
+#[cfg(target_os = "android")]
+fn android_files_dir() -> PathBuf {
+    let cmdline = std::fs::read("/proc/self/cmdline").unwrap_or_default();
+    let process = String::from_utf8_lossy(cmdline.split(|b| *b == 0).next().unwrap_or_default()).into_owned();
+    let package = process.split(':').next().unwrap_or_default();
+    PathBuf::from("/data/data").join(package).join("files")
+}
+
 pub const SAVE_ERROR: &str = "Mural couldn’t save your progress. Please export a backup and try again.";
 
 impl LearningStore {
     pub fn directory() -> PathBuf {
+        #[cfg(target_os = "android")]
+        return android_files_dir().join("Mural");
+        #[cfg(not(target_os = "android"))]
         dirs::data_dir().unwrap_or_else(std::env::temp_dir).join("Mural")
     }
 
@@ -49,7 +63,7 @@ impl LearningStore {
         Ok(store)
     }
 
-    fn write_private(path: &std::path::Path, data: &[u8]) -> std::io::Result<()> {
+    pub(crate) fn write_private(path: &std::path::Path, data: &[u8]) -> std::io::Result<()> {
         use std::io::Write;
         if let Some(dir) = path.parent() { std::fs::create_dir_all(dir)?; }
         let tmp = path.with_extension("tmp");

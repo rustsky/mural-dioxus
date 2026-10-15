@@ -6,7 +6,7 @@ description = "Mural for macOS: learn a language through conversation (Dioxus po
 license = "GPL-3.0-or-later"
 
 [dependencies]
-dioxus = { version = "0.7", features = ["desktop"] }
+dioxus = "0.7"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 uuid = { version = "1", features = ["v4", "serde"] }
@@ -14,7 +14,6 @@ chrono = { version = "0.4", default-features = false, features = ["clock", "std"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 tokio = { version = "1", features = ["time", "sync", "macros"] }
 futures-util = "0.3"
-rfd = "0.15"
 open = "5"
 dirs = "6"
 unicode-general-category = "1"
@@ -23,6 +22,14 @@ sherpa-onnx = "1.13.8"
 bzip2 = "0.6"
 tar = "0.4"
 base64 = "0.22"
+
+# The desktop renderer and its file dialogs everywhere but Android, which uses the mobile renderer.
+[target.'cfg(not(target_os = "android"))'.dependencies]
+dioxus = { version = "0.7", features = ["desktop"] }
+rfd = "0.15"
+
+[target.'cfg(target_os = "android")'.dependencies]
+dioxus = { version = "0.7", features = ["mobile"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 security-framework = "3"

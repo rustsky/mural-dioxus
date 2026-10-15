@@ -1,6 +1,6 @@
 name: Build
 
-# Builds Mural for Linux, macOS and Windows on every push and pull request.
+# Builds Mural for Linux, macOS, Windows and Android on every push and pull request.
 # Pushing a tag like v0.1.0 also publishes the binaries and the source archive as a GitHub release
 # (Mural is GPL-3.0-or-later, so the source always ships with the binaries).
 
@@ -125,6 +125,43 @@ jobs:
           path: dist/*.dmg
           if-no-files-found: error
 
+  android:
+    name: Android (arm64)
+    runs-on: ubuntu-24.04
+    env:
+      # Keep in step with scripts/build-android.sh's expectations; any NDK with the arm64 toolchain works.
+      NDK_VERSION: 29.0.14206865
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+      - name: Install the NDK
+        run: |
+          sdkmanager --install "ndk;${NDK_VERSION}" "platforms;android-35" "build-tools;35.0.0" > /dev/null
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ". -> target/android/release"
+      - uses: cargo-bins/cargo-binstall@main
+      - name: Install Dioxus CLI
+        run: cargo binstall --no-confirm --force "dioxus-cli@${DIOXUS_CLI_VERSION}"
+      # An optimized build (about 23 MB), signed with the standard debug key: it installs on any phone
+      # that allows apps from outside the Play Store. Publishing in the Play Store needs a real
+      # signing key in [android] of Dioxus.toml, kept in repository secrets.
+      - name: Build APK
+        run: ./scripts/build-android.sh --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-arm64
+          path: dist/*.apk
+          if-no-files-found: error
+
   source:
     name: Source archive
     runs-on: ubuntu-24.04
@@ -145,7 +182,7 @@ jobs:
   release:
     name: Publish release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux, windows, macos, source]
+    needs: [linux, windows, macos, android, source]
     runs-on: ubuntu-24.04
     permissions:
       contents: write

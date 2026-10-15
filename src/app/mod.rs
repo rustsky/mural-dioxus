@@ -11,8 +11,8 @@ mod state;
 mod talk;
 mod webview;
 
-use dioxus::desktop::tao::event::{Event as TaoEvent, WindowEvent};
-use dioxus::desktop::use_wry_event_handler;
+use crate::renderer::tao::event::{Event as TaoEvent, WindowEvent};
+use crate::renderer::use_wry_event_handler;
 use dioxus::prelude::*;
 
 use components::{Brand, Dialog};

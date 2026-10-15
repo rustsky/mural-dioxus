@@ -2265,7 +2265,8 @@ impl Mural {
     /// Sample content for local captures (`--preview --preview-seed`). Never used in release builds.
     pub fn prepare_preview(self) {
         use crate::engine::models::EvidenceKind;
-        if !std::env::args().any(|a| a == "--preview-seed") { return; }
+        // Android can't read arguments (see main.rs), and never starts with this one anyway.
+        if cfg!(target_os = "android") || !std::env::args().any(|a| a == "--preview-seed") { return; }
         self.store.write_unchecked().select_language("es");
         self.store.write_unchecked().update_preferences(|p| {
             p.meaning_visible = true;

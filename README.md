@@ -130,9 +130,15 @@ cargo test    # engine, scoring, catalogues, archive and API tests
 | macOS | `./scripts/build-macos.sh` | `dist/Mural.app`, the `.dmg` and the source archive |
 | Linux | `./scripts/build-linux-appimage.sh` | `dist/Mural-<version>-<arch>.AppImage` (needs WebKitGTK 4.1, GTK 3 and GStreamer; package list in `.github/workflows/build.yml`) |
 | Windows | `./scripts/rust-licenses.sh && dx bundle --release --package-types nsis --out-dir target/installer` | `*-setup.exe` under `target/installer` (run from Git Bash) |
+| Android | `./scripts/build-android.sh --release` | `dist/Mural-<version>-arm64-release.apk` (about 23 MB; without `--release`, a debug APK) (needs Java 17, the Android SDK and NDK, and `rustup target add aarch64-linux-android`; early, see below) |
 
 The macOS script signs ad-hoc by default. Set `SIGN_IDENTITY="Developer ID Application: …"` to sign
 with a hardened runtime for distribution (notarization is a separate step).
+
+**Android** runs the same app in an Android WebView. It saves to the app's private folder, keeps the
+API key in an owner-only file there (Android has no keychain Mural can reach yet), and asks for the
+microphone the first time a conversation starts. Learning backups (export and import) aren't
+available on Android yet, and the layout is the desktop one narrowed for a phone.
 
 `cargo run` starts the app for development, but on macOS **voice needs the app bundle**: WebKit only
 exposes the microphone when the host app's Info.plist declares `NSMicrophoneUsageDescription`.
