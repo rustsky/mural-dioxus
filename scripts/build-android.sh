@@ -27,6 +27,16 @@ fi
 # sherpa-onnx libraries then get into the APK.
 export CARGO_TARGET_DIR="$PWD/target/android/$profile"
 
+# CI's build cache restores Cargo's record of sherpa-onnx-sys but not the libraries its build script
+# unpacked into sherpa-onnx-prebuilt, so Cargo skips the script and linking fails. Without them,
+# forget the record and the script runs again.
+if [ -z "$(find "$CARGO_TARGET_DIR/sherpa-onnx-prebuilt" -path "*jniLibs/arm64-v8a/libsherpa-onnx-c-api.so" 2>/dev/null | head -1)" ]; then
+  # The cache can also bring back the folders empty, and the script takes an existing folder as
+  # already unpacked, so it has to go too.
+  rm -rf "${CARGO_TARGET_DIR:?}/sherpa-onnx-prebuilt"
+  find "$CARGO_TARGET_DIR" -path "*/.fingerprint/sherpa-onnx-sys-*" -prune -exec rm -rf {} + 2>/dev/null || true
+fi
+
 dx build --platform android --target aarch64-linux-android ${args[@]+"${args[@]}"}
 
 version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)

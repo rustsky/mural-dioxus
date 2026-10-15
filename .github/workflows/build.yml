@@ -19,7 +19,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CARGO_TERM_COLOR: always
+  # With colour forced on, dx drops cargo's own error messages (build-script failures among them)
+  # and reports only "cargo build finished with errors".
+  CARGO_TERM_COLOR: never
   # Keep in step with the dioxus version in Cargo.lock.
   DIOXUS_CLI_VERSION: 0.7.10
 
@@ -72,7 +74,8 @@ jobs:
         run: |
           VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
           ./scripts/rust-licenses.sh
-          dx bundle --release --package-types nsis --out-dir target/installer
+          # Named, because dx can't tell the platform from a Cargo.toml that also targets phones.
+          dx bundle --platform windows --release --package-types nsis --out-dir target/installer
           mkdir -p dist
           INSTALLER=$(find target/installer -name '*-setup.exe' | head -1)
           test -n "$INSTALLER"
@@ -138,6 +141,9 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: android-actions/setup-android@v3
+        with:
+          # The default also installs "tools", which the SDK repository no longer has.
+          packages: platform-tools
       - name: Install the NDK
         run: |
           sdkmanager --install "ndk;${NDK_VERSION}" "platforms;android-35" "build-tools;35.0.0" > /dev/null
@@ -170,6 +176,19 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-ios
+      # dx strips the binary with rust-objcopy. The copy in the rustc component is static,
+      # but llvm-tools replaces it with one linked against @rpath/libLLVM.dylib, and the macOS
+      # Intel image has shipped that without the dylib ("Library not loaded: @rpath/libLLVM.dylib").
+      # Reinstalling the component usually restores it; dropping it falls back to the static copy.
+      - name: Check rust-objcopy
+        run: |
+          OBJCOPY="$(rustc --print target-libdir)/../bin/rust-objcopy"
+          "$OBJCOPY" --version && exit 0
+          rustup component remove llvm-tools-preview || true
+          rustup component add llvm-tools-preview || true
+          "$OBJCOPY" --version && exit 0
+          rustup component remove llvm-tools-preview
+          "$OBJCOPY" --version
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: ". -> target/ios/release"
