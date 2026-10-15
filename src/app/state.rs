@@ -777,7 +777,10 @@ impl Mural {
             let megabytes = voice::missing_megabytes(language_id);
             if megabytes > 0 {
                 shadow.write_unchecked().preparing = Some(format!("Downloading the voice… 0% of {megabytes} MB"));
+                let mine = attempt.clone();
                 let progress = move |step: voice::Progress| {
+                    // A drill left mid-download keeps installing, but must not report into a newer one.
+                    if shadow.peek().attempt.as_deref() != Some(mine.as_str()) { return; }
                     let text = match step {
                         voice::Progress::Downloading(fraction) => format!("Downloading the voice… {}% of {megabytes} MB", (fraction * 100.0).floor() as i64),
                         voice::Progress::Unpacking => "Unpacking the voice…".to_string(),
@@ -786,6 +789,7 @@ impl Mural {
                     if s.preparing.as_ref() != Some(&text) { s.preparing = Some(text); }
                 };
                 if let Err(error) = voice::install(language_id, progress).await {
+                    if shadow.peek().attempt.as_deref() != Some(attempt.as_str()) { return; }
                     let mut s = shadow.write_unchecked();
                     s.preparing = None;
                     s.notice = Some(error);

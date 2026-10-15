@@ -149,6 +149,17 @@ pub enum Progress { Downloading(f64), Unpacking }
 
 /// Downloads whatever this language still needs.
 pub async fn install(language_id: &str, progress: impl Fn(Progress)) -> Result<(), String> {
+    // A drill left and reopened mid-download asks again; two installs would write the same part
+    // and staging files. The second waits, showing the first one's progress, then finds what the
+    // first already put in place.
+    static INSTALLING: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+    static LATEST: std::sync::Mutex<Option<Progress>> = std::sync::Mutex::new(None);
+    let _one_at_a_time = loop {
+        if let Ok(guard) = INSTALLING.try_lock() { break guard; }
+        if let Some(step) = *LATEST.lock().unwrap() { progress(step); }
+        tokio::time::sleep(Duration::from_millis(250)).await;
+    };
+    let progress = |step: Progress| { *LATEST.lock().unwrap() = Some(step); progress(step); };
     let needed: Vec<&Pack> = packs(language_id).into_iter().filter(|p| !path(p).exists()).collect();
     let total: f64 = needed.iter().map(|p| p.megabytes as f64).sum::<f64>().max(1.0);
     let mut done = 0.0;
@@ -161,6 +172,7 @@ pub async fn install(language_id: &str, progress: impl Fn(Progress)) -> Result<(
         })).await?;
         done += pack.megabytes as f64;
     }
+    *LATEST.lock().unwrap() = None;
     Ok(())
 }
 
