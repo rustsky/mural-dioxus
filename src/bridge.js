@@ -556,6 +556,12 @@ while (true) {
     case "play_end": playEnd(command.attempt); break;
     case "speak": speak(command.attempt, String(command.text || "")); break;
     case "listen": listen(command.attempt); break;
+    // The learner has started talking: stop playing at once so their first words are captured.
+    case "barge_in":
+      stopPlayback();
+      local.speaking = 0;
+      try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (_) {}
+      break;
     case "config": Object.assign(config, { fakeMicrophone: !!command.fakeMicrophone, fakeSpeech: command.fakeSpeech || [], fakeAudio: command.fakeAudio || [], trace: !!command.trace }); break;
   }
 }

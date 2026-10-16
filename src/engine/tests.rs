@@ -123,7 +123,7 @@ fn learner_projection_matches_shared_fixture() {
     let fixture: Value = serde_json::from_slice(&fixture_file("archive-expected.json")).unwrap();
     let learner = &fixture["learner"];
     let state = LearningEngine::project(&archive.sessions, fixture["languageID"].as_str().unwrap(),
-        &archive.preferences.hidden_words, Date(fixture["now"].as_f64().unwrap()));
+        &archive.preferences.hidden_words, &archive.preferences.kept_words, Date(fixture["now"].as_f64().unwrap()));
     assert_eq!(learner["challenge"].as_i64().unwrap(), state.challenge);
     assert_eq!(learner["observationCount"].as_u64().unwrap() as usize, state.observation_count);
     assert_eq!(learner["nextGoal"].as_str().unwrap(), state.next_goal);
@@ -186,7 +186,7 @@ fn late_fragments_invalidate_evidence_and_speakers_stay_separate() {
 fn supported_production_is_never_independent() {
     let s = fixture(0.0, "walk", true, EvidenceKind::Independent);
     assert_eq!(LearningEngine::validate(&s.assessments[0], &s).unwrap().words[0].kind, EvidenceKind::Assisted);
-    assert_eq!(LearningEngine::project(&[s], "nb", &[], Date::now()).words[0].independent_count, 0);
+    assert_eq!(LearningEngine::project(&[s], "nb", &[], &[], Date::now()).words[0].independent_count, 0);
 
     let mut s = basic();
     s.fragments.insert(0, Fragment::new(Speaker::Assistant, "Du gikk en tur?", 0, 500));
@@ -215,13 +215,13 @@ fn duplicates_never_double_credit() {
     let mut s = basic();
     let dup = s.assessments[0].clone();
     s.assessments.push(dup);
-    let p = LearningEngine::project(&[s.clone()], "nb", &[], s.started_at);
+    let p = LearningEngine::project(&[s.clone()], "nb", &[], &[], s.started_at);
     assert_eq!(p.words[0].independent_count, 1);
     assert_eq!(p.observation_count, 1);
     let mut s = basic();
     let w = s.assessments[0].words[0].clone();
     s.assessments[0].words.push(w);
-    assert_eq!(LearningEngine::project(&[s.clone()], "nb", &[], s.started_at).words[0].independent_count, 1);
+    assert_eq!(LearningEngine::project(&[s.clone()], "nb", &[], &[], s.started_at).words[0].independent_count, 1);
 }
 
 #[test]
@@ -230,15 +230,15 @@ fn steady_requires_spacing_and_contexts_and_fades() {
     let second = fixture(2.0, "walk", false, EvidenceKind::Independent);
     let third = fixture(8.0, "dinner", false, EvidenceKind::Independent);
     let all = [first.clone(), second.clone(), third.clone()];
-    assert_eq!(LearningEngine::project(&all, "nb", &[], third.started_at).words[0].bars, 3);
+    assert_eq!(LearningEngine::project(&all, "nb", &[], &[], third.started_at).words[0].bars, 3);
     let same = [first.clone(), second.clone(), fixture(8.0, "walk", false, EvidenceKind::Independent)];
-    assert_eq!(LearningEngine::project(&same, "nb", &[], third.started_at).words[0].bars, 2);
-    let faded = LearningEngine::project(&all, "nb", &[], third.started_at.adding(30.0 * 86_400.0));
+    assert_eq!(LearningEngine::project(&same, "nb", &[], &[], third.started_at).words[0].bars, 2);
+    let faded = LearningEngine::project(&all, "nb", &[], &[], third.started_at.adding(30.0 * 86_400.0));
     assert_eq!(faded.words[0].bars, 2);
     let lapse = fixture(9.0, "walk", false, EvidenceKind::Lapse);
     let mut with_lapse = all.to_vec();
     with_lapse.push(lapse.clone());
-    assert_eq!(LearningEngine::project(&with_lapse, "nb", &[], lapse.started_at).words[0].bars, 1);
+    assert_eq!(LearningEngine::project(&with_lapse, "nb", &[], &[], lapse.started_at).words[0].bars, 1);
 }
 
 #[test]
@@ -348,6 +348,39 @@ fn pinyin_uses_word_readings() {
 }
 
 #[test]
+fn a_kept_word_joins_the_list_with_no_strength() {
+    let now = Date::now();
+    let kept = KeptWord {
+        lemma: "die Quittung".into(), meaning: "the receipt".into(),
+        example: "Ich hätte gern eine Quittung.".into(), language_id: "nb".into(), kept_at: now,
+    };
+    let state = LearningEngine::project(&[], "nb", &[], std::slice::from_ref(&kept), now);
+    assert_eq!(state.words.len(), 1);
+    assert_eq!(state.words[0].bars, 0, "keeping a word is not evidence of recall");
+    assert_eq!(state.words[0].independent_count, 0);
+    assert!(state.words[0].due_at <= now, "a kept word is ready to come back at once");
+
+    // Another language's list is not polluted, and a removed word stays removed.
+    assert!(LearningEngine::project(&[], "de", &[], std::slice::from_ref(&kept), now).words.is_empty());
+    let hidden = vec![kept.key()];
+    assert!(LearningEngine::project(&[], "nb", &hidden, std::slice::from_ref(&kept), now).words.is_empty());
+}
+
+#[test]
+fn a_word_earned_in_conversation_outranks_the_same_word_kept() {
+    // fixture() logs "å gå" with the meaning "to go"; keeping the same pair must not duplicate it.
+    let session = fixture(0.0, "coffee", false, EvidenceKind::Independent);
+    let now = session.started_at.adding(60.0);
+    let kept = KeptWord {
+        lemma: "å gå".into(), meaning: "to go".into(), example: "".into(),
+        language_id: "nb".into(), kept_at: now,
+    };
+    let state = LearningEngine::project(&[session], "nb", &[], std::slice::from_ref(&kept), now);
+    assert_eq!(state.words.len(), 1, "one word, not two");
+    assert_eq!(state.words[0].independent_count, 1, "the conversation evidence is kept");
+}
+
+#[test]
 fn beginners_are_given_longer_to_think() {
     let mut beginner = ConversationActivity::with_challenge(0.0, 0);
     // The check-in scales with the allowance instead of firing a quarter of the way in.
@@ -384,12 +417,12 @@ fn an_error_counts_as_recurring_only_when_seen_again() {
     let mut first = fixture(0.0, "coffee", false, EvidenceKind::Independent);
     first.assessments[0].errors = vec![error.clone()];
     let now = Date(first.started_at.0 + 2.0 * 86_400.0);
-    let once = LearningEngine::project(std::slice::from_ref(&first), "nb", &[], now);
+    let once = LearningEngine::project(std::slice::from_ref(&first), "nb", &[], &[], now);
     assert!(once.recurring_errors.is_empty());
 
     let mut again = fixture(1.0, "walk", false, EvidenceKind::Independent);
     again.assessments[0].errors = vec![error];
-    let state = LearningEngine::project(&[first, again], "nb", &[], now);
+    let state = LearningEngine::project(&[first, again], "nb", &[], &[], now);
     assert_eq!(state.recurring_errors.len(), 1);
     assert_eq!(state.recurring_errors[0].count, 2);
     assert_eq!(state.recurring_errors[0].correction, "Jeg gikk en tur");
@@ -406,4 +439,43 @@ fn an_error_the_learner_did_not_say_is_discarded() {
     }];
     let validated = LearningEngine::validate(&session.assessments[0], &session).expect("validated");
     assert!(validated.errors.is_empty());
+}
+
+#[test]
+fn a_lookup_reads_as_dictionary_form_meaning_and_note() {
+    let g = teaching::parse_gloss("heute — today\nAn adverb saying when: the day that is now ending.", "heute");
+    assert_eq!((g.lemma.as_str(), g.meaning.as_str()), ("heute", "today"));
+    assert_eq!(g.note, "An adverb saying when: the day that is now ending.");
+    let verb = teaching::parse_gloss("war — sein (to be)", "war");
+    assert_eq!(verb.lemma, "war");
+    assert_eq!(teaching::parse_gloss("ir - to go.", "fue").meaning, "to go");
+}
+
+#[test]
+fn markdown_and_bullets_in_a_lookup_are_cleaned_away() {
+    let g = teaching::parse_gloss("**der Tag** — **day**\n- Used here with *dein*.", "Tag");
+    assert_eq!((g.lemma.as_str(), g.meaning.as_str()), ("der Tag", "day"));
+    assert_eq!(g.note, "Used here with *dein*.");
+}
+
+#[test]
+fn a_lookup_in_the_wrong_shape_still_shows_something_useful() {
+    // What a model sent when asked for prose: no dictionary line, so it all becomes the note.
+    let answer = "**Explanation** In the sentence “Hallo! Wie war dein Tag heute?” the word **heute** is an adverb meaning “today.”";
+    let g = teaching::parse_gloss(answer, "heute");
+    assert_eq!((g.lemma.as_str(), g.meaning.as_str()), ("heute", ""));
+    assert!(g.note.starts_with("Explanation In the sentence"), "{}", g.note);
+    assert!(!g.note.contains("**"));
+    assert_eq!(teaching::parse_gloss("", "heute").lemma, "heute");
+}
+
+#[test]
+fn a_gloss_takes_a_hyphen_or_a_colon_beside_the_word() {
+    let g = |a: &str, w: &str| { let g = teaching::parse_gloss(a, w); (g.lemma, g.meaning) };
+    assert_eq!(g("la sobremesa — conversation after a meal", "sobremesa"), ("la sobremesa".into(), "conversation after a meal".into()));
+    assert_eq!(g("der Termin - the appointment", "Termin"), ("der Termin".into(), "the appointment".into()));
+    assert_eq!(g("die Quittung: the receipt", "Quittung"), ("die Quittung".into(), "the receipt".into()));
+    assert_eq!(g("Explanation: it means today", "heute"), ("heute".into(), String::new()), "a label is not the word");
+    // Blank lines before the answer are skipped.
+    assert_eq!(g("\n\nder Zug — the train", "Zug"), ("der Zug".into(), "the train".into()));
 }

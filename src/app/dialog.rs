@@ -5,10 +5,11 @@
 
 use dioxus::prelude::*;
 
-use super::components::PageHeading;
+use super::components::{LookupText, PageHeading};
 use super::icons::Icon;
 use super::state::{Mural, Sheet, Tab};
 use crate::engine::phrases::Band;
+use crate::engine::pinyin;
 use crate::engine::scenarios::{self, Scenario};
 use crate::engine::text::contains_ci;
 use crate::services::dialog_store;
@@ -23,7 +24,7 @@ pub fn DialogView() -> Element {
         return rsx! {
             div { class: "page stack",
                 PageHeading { eyebrow: "Dialogues", title: "Not in {language.name}\nyet",
-                    subtitle: "Scenarios are written per language. German has a set; the others follow." }
+                    subtitle: "Scenarios are written per language, and this one has none yet." }
             }
         };
     }
@@ -99,6 +100,8 @@ fn ScenarioList(on_pick: EventHandler<String>) -> Element {
                         for scenario in rows {
                             {
                                 let progress = record.get(&scenario.id);
+                                // A scenario can lose beats in a catalogue update; never show more reached than exist.
+                                let reached = progress.best_beats.min(scenario.beats.len());
                                 let id = scenario.id.clone();
                                 rsx! {
                                     button { key: "{scenario.id}", class: "phrase-row",
@@ -111,7 +114,7 @@ fn ScenarioList(on_pick: EventHandler<String>) -> Element {
                                         div { class: if progress.completed { "phrase-mark settled" } else { "phrase-mark" },
                                             span { class: "band-badge", "{scenario.cefr.label()}" }
                                             if progress.completed { Icon { name: "checkmark.circle.fill", size: 17 } }
-                                            else if progress.runs > 0 { span { class: "caption2 secondary", "{progress.best_beats}/{scenario.beats.len()}" } }
+                                            else if progress.runs > 0 { span { class: "caption2 secondary", "{reached}/{scenario.beats.len()}" } }
                                         }
                                     }
                                 }
@@ -133,6 +136,7 @@ fn Brief(scenario: String, on_back: EventHandler<()>) -> Element {
         return rsx! { div { class: "page stack", "That situation has gone." } };
     };
     let progress = dialog_store::current().get(&scenario.id);
+    let reached = progress.best_beats.min(scenario.beats.len());
     let running = app.conv.read().is_running();
 
     let start = move |_| {
@@ -147,7 +151,7 @@ fn Brief(scenario: String, on_back: EventHandler<()>) -> Element {
                 Icon { name: "chevron.left", size: 14 } "All situations"
             }
             div { class: "drill-card",
-                div { class: "drill-phrase selectable", "{scenario.title}" }
+                div { class: "drill-phrase selectable", LookupText { text: scenario.title.clone(), language_id: language.id.to_string() } }
                 if meaning_visible { div { class: "meaning", "{scenario.title_en}" } }
                 div { class: "drill-meta",
                     span { class: "band-badge", "{scenario.cefr.label()}" }
@@ -166,7 +170,7 @@ fn Brief(scenario: String, on_back: EventHandler<()>) -> Element {
                 div { class: "brief-row",
                     span { class: "brief-label", "You want" }
                     span {
-                        div { "{scenario.goal}" }
+                        div { class: "selectable", LookupText { text: scenario.goal.clone(), language_id: language.id.to_string() } }
                         if meaning_visible { div { class: "sub secondary", "{scenario.goal_en}" } }
                     }
                 }
@@ -177,7 +181,10 @@ fn Brief(scenario: String, on_back: EventHandler<()>) -> Element {
                     div { key: "{i}", class: "beat",
                         span { class: "beat-number", "{i + 1}" }
                         span {
-                            div { "{beat.de}" }
+                            div { class: "selectable", LookupText { text: beat.text.clone(), language_id: language.id.to_string() } }
+                            if language.id == "zh" {
+                                if let Some(reading) = pinyin::reading(&beat.text) { div { class: "sub secondary", "{reading}" } }
+                            }
                             if meaning_visible { div { class: "sub secondary", "{beat.en}" } }
                         }
                     }
@@ -190,7 +197,7 @@ fn Brief(scenario: String, on_back: EventHandler<()>) -> Element {
             if progress.runs > 0 {
                 div { class: "caption2 secondary",
                     if progress.completed { "You have been through this one." }
-                    else { "Played {progress.runs} times, {progress.best_beats} of {scenario.beats.len()} beats so far." }
+                    else { "Played {progress.runs} times, {reached} of {scenario.beats.len()} beats so far." }
                 }
             }
         }

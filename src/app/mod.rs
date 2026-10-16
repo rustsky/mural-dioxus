@@ -11,8 +11,8 @@ mod state;
 mod talk;
 mod webview;
 
-use dioxus::desktop::tao::event::{Event as TaoEvent, WindowEvent};
-use dioxus::desktop::use_wry_event_handler;
+use crate::renderer::tao::event::{Event as TaoEvent, WindowEvent};
+use crate::renderer::use_wry_event_handler;
 use dioxus::prelude::*;
 
 use components::{Brand, Dialog};
@@ -102,9 +102,9 @@ fn Main(store: Signal<Option<crate::services::store::LearningStore>>) -> Element
                         Sheet::AiConsent => rsx! { onboarding::AiConsentSheet {} },
                         Sheet::TypedReply => rsx! { talk::TypedReplySheet {} },
                         Sheet::Transcript => rsx! { library::TranscriptSheet {} },
-                        Sheet::Lookup { word, sentence } => rsx! { talk::LookupSheet { word, sentence } },
                         Sheet::CurrentTopic => rsx! { library::CurrentTopicSheet {} },
                         Sheet::WordDetail(id) => rsx! { library::WordDetailSheet { id } },
+                        Sheet::AddWord => rsx! { library::AddWordSheet {} },
                         Sheet::History => rsx! { library::HistorySheet {} },
                         Sheet::EditableTranscript(session_id) => rsx! { library::EditableTranscriptSheet { session_id } },
                         Sheet::Notices => rsx! { settings::NoticesSheet {} },

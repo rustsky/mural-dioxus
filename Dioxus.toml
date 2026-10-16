@@ -27,3 +27,16 @@ license = "LICENSE"
 installer_icon = "icons/icon.ico"
 install_mode = "CurrentUser"
 start_menu_folder = "Mural"
+
+[android]
+# wry asks for both when the page wants the microphone, and grants it only if both are declared.
+[android.permissions]
+"android.permission.RECORD_AUDIO" = { description = "Mural listens while you speak in a conversation or a drill." }
+"android.permission.MODIFY_AUDIO_SETTINGS" = { description = "Echo cancellation while Mural speaks and listens." }
+
+[ios]
+[ios.plist]
+NSMicrophoneUsageDescription = "Mural listens while you speak in a conversation or a drill."
+
+[ios.plist.UIApplicationSceneManifest]
+UIApplicationSupportsMultipleScenes = false

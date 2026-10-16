@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use super::languages::{self};
-use super::models::{Assessment, ErrorProposal, EvidenceKind, Outcome, Passage, SessionRecord, Speaker, WordProposal};
+use super::models::{Assessment, ErrorProposal, EvidenceKind, KeptWord, Outcome, Passage, SessionRecord, Speaker, WordProposal};
 use super::text::{char_count, contains_ci, prefix};
 use super::time::{Date, DAY};
 
@@ -138,7 +138,7 @@ impl LearningEngine {
         recurring
     }
 
-    pub fn project(sessions: &[SessionRecord], language_id: &str, hidden_words: &[String], now: Date) -> LearnerState {
+    pub fn project(sessions: &[SessionRecord], language_id: &str, hidden_words: &[String], kept: &[KeptWord], now: Date) -> LearnerState {
         let mut level: i64 = 0;
         let mut count = 0usize;
         let mut successes = 0;
@@ -215,6 +215,23 @@ impl LearningEngine {
                 due_at: due,
             })
         }).collect();
+        for word in kept.iter().filter(|w| w.language_id == language_id) {
+            let key = word.key();
+            if hidden_words.contains(&key) || words.iter().any(|w| w.id == key) { continue; }
+            words.push(WordState {
+                id: key,
+                lemma: word.lemma.clone(),
+                meaning: word.meaning.clone(),
+                form: word.lemma.clone(),
+                example: word.example.clone(),
+                bars: 0,
+                understanding_count: 0,
+                independent_count: 0,
+                last_seen: word.kept_at,
+                // Kept, not practised: it is due as soon as it is added.
+                due_at: word.kept_at,
+            });
+        }
         words.sort_by(|a, b| b.last_seen.0.total_cmp(&a.last_seen.0));
         LearnerState {
             challenge: level,

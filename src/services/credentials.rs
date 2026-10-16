@@ -52,7 +52,7 @@ impl Credential {
     pub fn delete(&self) -> Result<(), KeyError> { platform::delete(self.service) }
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "ios"))]
 mod platform {
     use super::*;
     use security_framework::passwords::{delete_generic_password, get_generic_password, set_generic_password};
@@ -61,6 +61,10 @@ mod platform {
         get_generic_password(service, ACCOUNT).ok().and_then(|d| String::from_utf8(d).ok())
     }
     pub fn save(service: &str, value: &str) -> Result<(), KeyError> {
+        // Updating an item keeps its access list, which trusts only the build that created it.
+        // An ad-hoc signed rebuild is a different app to the Keychain and can't read it back, so
+        // replace the item and let this build create it.
+        let _ = delete(service);
         set_generic_password(service, ACCOUNT, value.as_bytes()).map_err(|_| KeyError::Save)
     }
     pub fn delete(service: &str) -> Result<(), KeyError> {
@@ -92,7 +96,31 @@ mod platform {
     }
 }
 
-#[cfg(not(any(target_os = "macos", windows, target_os = "linux")))]
+/// Android has no keychain Mural can reach without Java: the key is a file only this app can read,
+/// in its private folder, which Android keeps from other apps and removes with the app.
+#[cfg(target_os = "android")]
+mod platform {
+    use super::*;
+    use crate::services::store::LearningStore;
+
+    fn path(service: &str) -> std::path::PathBuf { LearningStore::directory().join("keys").join(service) }
+
+    pub fn read(service: &str) -> Option<String> {
+        std::fs::read_to_string(path(service)).ok().map(|k| k.trim().to_string()).filter(|k| !k.is_empty())
+    }
+    pub fn save(service: &str, value: &str) -> Result<(), KeyError> {
+        LearningStore::write_private(&path(service), value.as_bytes()).map_err(|_| KeyError::Save)
+    }
+    pub fn delete(service: &str) -> Result<(), KeyError> {
+        match std::fs::remove_file(path(service)) {
+            Ok(()) => Ok(()),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(_) => Err(KeyError::Remove),
+        }
+    }
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "ios", windows, target_os = "linux", target_os = "android")))]
 mod platform {
     use super::*;
     pub fn read(_service: &str) -> Option<String> { None }

@@ -10,10 +10,12 @@ use serde::Deserialize;
 
 use super::phrases::Band;
 
-/// One step of the arc. German for the learner, English underneath.
+/// One step of the arc: what to do in the language being learned, and in English underneath.
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct Beat {
-    pub de: String,
+    /// The German catalogue came first and calls this "de".
+    #[serde(alias = "de")]
+    pub text: String,
     pub en: String,
 }
 
@@ -44,17 +46,30 @@ struct Catalogue {
     scenarios: Vec<Scenario>,
 }
 
-const GERMAN: &str = include_str!("../../assets/scenarios/de.json");
+/// The catalogues that ship with the app, by language id. Every language has the same scenarios,
+/// under the same ids, adapted rather than translated.
+const CATALOGUES: &[(&str, &str)] = &[
+    ("de", include_str!("../../assets/scenarios/de.json")),
+    ("es", include_str!("../../assets/scenarios/es.json")),
+    ("fr", include_str!("../../assets/scenarios/fr.json")),
+    ("it", include_str!("../../assets/scenarios/it.json")),
+    ("pt", include_str!("../../assets/scenarios/pt.json")),
+    ("en", include_str!("../../assets/scenarios/en.json")),
+    ("nb", include_str!("../../assets/scenarios/nb.json")),
+    ("zh", include_str!("../../assets/scenarios/zh.json")),
+];
 
 pub fn all(language_id: &str) -> &'static [Scenario] {
-    static GERMAN_SCENARIOS: OnceLock<Vec<Scenario>> = OnceLock::new();
-    match language_id {
-        "de" => GERMAN_SCENARIOS.get_or_init(|| {
-            serde_json::from_str::<Catalogue>(GERMAN).expect("German scenario catalogue").scenarios
-        }),
-        _ => &[],
-    }
+    static LOADED: OnceLock<Vec<(&'static str, Vec<Scenario>)>> = OnceLock::new();
+    let loaded = LOADED.get_or_init(|| CATALOGUES.iter().map(|(id, json)| {
+        let scenarios = serde_json::from_str::<Catalogue>(json).unwrap_or_else(|e| panic!("{id} scenario catalogue: {e}")).scenarios;
+        (*id, scenarios)
+    }).collect());
+    loaded.iter().find(|(id, _)| *id == language_id).map(|(_, s)| s.as_slice()).unwrap_or(&[])
 }
+
+/// The languages that have scenarios.
+pub fn languages() -> impl Iterator<Item = &'static str> { CATALOGUES.iter().map(|(id, _)| *id) }
 
 pub fn available(language_id: &str) -> bool { !all(language_id).is_empty() }
 
@@ -81,13 +96,44 @@ impl Scenario {
     pub fn valid_beat(&self, index: usize) -> bool { index < self.beats.len() }
 }
 
+/// Steps checked after each turn. A scenario has up to 25, so asking about all of them would cost
+/// a request each; the conversation is only ever near a handful.
+pub const BEAT_WINDOW: usize = 5;
+/// Steps a single turn may tick off. Steps are small, so one turn can cover a few.
+pub const BEATS_PER_TURN: usize = 3;
+
+/// Reads the checklist answer ("2, 5, 7" or "none"): the steps it names, counted from zero, that
+/// exist and are not already done.
+pub fn parse_checklist(answer: &str, total: usize, done: &[usize]) -> Vec<usize> {
+    let mut found: Vec<usize> = answer.split(|c: char| !c.is_ascii_digit())
+        .filter_map(|n| n.parse::<usize>().ok())
+        .filter(|&n| n >= 1 && n <= total)
+        .map(|n| n - 1)
+        .filter(|i| !done.contains(i))
+        .collect();
+    found.sort_unstable();
+    found.dedup();
+    found
+}
+
+/// The unfinished steps worth asking about: the next few after the furthest one reached. Steps
+/// passed over earlier stay open, but no longer hold up the ones ahead.
+pub fn beat_window(total: usize, done: &[usize]) -> Vec<usize> {
+    let from = done.iter().max().map(|&i| i + 1).unwrap_or(0);
+    (from..total).filter(|i| !done.contains(i)).take(BEAT_WINDOW).collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn the_german_catalogue_is_well_formed() {
-        let scenarios = all("de");
+    fn every_catalogue_is_well_formed() {
+        for language in languages() { catalogue_is_well_formed(language) }
+    }
+
+    fn catalogue_is_well_formed(language: &str) {
+        let scenarios = all(language);
         assert!(!scenarios.is_empty());
 
         let mut ids: Vec<&str> = scenarios.iter().map(|s| s.id.as_str()).collect();
@@ -108,11 +154,41 @@ mod tests {
                                    ("category", &s.category)] {
                 assert!(!value.trim().is_empty(), "{} has no {field}", s.id);
             }
-            // Five to ten minutes: long enough to go somewhere, short enough to finish.
-            assert!((5..=10).contains(&s.minutes), "{} runs {} minutes", s.id, s.minutes);
-            assert!((3..=6).contains(&s.beats.len()), "{} has {} beats", s.id, s.beats.len());
+            // Finer steps the higher the level, and about a minute for every two of them.
+            let expected = match s.cefr { Band::A1 => 12, Band::A2 => 15, Band::B1 => 18, Band::B2 => 21, Band::C1 => 25 };
+            assert_eq!(s.beats.len(), expected, "{} ({}) has {} beats", s.id, s.cefr.label(), s.beats.len());
+            assert_eq!(s.minutes as usize, expected.div_ceil(2), "{} runs {} minutes", s.id, s.minutes);
             for beat in &s.beats {
-                assert!(!beat.de.trim().is_empty() && !beat.en.trim().is_empty(), "{} has an empty beat", s.id);
+                assert!(!beat.text.trim().is_empty() && !beat.en.trim().is_empty(), "{} has an empty beat", s.id);
+            }
+        }
+    }
+
+    #[test]
+    fn every_language_has_the_same_scenarios_and_steps() {
+        // The progress record is keyed by scenario id alone, so the ids must mean the same
+        // situation in every language, at the same level and with the same number of steps.
+        let german = all("de");
+        for language in languages() {
+            let other = all(language);
+            assert_eq!(other.len(), german.len(), "{language}");
+            for (a, b) in german.iter().zip(other) {
+                assert_eq!((&a.id, a.cefr, a.beats.len(), &a.category), (&b.id, b.cefr, b.beats.len(), &b.category), "{language}");
+            }
+        }
+    }
+
+    #[test]
+    fn no_scenario_repeats_a_step() {
+        // Each beat is a step of its own; the same task twice in one scenario is a slip.
+        for language in languages() {
+            for s in all(language) {
+                for (i, a) in s.beats.iter().enumerate() {
+                    for b in &s.beats[i + 1..] {
+                        assert!(a.text.trim() != b.text.trim() && a.en.trim() != b.en.trim(),
+                                "{language} {} repeats the beat “{}”", s.id, a.en);
+                    }
+                }
             }
         }
     }
@@ -127,11 +203,28 @@ mod tests {
     }
 
     #[test]
+    fn only_the_next_few_steps_are_checked() {
+        assert_eq!(beat_window(25, &[]), vec![0, 1, 2, 3, 4]);
+        // A skipped greeting stays open but no longer holds the window back.
+        assert_eq!(beat_window(25, &[1, 2]), vec![3, 4, 5, 6, 7]);
+        assert_eq!(beat_window(12, &[9, 10]), vec![11]);
+        assert!(beat_window(12, &[11]).is_empty());
+    }
+
+    #[test]
+    fn a_checklist_answer_names_new_steps_only() {
+        assert_eq!(parse_checklist("1, 2, 4,9", 12, &[1]), vec![0, 3, 8]);
+        assert_eq!(parse_checklist("none", 12, &[]), Vec::<usize>::new());
+        // Numbers outside the list are model slips, and repeats count once.
+        assert_eq!(parse_checklist("0, 3, 3, 13", 12, &[]), vec![2]);
+    }
+
+    #[test]
     fn languages_without_a_list_are_simply_empty() {
-        assert!(all("nb").is_empty());
-        assert!(!available("nb"));
+        assert!(all("xx").is_empty());
+        assert!(!available("xx"));
         assert!(available("de"));
-        assert!(bands("nb").is_empty());
+        assert!(bands("xx").is_empty());
     }
 
     #[test]

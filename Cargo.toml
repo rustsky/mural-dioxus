@@ -1,19 +1,19 @@
 [package]
 name = "mural"
-version = "0.2.0"
+version = "0.4.0"
 edition = "2021"
 description = "Mural for macOS: learn a language through conversation (Dioxus port)"
 license = "GPL-3.0-or-later"
 
 [dependencies]
-dioxus = { version = "0.7", features = ["desktop"] }
+dioxus = "0.7"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 uuid = { version = "1", features = ["v4", "serde"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 tokio = { version = "1", features = ["time", "sync", "macros"] }
-rfd = "0.15"
+futures-util = "0.3"
 open = "5"
 dirs = "6"
 unicode-general-category = "1"
@@ -22,6 +22,22 @@ sherpa-onnx = "1.13.8"
 bzip2 = "0.6"
 tar = "0.4"
 base64 = "0.22"
+
+# The desktop renderer and its file dialogs on computers; phones use the mobile renderer.
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+dioxus = { version = "0.7", features = ["desktop"] }
+rfd = "0.15"
+
+[target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
+dioxus = { version = "0.7", features = ["mobile"] }
+
+# The Apple frameworks iOS shares with macOS: the keychain, language detection and pinyin readings.
+[target.'cfg(target_os = "ios")'.dependencies]
+security-framework = "3"
+core-foundation = "0.10"
+core-foundation-sys = "0.8"
+objc2-foundation = { version = "0.3", features = ["NSString", "NSDictionary", "NSValue", "NSLocale", "NSArray"] }
+objc2-natural-language = { version = "0.3", features = ["NLLanguage", "NLLanguageRecognizer"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 security-framework = "3"
@@ -46,3 +62,8 @@ webkit2gtk = { version = "2.0.1", features = ["v2_40"] }
 opt-level = 3
 lto = "thin"
 strip = true
+
+# tao 0.37 under the 0.34 number Dioxus 0.7 asks for: iOS 27 launches only scene-based apps, and
+# only tao 0.37 has scenes. See vendor/tao/MURAL.md.
+[patch.crates-io]
+tao = { path = "vendor/tao" }

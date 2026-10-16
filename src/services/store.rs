@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::engine::languages::{self, LanguageModule};
 use crate::engine::learning::{LearnerState, LearningEngine};
-use crate::engine::models::{Archive, Preferences, SessionRecord, Speaker};
+use crate::engine::models::{Archive, KeptWord, Preferences, SessionRecord, Speaker};
 use crate::engine::text::prefix;
 use crate::engine::time::Date;
 
@@ -14,10 +14,24 @@ pub struct LearningStore {
     path: Option<PathBuf>,
 }
 
+/// The app's private files folder, which Android keeps from other apps and clears on uninstall.
+/// There is no data directory in the environment, and the temp fallback isn't writable; the
+/// package name in the process's command line names the folder without a call into Java.
+#[cfg(target_os = "android")]
+fn android_files_dir() -> PathBuf {
+    let cmdline = std::fs::read("/proc/self/cmdline").unwrap_or_default();
+    let process = String::from_utf8_lossy(cmdline.split(|b| *b == 0).next().unwrap_or_default()).into_owned();
+    let package = process.split(':').next().unwrap_or_default();
+    PathBuf::from("/data/data").join(package).join("files")
+}
+
 pub const SAVE_ERROR: &str = "Mural couldn’t save your progress. Please export a backup and try again.";
 
 impl LearningStore {
     pub fn directory() -> PathBuf {
+        #[cfg(target_os = "android")]
+        return android_files_dir().join("Mural");
+        #[cfg(not(target_os = "android"))]
         dirs::data_dir().unwrap_or_else(std::env::temp_dir).join("Mural")
     }
 
@@ -49,7 +63,7 @@ impl LearningStore {
         Ok(store)
     }
 
-    fn write_private(path: &std::path::Path, data: &[u8]) -> std::io::Result<()> {
+    pub(crate) fn write_private(path: &std::path::Path, data: &[u8]) -> std::io::Result<()> {
         use std::io::Write;
         if let Some(dir) = path.parent() { std::fs::create_dir_all(dir)?; }
         let tmp = path.with_extension("tmp");
@@ -87,7 +101,8 @@ impl LearningStore {
     }
     pub fn session(&self, id: &str) -> Option<&SessionRecord> { self.archive.sessions.iter().find(|s| s.id == id) }
     pub fn learner(&self) -> LearnerState {
-        LearningEngine::project(&self.archive.sessions, self.language().id, &self.archive.preferences.hidden_words, Date::now())
+        LearningEngine::project(&self.archive.sessions, self.language().id,
+            &self.archive.preferences.hidden_words, &self.archive.preferences.kept_words, Date::now())
     }
     pub fn select_language(&mut self, id: &str) {
         if languages::module(id).is_none() { return; }
@@ -109,6 +124,27 @@ impl LearningStore {
         self.archive.sessions.retain(|s| s.id != id);
         self.persist();
     }
+    /// Keeps a looked-up word. It joins the list with no strength: the bars still have to be
+    /// earned by using the word in conversation.
+    pub fn keep_word(&mut self, lemma: &str, meaning: &str, example: &str) -> bool {
+        let language_id = self.language().id.to_string();
+        let word = KeptWord {
+            lemma: lemma.trim().to_string(),
+            meaning: meaning.trim().to_string(),
+            example: example.trim().to_string(),
+            language_id,
+            kept_at: Date::now(),
+        };
+        if word.lemma.is_empty() || word.meaning.is_empty() { return false; }
+        let key = word.key();
+        if self.archive.preferences.kept_words.iter().any(|w| w.key() == key) { return false; }
+        // Keeping a word the learner once removed is a change of mind, not a conflict.
+        self.archive.preferences.hidden_words.retain(|h| h != &key);
+        self.archive.preferences.kept_words.push(word);
+        self.persist();
+        true
+    }
+
     pub fn hide_word(&mut self, id: &str) {
         self.archive.preferences.hidden_words.push(id.into());
         self.persist();

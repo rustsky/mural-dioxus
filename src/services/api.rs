@@ -30,6 +30,7 @@ pub enum ApiError {
     Provider(ProviderFailure),
     OllamaMissingKey,
     OllamaNotRunning,
+    OllamaTimeout,
     Ollama { status: u16, model: String },
 }
 
@@ -43,6 +44,7 @@ impl std::fmt::Display for ApiError {
             ApiError::Provider(p) => write!(f, "{p}"),
             ApiError::OllamaMissingKey => f.write_str("Add your Ollama API key in Settings → Teacher, or choose another teacher."),
             ApiError::OllamaNotRunning => f.write_str("Ollama isn’t running on this computer. Start Ollama and try again."),
+            ApiError::OllamaTimeout => f.write_str("The model on this computer took too long to answer. A smaller model in Settings → Teacher will keep up better."),
             ApiError::Ollama { status, model } => match status {
                 401 | 403 => f.write_str("Your Ollama key wasn’t accepted. Check it in Settings → Teacher."),
                 404 => write!(f, "Ollama doesn’t have the model “{model}”. Choose another model in Settings → Teacher."),
@@ -56,6 +58,20 @@ impl std::fmt::Display for ApiError {
 
 fn teacher_name() -> &'static str {
     if provider::current().teacher.is_ollama() { "Ollama" } else { "OpenAI" }
+}
+
+/// For a model on this computer: it can think for minutes and sends nothing meanwhile, so the
+/// read timeout that protects network calls would cut it off mid-thought.
+fn local_client() -> &'static reqwest::Client {
+    static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
+    CLIENT.get_or_init(|| {
+        reqwest::Client::builder()
+            .redirect(reqwest::redirect::Policy::none())
+            .connect_timeout(Duration::from_secs(5))
+            .timeout(Duration::from_secs(300))
+            .build()
+            .expect("HTTP client")
+    })
 }
 
 fn client() -> &'static reqwest::Client {
@@ -147,12 +163,20 @@ pub fn parse_response(json: &Value) -> Result<ApiResult, ApiError> {
 
 // ---------- Ollama ----------
 
+/// The client a teacher's requests belong on: a model here needs patience, a hosted one a guard.
+fn ollama_client(settings: &ProviderSettings) -> &'static reqwest::Client {
+    if settings.teacher == Teacher::OllamaLocal { local_client() } else { client() }
+}
+
 async fn ollama_send(settings: &ProviderSettings, request: reqwest::RequestBuilder, key: Option<&str>) -> Result<(u16, Vec<u8>), ApiError> {
     let request = match key { Some(k) => request.bearer_auth(k), None => request };
     let local = settings.teacher == Teacher::OllamaLocal;
     let timeout = Duration::from_secs(if local { 300 } else { 90 });
     let response = request.timeout(timeout).send().await.map_err(|e| {
-        if local && (e.is_connect() || e.is_request()) { ApiError::OllamaNotRunning } else { ApiError::Network }
+        // A timeout and a missing server are different problems, and saying so saves a hunt.
+        if local && e.is_timeout() { ApiError::OllamaTimeout }
+        else if local && (e.is_connect() || e.is_request()) { ApiError::OllamaNotRunning }
+        else { ApiError::Network }
     })?;
     let status = response.status().as_u16();
     let bytes = response.bytes().await.map_err(|_| ApiError::Network)?;
@@ -251,10 +275,38 @@ pub async fn converse(messages: Vec<Value>) -> Result<ApiResult, ApiError> {
     if !settings.teacher.is_ollama() { return Err(ApiError::MissingKey); }
     let key = ollama_key(&settings)?;
     let _turn = VoiceTurn::begin();
-    match ollama_chat(&settings, key.as_deref(), messages.clone(), None, Some(Spoken { retry: false })).await {
-        Err(ApiError::Incomplete) => ollama_chat(&settings, key.as_deref(), messages, None, Some(Spoken { retry: true })).await,
+    // A schema keeps gpt-oss to one turn: without it, it often goes on to speak the learner's
+    // part and its own reasoning too.
+    let schema = Some(object(vec![("reply", json!({"type": "string"}))]));
+    let result = match ollama_chat(&settings, key.as_deref(), messages.clone(), schema.clone(), Some(Spoken { retry: false })).await {
+        Err(ApiError::Incomplete) => ollama_chat(&settings, key.as_deref(), messages, schema, Some(Spoken { retry: true })).await,
         other => other,
+    };
+    result.and_then(|mut r| {
+        r.text = first_turn(&spoken_reply(&r.text)).to_string();
+        if r.text.is_empty() { Err(ApiError::Incomplete) } else { Ok(r) }
+    })
+}
+
+/// The `reply` field of a spoken answer. Some models answer in plain text despite the schema.
+fn spoken_reply(text: &str) -> String {
+    match serde_json::from_str::<Value>(text) {
+        Ok(json) if json.is_object() => json["reply"].as_str().unwrap_or("").trim().to_string(),
+        _ => text.to_string(),
     }
+}
+
+/// The reply up to where the model starts a turn of its own. gpt-oss sometimes runs on past its
+/// turn, speaking the learner's part and its own reasoning too; the turn markers are stripped, so
+/// the seams show as a sentence glued to the next ("dazu?Möchtest") or a blank line.
+fn first_turn(text: &str) -> &str {
+    let mut chars = text.char_indices().peekable();
+    while let Some((i, c)) = chars.next() {
+        let Some(&(_, next)) = chars.peek() else { break };
+        if matches!(c, '.' | '!' | '?' | '…') && next.is_uppercase() { return &text[..i + c.len_utf8()]; }
+        if c == '\n' && next == '\n' { return text[..i].trim_end(); }
+    }
+    text
 }
 
 /// Context window for a model on this computer. Every request uses the same value, because
@@ -275,11 +327,11 @@ async fn ollama_chat(settings: &ProviderSettings, key: Option<&str>, messages: V
     // gpt-oss only accepts reasoning levels; other models answer directly.
     body["think"] = if model.starts_with("gpt-oss") { json!("low") } else { json!(false) };
     let url = format!("{}/api/chat", settings.host());
-    let (mut status, mut bytes) = ollama_send(settings, client().post(&url).json(&body), key).await?;
+    let (mut status, mut bytes) = ollama_send(settings, ollama_client(settings).post(&url).json(&body), key).await?;
     if status == 400 {
         // Some models reject the thinking option; retry once without it.
         body.as_object_mut().map(|b| b.remove("think"));
-        (status, bytes) = ollama_send(settings, client().post(&url).json(&body), key).await?;
+        (status, bytes) = ollama_send(settings, ollama_client(settings).post(&url).json(&body), key).await?;
     }
     if !(200..300).contains(&status) { return Err(ApiError::Ollama { status, model }); }
     let json: Value = serde_json::from_slice(&bytes).map_err(|_| ApiError::InvalidResponse)?;
@@ -306,14 +358,27 @@ pub fn parse_ollama(json: &Value) -> Result<ApiResult, ApiError> {
 pub async fn ollama_models(teacher: Teacher) -> Result<Vec<String>, ApiError> {
     let settings = ProviderSettings { teacher, ..provider::current() };
     let key = if teacher == Teacher::OllamaCloud { OLLAMA.read() } else { None };
-    let request = client().get(format!("{}/api/tags", settings.host()));
+    let request = ollama_client(&settings).get(format!("{}/api/tags", settings.host()));
     let (status, bytes) = ollama_send(&settings, request, key.as_deref()).await?;
     if !(200..300).contains(&status) { return Err(ApiError::Ollama { status, model: String::new() }); }
     let json: Value = serde_json::from_slice(&bytes).map_err(|_| ApiError::InvalidResponse)?;
+    // Local models load into this computer's memory next to Mural's own speech models; hide the ones that won't fit.
+    let budget = if teacher == Teacher::OllamaLocal { local_model_budget() } else { None };
     let mut names: Vec<String> = json["models"].as_array().into_iter().flatten()
+        .filter(|m| fits(m["size"].as_u64(), budget))
         .filter_map(|m| m["name"].as_str().or(m["model"].as_str()).map(String::from)).collect();
     names.sort();
     Ok(names)
+}
+
+fn fits(size: Option<u64>, budget: Option<u64>) -> bool {
+    match (size, budget) { (Some(size), Some(budget)) => size <= budget, _ => true }
+}
+
+/// Half of physical memory: room for the model's weights and context with the rest of the computer still usable.
+fn local_model_budget() -> Option<u64> {
+    let out = std::process::Command::new("/usr/sbin/sysctl").args(["-n", "hw.memsize"]).output().ok()?;
+    String::from_utf8(out.stdout).ok()?.trim().parse::<u64>().ok().map(|bytes| bytes / 2)
 }
 
 fn object(fields: Vec<(&str, Value)>) -> Value {
@@ -323,8 +388,7 @@ fn object(fields: Vec<(&str, Value)>) -> Value {
     json!({"type": "object", "properties": properties, "required": required, "additionalProperties": false})
 }
 
-/// `beats` is how many beats the running scenario has, or 0 when none is running.
-pub fn assessment_schema(language: &LanguageModule, beats: usize) -> Value {
+pub fn assessment_schema(language: &LanguageModule) -> Value {
     let string = || json!({"type": "string"});
     let mut languages = vec![language.id, "en", "mixed", "uncertain"];
     languages.sort();
@@ -342,8 +406,6 @@ pub fn assessment_schema(language: &LanguageModule, beats: usize) -> Value {
             ("confidence", json!({"type": "number", "minimum": 0, "maximum": 1})),
             ("sourceIDs", json!({"type": "array", "items": string()})),
         ])})),
-        ("beatsCovered", json!({"type": "array", "maxItems": beats.max(1),
-            "items": {"type": "integer", "minimum": 0, "maximum": beats.saturating_sub(1)}})),
         ("errors", json!({"type": "array", "maxItems": 4, "items": object(vec![
             ("form", string()), ("correction", string()), ("label", string()),
             ("language", json!({"type": "string", "enum": languages_for_errors})),
@@ -366,6 +428,15 @@ pub async fn create_live_session(instructions: &str, sdp: &str) -> Result<(Strin
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn hides_local_models_over_memory_budget() {
+        let budget = Some(8_000_000_000);
+        assert!(fits(Some(2_019_393_189), budget));
+        assert!(!fits(Some(13_793_441_244), budget));
+        assert!(fits(None, budget));
+        assert!(fits(Some(13_793_441_244), None));
+    }
 
     #[test]
     fn parses_text_citations_and_usage() {
@@ -391,6 +462,24 @@ mod tests {
     }
 
     #[test]
+    fn keeps_only_the_first_spoken_turn() {
+        assert_eq!(first_turn("Ein Sesambrötchen, verstanden. Und das Croissant dazu?Möchtest du das Croissant noch dazu?Ja, das Croissant wäre gut!"),
+            "Ein Sesambrötchen, verstanden. Und das Croissant dazu?");
+        assert_eq!(first_turn("Okay, dann 3 Euro, bitte.\n\nWe need to respond politely."), "Okay, dann 3 Euro, bitte.");
+        assert_eq!(first_turn("Hallo! Was möchtest du heute kaufen?"), "Hallo! Was möchtest du heute kaufen?");
+        assert_eq!(first_turn("Das kostet 2.50 Euro."), "Das kostet 2.50 Euro.");
+        assert_eq!(first_turn("你好！你想买什么？"), "你好！你想买什么？");
+    }
+
+    #[test]
+    fn reads_the_spoken_reply_field_or_plain_text() {
+        assert_eq!(spoken_reply(r#"{"reply": " Ein Sesambrötchen, gern. "}"#), "Ein Sesambrötchen, gern.");
+        assert_eq!(spoken_reply("Ein Sesambrötchen, gern."), "Ein Sesambrötchen, gern.");
+        assert_eq!(spoken_reply(r#"{"answer": "x"}"#), "");
+        assert_eq!(spoken_reply("3"), "3");
+    }
+
+    #[test]
     fn parses_ollama_chat_and_builds_search_queries() {
         let r = parse_ollama(&json!({"message": {"role": "assistant", "content": " Hola "}, "done": true, "prompt_eval_count": 40, "eval_count": 5})).unwrap();
         assert_eq!(r.text, "Hola");
@@ -404,9 +493,8 @@ mod tests {
 
     #[test]
     fn schema_requires_every_field() {
-        let schema = assessment_schema(crate::engine::languages::module("es").unwrap(), 4);
-        assert_eq!(schema["required"], json!(["beatsCovered", "capability", "errors", "nextGoal", "outcome", "suggestedLevel", "words"]));
-        assert_eq!(schema["properties"]["beatsCovered"]["items"]["maximum"], json!(3));
+        let schema = assessment_schema(crate::engine::languages::module("es").unwrap());
+        assert_eq!(schema["required"], json!(["capability", "errors", "nextGoal", "outcome", "suggestedLevel", "words"]));
         assert_eq!(schema["properties"]["words"]["items"]["properties"]["language"]["enum"], json!(["en", "es", "mixed", "uncertain"]));
     }
 }

@@ -10,7 +10,7 @@ use crate::services::credentials::{OLLAMA, OPENAI};
 use crate::services::provider::{self, Teacher, VoiceStyle};
 use crate::services::voice;
 
-const PLATFORM: &str = if cfg!(target_os = "macos") { "macOS" } else if cfg!(windows) { "Windows" } else { "Linux" };
+const PLATFORM: &str = if cfg!(target_os = "macos") { "macOS" } else if cfg!(windows) { "Windows" } else if cfg!(target_os = "android") { "Android" } else if cfg!(target_os = "ios") { "iOS" } else { "Linux" };
 
 #[component]
 pub fn SettingsSheet() -> Element {
@@ -48,14 +48,14 @@ pub fn SettingsSheet() -> Element {
     };
     let export = move |_| {
         let data = match app.store.peek().export_data() { Ok(d) => d, Err(e) => { message.set(Some(e)); return; } };
-        let Some(path) = rfd::FileDialog::new().set_file_name("Mural-learning-backup.json").add_filter("JSON", &["json"]).save_file() else { return };
+        let Some(path) = backup_save_path() else { return };
         match std::fs::write(&path, data) {
             Ok(()) => message.set(Some("Your backup has been exported.".into())),
             Err(e) => message.set(Some(e.to_string())),
         }
     };
     let import = move |_| {
-        let Some(path) = rfd::FileDialog::new().add_filter("JSON", &["json"]).pick_file() else { return };
+        let Some(path) = backup_open_path() else { return };
         let result = Archive::read_import_data(&path).map_err(|e| e.to_string())
             .and_then(|data| app.store.write_unchecked().import_data(&data));
         message.set(Some(match result { Ok(()) => "Your backup has been imported.".into(), Err(e) => e }));
@@ -204,8 +204,11 @@ pub fn SettingsSheet() -> Element {
                 section {
                     div { class: "section-title", "Your words belong to you" }
                     div { class: "group",
-                        div { class: "form-row", button { class: "action row", onclick: export, Icon { name: "square.and.arrow.up", size: 16 } "Export learning backup" } }
-                        div { class: "form-row", button { class: "action row", disabled: running, onclick: import, Icon { name: "square.and.arrow.down", size: 16 } "Import learning backup" } }
+                        // Phones have no file dialogs here yet; their backups need the system's own picker.
+                        if cfg!(not(any(target_os = "android", target_os = "ios"))) {
+                            div { class: "form-row", button { class: "action row", onclick: export, Icon { name: "square.and.arrow.up", size: 16 } "Export learning backup" } }
+                            div { class: "form-row", button { class: "action row", disabled: running, onclick: import, Icon { name: "square.and.arrow.down", size: 16 } "Import learning backup" } }
+                        }
                         div { class: "form-row", button { class: "action danger", disabled: running, onclick: move |_| deleting.set(true), "Delete all conversations and learning" } }
                     }
                     div { class: "section-footer", "Backups hold transcripts and learning evidence, never your API key. Importing adds conversations with new IDs and leaves existing ones alone. There is no cloud sync." }
@@ -292,7 +295,7 @@ fn TeacherSection(running: bool) -> Element {
         loading.set(true);
         spawn(async move {
             match api::ollama_models(teacher).await {
-                Ok(list) => { message.set(if list.is_empty() { Some("No models found. Run “ollama pull llama3.2” first, and pick a model that fits in this computer’s memory.".into()) } else { None }); models.set(list); }
+                Ok(list) => { message.set(if list.is_empty() { Some("No models found that fit in this computer’s memory. Run “ollama pull llama3.2” first.".into()) } else { None }); models.set(list); }
                 Err(e) => { models.set(vec![]); message.set(Some(e.to_string())); }
             }
             loading.set(false);
@@ -437,3 +440,19 @@ fn TeacherSection(running: bool) -> Element {
         }
     }
 }
+
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+fn backup_save_path() -> Option<std::path::PathBuf> {
+    rfd::FileDialog::new().set_file_name("Mural-learning-backup.json").add_filter("JSON", &["json"]).save_file()
+}
+
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+fn backup_open_path() -> Option<std::path::PathBuf> {
+    rfd::FileDialog::new().add_filter("JSON", &["json"]).pick_file()
+}
+
+#[cfg(any(target_os = "android", target_os = "ios"))]
+fn backup_save_path() -> Option<std::path::PathBuf> { None }
+
+#[cfg(any(target_os = "android", target_os = "ios"))]
+fn backup_open_path() -> Option<std::path::PathBuf> { None }

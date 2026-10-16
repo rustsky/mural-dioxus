@@ -5,7 +5,7 @@
 
 use dioxus::prelude::*;
 
-use super::components::PageHeading;
+use super::components::{LookupText, PageHeading, PinyinHelp};
 use super::icons::Icon;
 use super::state::{Mural, Tab};
 use crate::engine::phrases::{self, Band, Phrase};
@@ -27,7 +27,7 @@ pub fn ShadowView() -> Element {
         return rsx! {
             div { class: "page stack",
                 PageHeading { eyebrow: "Shadowing", title: "Not in {language.name}\nyet",
-                    subtitle: "Phrase drills are written per language. German has a list; the others follow." }
+                    subtitle: "Phrase drills are written per language, and this one has none yet." }
             }
         };
     }
@@ -187,7 +187,8 @@ fn Drill() -> Element {
                 Icon { name: "chevron.left", size: 14 } "All phrases"
             }
             div { class: "drill-card",
-                div { class: "drill-phrase selectable", "{phrase.text}" }
+                div { class: "drill-phrase selectable", LookupText { text: phrase.text.clone(), language_id: language.id.to_string() } }
+                if language.id == "zh" { PinyinHelp { text: phrase.text.clone() } }
                 if meaning_visible { div { class: "meaning", "{phrase.meaning}" } }
                 div { class: "drill-meta",
                     span { class: "band-badge", "{phrase.cefr.label()}" }

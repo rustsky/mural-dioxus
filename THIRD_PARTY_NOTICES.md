@@ -45,18 +45,29 @@ Rust crates compiled into the app, with their licences, are listed in `THIRD_PAR
 (generated from `Cargo.lock` by `scripts/rust-licenses.sh`). Their licence texts are in each
 crate's source, available from https://crates.io.
 
+One crate is included in this repository rather than fetched: [tao](https://github.com/tauri-apps/tao)
+0.37.1 (Apache-2.0), in `vendor/tao` with its licence. Its version number is changed to 0.34.99
+so it can stand in for the tao 0.34 that Dioxus asks for, which is why `THIRD_PARTY_RUST.txt` lists
+that number. The source is unchanged; `vendor/tao/MURAL.md` lists the two manifest edits.
+
 ## Voice models (downloaded on first use, not shipped in the app)
 
 | Model | Author | Licence | Used for |
 | --- | --- | --- | --- |
-| [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), int8 ONNX export by sherpa-onnx | NVIDIA | **CC-BY-4.0** | Listening: de, en, es, fr, it, pt |
-| [Omnilingual ASR 300M CTC v2](https://github.com/facebookresearch/omnilingual-asr), int8 ONNX export by sherpa-onnx | Meta Platforms, Inc. | Apache-2.0 | Listening: nb, zh |
+| [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), int8 ONNX export by sherpa-onnx | NVIDIA | **CC-BY-4.0** | Listening: en, es, fr, it |
+| [FastConformer Hybrid Large German](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/nemo/models/stt_de_fastconformer_hybrid_large_pc) (stt_de_fastconformer_hybrid_large_pc), int8 ONNX export by sherpa-onnx | NVIDIA | **CC-BY-4.0** | Listening: de |
+| [Whisper small](https://github.com/openai/whisper), int8 ONNX export by sherpa-onnx | OpenAI | MIT | Listening: pt, nb; second opinion for es, fr, it |
+| [SenseVoice Small](https://github.com/FunAudioLLM/SenseVoice), int8 ONNX export by sherpa-onnx | FunAudioLLM (Alibaba) | [FunASR Model License](https://github.com/modelscope/FunASR/blob/main/MODEL_LICENSE) | Listening: zh |
 | [Kokoro-82M v1.0](https://huggingface.co/hexgrad/Kokoro-82M) | hexgrad | Apache-2.0 | Speaking: en, es, fr, it, pt, zh |
 | [Piper](https://huggingface.co/rhasspy/piper-voices) voice “thorsten (high)”, trained on the [Thorsten-Voice](https://github.com/thorstenMueller/Thorsten-Voice) dataset (CC0) | Rhasspy / Thorsten Müller | MIT | Speaking: de |
 | [Piper](https://huggingface.co/rhasspy/piper-voices) voice “talesyntese (medium)”, trained on the [Språkbanken](https://www.nb.no/sprakbanken/en/resource-catalogue/oai-nb-no-sbr-15/) dataset (CC0) | Rhasspy / National Library of Norway | MIT | Speaking: nb |
 | [Silero VAD](https://github.com/snakers4/silero-vad) | Silero Team | MIT | Detecting the end of a turn |
 | espeak-ng-data (pronunciation data inside the Kokoro and Piper downloads) | espeak-ng contributors | GPL-3.0-or-later | Pronunciation |
 
-Parakeet TDT 0.6B v3 is © NVIDIA and licensed under the Creative Commons Attribution 4.0
-International licence (https://creativecommons.org/licenses/by/4.0/). Mural uses a quantized ONNX
-conversion published by the sherpa-onnx project; no other changes were made.
+Parakeet TDT 0.6B v3 and FastConformer Hybrid Large German are © NVIDIA and licensed under the
+Creative Commons Attribution 4.0 International licence (https://creativecommons.org/licenses/by/4.0/).
+Mural uses quantized ONNX conversions published by the sherpa-onnx project; no other changes were made.
+
+NB-Whisper base (© the National Library of Norway, Apache-2.0) is not distributed with Mural. A
+learner may build it with `scripts/convert-nb-whisper.sh`, which downloads it from the National
+Library and converts it on their own computer.

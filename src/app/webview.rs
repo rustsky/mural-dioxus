@@ -5,11 +5,11 @@
 /// WebKitGTK's default. macOS (WKWebView) and Windows (WebView2) ask the user themselves.
 #[cfg(target_os = "linux")]
 pub fn prepare() {
-    use dioxus::desktop::wry::WebViewExtUnix;
+    use crate::renderer::wry::WebViewExtUnix;
     use webkit2gtk::glib::Cast;
     use webkit2gtk::{PermissionRequestExt, SettingsExt, UserMediaPermissionRequest, UserMediaPermissionRequestExt, WebViewExt};
 
-    let webview = dioxus::desktop::window().webview.webview();
+    let webview = crate::renderer::window().webview.webview();
     if let Some(settings) = WebViewExt::settings(&webview) {
         settings.set_enable_media_stream(true);
         settings.set_enable_webrtc(true);

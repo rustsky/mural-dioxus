@@ -12,7 +12,7 @@
 use std::path::PathBuf;
 use std::time::Duration;
 
-use dioxus::desktop::window;
+use crate::renderer::window;
 use dioxus::prelude::*;
 
 pub fn start(app: super::state::Mural) {
@@ -52,7 +52,7 @@ pub fn start(app: super::state::Mural) {
 #[cfg(target_os = "macos")]
 fn snapshot(path: PathBuf) {
     use block2::RcBlock;
-    use dioxus::desktop::wry::WebViewExtMacOS;
+    use crate::renderer::wry::WebViewExtMacOS;
     use objc2_app_kit::NSImage;
     use objc2_foundation::NSError;
     let webview = window().webview.webview();

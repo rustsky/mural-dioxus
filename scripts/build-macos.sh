@@ -9,7 +9,9 @@ VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
 IDENTITY=${SIGN_IDENTITY:--}
 
 ./scripts/rust-licenses.sh
-dx bundle --release --package-types macos
+# The platform is named because Cargo.toml lists dioxus once for computers and once for phones,
+# and dx can no longer tell from it which one to build.
+dx bundle --platform macos --release --package-types macos
 # The layout under bundle/macos has moved between dx versions, so search for the bundle.
 APP=$(find target/dx/mural/bundle/macos -maxdepth 4 -type d -name Mural.app | head -1)
 [ -n "$APP" ] || { echo "no Mural.app under target/dx/mural/bundle/macos" >&2; exit 1; }

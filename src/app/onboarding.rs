@@ -10,12 +10,12 @@ use crate::engine::models::Preferences;
 use crate::engine::{pinyin, AI_CONSENT_SUMMARY};
 
 /// The system's preferred languages, as BCP 47 identifiers.
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "ios"))]
 fn preferred_languages() -> Vec<String> {
     objc2_foundation::NSLocale::preferredLanguages().iter().map(|s| s.to_string()).collect()
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(not(any(target_os = "macos", target_os = "ios")))]
 fn preferred_languages() -> Vec<String> {
     std::env::var("LANG").map(|l| vec![l.replace('_', "-")]).unwrap_or_default()
 }

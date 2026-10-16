@@ -1,8 +1,10 @@
 //! Comparing what the learner said with the phrase they were shadowing.
 //!
-//! Recognition is approximate and learners are not typists: case, punctuation and the usual
-//! German spelling variants must not count against them. What should count is whether the words
-//! came out, in the right order.
+//! Recognition is approximate and learners are not typists: case, punctuation, accents the
+//! recogniser chose to write or not, digits for number words and the usual German spelling
+//! variants must not count against them. What should count is whether the words
+//! came out, in the right order. Chinese is written without spaces, so there each character
+//! counts as a word.
 
 /// One word of the phrase, and whether the learner said it.
 #[derive(Clone, Debug, PartialEq)]
@@ -36,9 +38,11 @@ impl Verdict {
     }
 }
 
-/// Spelling variants a learner should never be marked down for: ß written as ss, and umlauts
-/// written out, which is both a keyboard habit and a common recogniser output.
+/// Spelling variants a learner should never be marked down for: ß written as ss, umlauts
+/// written out, and accents, which are the recogniser's spelling rather than the learner's
+/// sound ("como estas" for "cómo estás"). ñ and the Nordic å stay, as they are sounds of their own.
 fn fold(word: &str) -> String {
+    use unicode_normalization::UnicodeNormalization;
     let mut out = String::with_capacity(word.len());
     for c in word.chars().flat_map(|c| c.to_lowercase()) {
         match c {
@@ -46,19 +50,66 @@ fn fold(word: &str) -> String {
             'ä' => out.push_str("ae"),
             'ö' => out.push_str("oe"),
             'ü' => out.push_str("ue"),
-            _ => out.push(c),
+            'ñ' | 'å' => out.push(c),
+            c => out.extend(c.to_string().nfd().filter(|m| !unicode_normalization::char::is_combining_mark(*m))),
         }
     }
+    number(&out).map(str::to_string).unwrap_or(out)
+}
+
+/// Recognisers write numbers as digits or words as they please; both are the same spoken word.
+fn number(word: &str) -> Option<&'static str> {
+    const WORDS: &[(&str, &[&str])] = &[
+        ("0", &["zero", "cero", "null", "零"]),
+        ("1", &["one", "uno", "una", "un", "une", "um", "uma", "eins", "en", "ett", "一"]),
+        ("2", &["two", "dos", "deux", "due", "dois", "duas", "zwei", "to", "二", "两"]),
+        ("3", &["three", "tres", "trois", "tre", "drei", "三"]),
+        ("4", &["four", "cuatro", "quatre", "quattro", "quatro", "vier", "fire", "四"]),
+        ("5", &["five", "cinco", "cinq", "cinque", "fuenf", "fem", "五"]),
+        ("6", &["six", "seis", "sei", "sechs", "seks", "六"]),
+        ("7", &["seven", "siete", "sept", "sette", "sete", "sieben", "sju", "七"]),
+        ("8", &["eight", "ocho", "huit", "otto", "oito", "acht", "åtte", "八"]),
+        ("9", &["nine", "nueve", "neuf", "nove", "neun", "ni", "九"]),
+        ("10", &["ten", "diez", "dix", "dieci", "dez", "zehn", "ti", "十"]),
+        ("12", &["twelve", "doce", "douze", "dodici", "doze", "zwoelf", "tolv"]),
+        ("15", &["fifteen", "quince", "quinze", "quindici", "fuenfzehn", "femten"]),
+        ("20", &["twenty", "veinte", "vingt", "venti", "vinte", "zwanzig", "tjue"]),
+        ("30", &["thirty", "treinta", "trente", "trenta", "trinta", "dreissig", "tretti"]),
+        ("100", &["hundred", "cien", "cent", "cento", "cem", "hundert", "hundre"]),
+    ];
+    if word.chars().all(|c| c.is_ascii_digit()) { return None; }
+    // Words arrive folded: "fuenf", "tres", "dreissig".
+    WORDS.iter().find(|(_, w)| w.contains(&word)).map(|(d, _)| *d)
+}
+
+/// Hesitations and markers that recognisers emit for silence; nobody is asked to say them.
+fn filler(word: &str) -> bool { matches!(word, "sil" | "嗯" | "呃" | "啊" | "uh" | "uhm" | "hmm" | "mhm") }
+
+/// Chinese characters, which carry a syllable each and are written without spaces between words.
+fn is_han(c: char) -> bool {
+    matches!(c, '\u{3400}'..='\u{4DBF}' | '\u{4E00}'..='\u{9FFF}' | '\u{F900}'..='\u{FAFF}' | '\u{20000}'..='\u{2FA1F}')
+}
+
+/// The words as written, stripped of the punctuation that speech has no sound for. Digits stay:
+/// "8 Uhr" is said. Each Chinese character stands alone.
+fn tokens(text: &str) -> Vec<String> {
+    let mut out = vec![];
+    let mut word = String::new();
+    for c in text.chars() {
+        if is_han(c) {
+            if !word.is_empty() { out.push(std::mem::take(&mut word)); }
+            out.push(c.to_string());
+        } else if c.is_alphanumeric() || c == '\'' {
+            word.push(c);
+        } else if !word.is_empty() {
+            out.push(std::mem::take(&mut word));
+        }
+    }
+    if !word.is_empty() { out.push(word); }
     out
 }
 
-/// Words, stripped of the punctuation that speech has no sound for. Digits stay: "8 Uhr" is said.
-fn words(text: &str) -> Vec<String> {
-    text.split(|c: char| c.is_whitespace() || (!c.is_alphanumeric() && c != '\''))
-        .filter(|w| !w.is_empty())
-        .map(fold)
-        .collect()
-}
+fn words(text: &str) -> Vec<String> { tokens(text).iter().map(|w| fold(w)).filter(|w| !filler(w)).collect() }
 
 /// Which words of the phrase turned up in what was heard, in order.
 ///
@@ -98,11 +149,7 @@ pub fn score(expected: &str, heard: &str) -> Attempt {
     let want = words(expected);
     let got = words(heard);
     // The display keeps the original spelling; only the comparison is folded.
-    let shown: Vec<String> = expected
-        .split_whitespace()
-        .map(|w| w.trim_matches(|c: char| !c.is_alphanumeric() && c != '\'').to_string())
-        .filter(|w| !w.is_empty())
-        .collect();
+    let shown = tokens(expected);
 
     if want.is_empty() {
         return Attempt { score: 0.0, words: vec![] };
@@ -218,6 +265,43 @@ mod tests {
     #[test]
     fn an_empty_phrase_cannot_be_scored() {
         assert_eq!(score("", "irgendwas"), Attempt { score: 0.0, words: vec![] });
+    }
+
+    #[test]
+    fn chinese_is_scored_character_by_character() {
+        let a = score("我想要一杯咖啡。", "我要一杯咖啡");
+        assert_eq!(missed(&a), vec!["想"]);
+        assert!(a.score > 0.8 && a.score < 1.0, "{}", a.score);
+        assert_eq!(score("你好吗？", "你好吗").score, 1.0);
+    }
+
+    #[test]
+    fn accents_and_apostrophes_of_other_languages_are_kept() {
+        assert_eq!(score("J'ai un rendez-vous à midi.", "j'ai un rendez vous à midi").score, 1.0);
+        assert_eq!(missed(&score("¿Dónde está la estación?", "dónde está estación")), vec!["la"]);
+    }
+
+    #[test]
+    fn accents_are_the_recognisers_spelling_not_the_learners_sound() {
+        assert_eq!(score("¿Cómo estás?", "como estas").score, 1.0);
+        assert_eq!(score("Comment ça va ?", "comment ca va").score, 1.0);
+        assert_eq!(score("Mais cinco minutinhos.", "mais cinco minutinhos").score, 1.0);
+        // ñ is a sound of its own.
+        assert!(score("Feliz año", "feliz ano").score < 1.0);
+    }
+
+    #[test]
+    fn digits_and_number_words_are_the_same_word() {
+        assert_eq!(score("Cinco minutos más.", "5 minutos más").score, 1.0);
+        assert_eq!(score("Encore cinq minutes.", "Encore 5 minutes.").score, 1.0);
+        assert_eq!(score("Noch fünf Minuten.", "noch 5 minuten").score, 1.0);
+        assert_eq!(score("我要两杯咖啡", "我要2杯咖啡").score, 1.0);
+    }
+
+    #[test]
+    fn hesitations_and_silence_markers_are_ignored() {
+        assert_eq!(score("早上好！", "嗯 早上好").score, 1.0);
+        assert_eq!(score("Guten Morgen", "<sil> Guten Morgen").score, 1.0);
     }
 
     #[test]

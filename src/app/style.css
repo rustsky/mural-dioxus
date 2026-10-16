@@ -44,6 +44,13 @@ a { color: inherit; }
 .tab.selected { background: white; color: var(--ink); box-shadow: 0 1px 3px rgba(54,42,34,0.12); }
 .glass-button { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.55); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.8), 0 1px 4px rgba(54,42,34,0.08); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
 .glass-button:hover { background: rgba(255,255,255,0.85); }
+/* Phones: the dot stands in for the name, and the four tabs fit beside Settings. */
+@media (max-width: 560px) {
+  .toolbar { gap: 8px; padding: 10px 12px 8px; }
+  .brand { font-size: 0; gap: 0; }
+  .tabs { gap: 2px; padding: 3px; }
+  .tab { gap: 4px; padding: 6px 8px; font-size: 12px; }
+}
 .content { flex: 1; overflow-y: auto; overflow-x: hidden; }
 .page { max-width: 760px; margin: 0 auto; padding: 16px 28px 40px; }
 
@@ -67,7 +74,7 @@ a { color: inherit; }
 .dialogue::-webkit-scrollbar { width: 11px; }
 .dialogue::-webkit-scrollbar-thumb { background: rgba(54,42,34,0.22); border-radius: 6px; border: 3px solid transparent; background-clip: content-box; }
 .dialogue::-webkit-scrollbar-thumb:hover { background: rgba(54,42,34,0.38); background-clip: content-box; }
-.dialogue .greeting { text-align: center; }
+.dialogue .greeting, .dialogue .greeting + .meaning { text-align: center; }
 .line { display: flex; flex-direction: column; gap: 5px; }
 .line .who { font-family: var(--rounded); font-weight: 500; font-size: 10.5px; letter-spacing: .5px; color: var(--secondary); }
 .line.mural .said { font-family: var(--rounded); font-weight: 500; letter-spacing: -0.3px; line-height: 1.3; font-size: 21px; }
@@ -96,6 +103,19 @@ a { color: inherit; }
 .mic-button:disabled { opacity: 1; }
 .form-row .stack { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; align-items: stretch; }
 .form-row .stack .desc { font-size: 11.5px; color: var(--secondary); line-height: 1.35; text-align: left; }
+/* A word's meaning, beside the word */
+.peek-catcher { position: fixed; inset: 0; z-index: 40; }
+.word-card { position: fixed; z-index: 41; width: min(340px, calc(100vw - 40px)); background: white;
+  border-radius: 16px; padding: 14px 16px; box-shadow: 0 14px 40px rgba(54,42,34,0.22);
+  display: flex; flex-direction: column; gap: 10px; text-align: left; animation: rise .14s ease-out;
+  /* It sits inside the text it explains, so it must not inherit a heading's size or a caption's colour. */
+  font-family: var(--text); font-size: 14px; font-weight: 400; line-height: 1.4; letter-spacing: normal; color: var(--ink); }
+.word-card-head { display: flex; align-items: baseline; gap: 10px; }
+.word-card-head .big { font-family: var(--rounded); font-weight: 600; font-size: 19px; }
+.word-card-meaning { font-size: 17px; line-height: 1.35; }
+.word-card-note { font-size: 13px; line-height: 1.45; color: var(--secondary); }
+.word-card-foot { display: flex; }
+.word-card-foot .action { width: 100%; justify-content: center; }
 /* Dialogues */
 .brief-card { background: white; border-radius: 16px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
 .brief-row { display: flex; gap: 14px; align-items: flex-start; font-size: 14px; line-height: 1.4; }
@@ -104,7 +124,13 @@ a { color: inherit; }
 .beat { display: flex; gap: 12px; align-items: flex-start; font-size: 14.5px; line-height: 1.35; }
 .beat-number { flex: none; width: 22px; height: 22px; border-radius: 50%; background: rgba(255,186,122,0.3); color: #8a5a32;
   font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
-.beat-strip { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 620px; margin-top: 6px; }
+.beat-panel { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; max-width: 640px; margin-top: 6px; }
+.beat-toggle { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: #3f7d4e; background: rgba(104,169,120,0.18);
+  border: none; border-radius: 999px; padding: 4px 11px; cursor: pointer; }
+.beat-strip { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-height: min(300px, 38vh); overflow-y: auto; padding: 2px; }
+.beat-dot.next { background: white; color: var(--primary, #362a22); box-shadow: 0 0 0 1px rgba(255,186,122,0.7); }
+.beat-dot:hover { box-shadow: 0 0 0 1px rgba(138,90,50,0.45); cursor: default; }
+.beat-meaning { font-size: 12px; min-height: 16px; color: #8a5a32; }
 .beat-dot { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--secondary);
   background: rgba(255,255,255,0.6); border-radius: 999px; padding: 4px 10px; }
 .beat-dot.done { background: rgba(104,169,120,0.18); color: #3f7d4e; }
@@ -127,6 +153,7 @@ a { color: inherit; }
 .drill { align-items: stretch; }
 .drill-meta { display: flex; align-items: center; gap: 8px; justify-content: center; }
 .drill-card { background: white; border-radius: 18px; padding: 22px 20px; display: flex; flex-direction: column; gap: 8px; text-align: center; }
+.drill-card .pinyin { align-items: center; }
 .drill-phrase { font-family: var(--rounded); font-weight: 500; font-size: 28px; line-height: 1.25; letter-spacing: -0.4px; }
 .drill-controls { display: flex; gap: 10px; justify-content: center; }
 .drill-status { display: flex; align-items: center; gap: 10px; justify-content: center; font-size: 13px; color: var(--secondary); }
@@ -196,7 +223,7 @@ a { color: inherit; }
 .overlay { position: fixed; inset: 0; background: rgba(54,42,34,0.28); display: flex; align-items: center; justify-content: center; z-index: 20; animation: fade .18s ease-out; padding: 24px; }
 @keyframes fade { from { opacity: 0; } }
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
-.sheet { background: var(--cream); border-radius: 22px; width: min(620px, 100%); max-height: calc(100vh - 48px); display: flex; flex-direction: column; box-shadow: 0 24px 60px rgba(54,42,34,0.25); animation: rise .22s ease-out; overflow: hidden; }
+.sheet { background: var(--cream); border-radius: 22px; width: min(620px, 100%); max-height: 100%; display: flex; flex-direction: column; box-shadow: 0 24px 60px rgba(54,42,34,0.25); animation: rise .22s ease-out; overflow: hidden; }
 .sheet.wide { width: min(720px, 100%); }
 .sheet-bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 14px 18px 10px; }
 .sheet-bar .title { font-weight: 600; font-size: 14px; text-align: center; }
@@ -272,7 +299,8 @@ a { color: inherit; }
 .steps { display: flex; gap: 6px; }
 .step { height: 6px; width: 8px; border-radius: 3px; background: var(--peach); transition: width .3s, background .3s; }
 .step.current { width: 24px; background: var(--orange); }
-.onboarding-scroll { position: relative; flex: 1; overflow-y: auto; }
+.onboarding-scroll { position: relative; flex: 1; overflow-y: auto;
+  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 28px), transparent); mask-image: linear-gradient(to bottom, black calc(100% - 28px), transparent); }
 .onboarding-inner { max-width: 520px; margin: 0 auto; padding: 0 26px 22px; display: flex; flex-direction: column; gap: 20px; text-align: center; animation: rise .35s ease-out; }
 .greeting-big { font-family: var(--rounded); font-weight: 500; letter-spacing: -2px; font-size: 58px; height: 74px; animation: fade .6s; }
 .greeting-big.small { font-size: 46px; height: 58px; }
@@ -288,6 +316,13 @@ a { color: inherit; }
 .onboarding-bottom { position: relative; background: var(--cream); padding: 16px 26px 20px; display: flex; flex-direction: column; gap: 12px; align-items: center; }
 .onboarding-bottom > * { max-width: 520px; width: 100%; }
 .onboarding-bottom .pill-button { font-family: var(--rounded); justify-content: center; padding: 18px; }
+/* Phones: the consent footer takes a third of the screen, so the steps above it tighten up. */
+@media (max-height: 820px) {
+  .onboarding-inner { gap: 14px; }
+  .greeting-big.small { font-size: 38px; height: 46px; }
+  .onboarding-bottom { padding: 12px 26px 14px; gap: 10px; }
+  .onboarding-bottom .pill-button { padding: 15px; }
+}
 
 .startup-error { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 40px; }
 .startup-error h1 { font-family: var(--rounded); margin: 0; }
@@ -295,3 +330,23 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* Flash cards on the Words tab */
+.review-panel { display: flex; align-items: center; gap: 16px; padding: 18px 20px; border-radius: 22px; background: var(--sage); }
+.review-summary { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.review-count { font-family: var(--rounded); font-weight: 600; font-size: 19px; }
+.review-start { width: auto; padding: 13px 22px; gap: 8px; }
+.review { outline: none; }
+.review-top { display: flex; align-items: center; justify-content: space-between; }
+.flash-card { min-height: 220px; justify-content: center; align-items: center; gap: 14px; }
+.flash-answer { display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%; padding-top: 14px; border-top: 1px solid var(--peach); }
+.flash-meaning { font-size: 20px; line-height: 1.35; }
+.grade-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.grade { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 12px 6px; border-radius: 16px; background: white; font-weight: 600; font-size: 14px; }
+.grade:hover { filter: brightness(0.97); }
+.grade-wait { font-size: 11px; font-weight: 400; color: var(--secondary); }
+.grade-1 { background: rgba(214,106,86,0.14); }
+.grade-2 { background: rgba(255,196,99,0.22); }
+.grade-3 { background: rgba(104,169,120,0.18); }
+.grade-4 { background: rgba(110,150,210,0.18); }
+.center { text-align: center; }

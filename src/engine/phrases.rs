@@ -51,18 +51,30 @@ struct Catalogue {
     phrases: Vec<Phrase>,
 }
 
-const GERMAN: &str = include_str!("../../assets/phrases/de.json");
+/// The catalogues that ship with the app, by language id.
+const CATALOGUES: &[(&str, &str)] = &[
+    ("de", include_str!("../../assets/phrases/de.json")),
+    ("es", include_str!("../../assets/phrases/es.json")),
+    ("fr", include_str!("../../assets/phrases/fr.json")),
+    ("it", include_str!("../../assets/phrases/it.json")),
+    ("pt", include_str!("../../assets/phrases/pt.json")),
+    ("en", include_str!("../../assets/phrases/en.json")),
+    ("nb", include_str!("../../assets/phrases/nb.json")),
+    ("zh", include_str!("../../assets/phrases/zh.json")),
+];
 
 /// Every phrase for a language, in catalogue order, or empty when there is no list yet.
 pub fn all(language_id: &str) -> &'static [Phrase] {
-    static GERMAN_PHRASES: OnceLock<Vec<Phrase>> = OnceLock::new();
-    match language_id {
-        "de" => GERMAN_PHRASES.get_or_init(|| {
-            serde_json::from_str::<Catalogue>(GERMAN).expect("German phrase catalogue").phrases
-        }),
-        _ => &[],
-    }
+    static LOADED: OnceLock<Vec<(&'static str, Vec<Phrase>)>> = OnceLock::new();
+    let loaded = LOADED.get_or_init(|| CATALOGUES.iter().map(|(id, json)| {
+        let phrases = serde_json::from_str::<Catalogue>(json).unwrap_or_else(|e| panic!("{id} phrase catalogue: {e}")).phrases;
+        (*id, phrases)
+    }).collect());
+    loaded.iter().find(|(id, _)| *id == language_id).map(|(_, p)| p.as_slice()).unwrap_or(&[])
 }
+
+/// The languages that have a phrase list.
+pub fn languages() -> impl Iterator<Item = &'static str> { CATALOGUES.iter().map(|(id, _)| *id) }
 
 pub fn available(language_id: &str) -> bool { !all(language_id).is_empty() }
 
@@ -96,9 +108,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_german_catalogue_is_well_formed() {
-        let phrases = all("de");
-        assert_eq!(phrases.len(), 1500);
+    fn every_catalogue_is_well_formed() {
+        for language in languages() { catalogue_is_well_formed(language) }
+    }
+
+    fn catalogue_is_well_formed(language: &str) {
+        let phrases = all(language);
+        assert_eq!(phrases.len(), 1500, "{language}");
 
         let mut ids: Vec<&str> = phrases.iter().map(|p| p.id.as_str()).collect();
         ids.sort_unstable();
@@ -119,24 +135,27 @@ mod tests {
             assert!((0..=5).contains(&p.level), "{} has level {}", p.id, p.level);
             // Shadowing is for phrases a learner can hold in their head and say in one breath.
             assert!(p.text.chars().count() <= 60, "{} is too long to shadow: {}", p.id, p.text);
+            assert!(p.id.starts_with(&format!("{language}-")), "{} is filed under {language}", p.id);
         }
     }
 
     #[test]
     fn every_band_has_phrases_and_they_rise_in_order() {
-        assert_eq!(bands("de"), Band::ALL.to_vec());
-        for band in Band::ALL {
-            let count = all("de").iter().filter(|p| p.cefr == band).count();
-            assert_eq!(count, 300, "{} has {count} phrases", band.label());
+        for language in languages() {
+            assert_eq!(bands(language), Band::ALL.to_vec(), "{language}");
+            for band in Band::ALL {
+                let count = all(language).iter().filter(|p| p.cefr == band).count();
+                assert_eq!(count, 300, "{language} {} has {count} phrases", band.label());
+            }
         }
         assert!(Band::A1 < Band::C1);
-        assert!(bands("nb").is_empty());
+        assert!(bands("xx").is_empty());
     }
 
     #[test]
     fn a_phrases_band_matches_its_teaching_level() {
         // The two scales are written side by side, so they must not drift apart.
-        for p in all("de") {
+        for p in languages().flat_map(all) {
             let expected = match p.level { 0 | 1 => Band::A1, 2 => Band::A2, 3 => Band::B1, 4 => Band::B2, _ => Band::C1 };
             assert_eq!(p.cefr, expected, "{} is level {} but band {}", p.id, p.level, p.cefr.label());
         }
@@ -144,8 +163,8 @@ mod tests {
 
     #[test]
     fn languages_without_a_list_are_simply_empty() {
-        assert!(all("nb").is_empty());
-        assert!(!available("nb"));
+        assert!(all("xx").is_empty());
+        assert!(!available("xx"));
         assert!(available("de"));
     }
 

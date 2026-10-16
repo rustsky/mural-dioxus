@@ -1,5 +1,6 @@
 pub mod activity;
 pub mod captions;
+pub mod flashcards;
 mod content;
 pub mod langdetect;
 pub mod languages;
