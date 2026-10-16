@@ -3,13 +3,20 @@
 Learn a language by talking. Mural holds a real conversation with you, drills the phrases you need
 until they come out without thinking, and plays through everyday situations from hello to goodbye.
 
-A desktop port of [Chuloo/mural](https://github.com/Chuloo/mural), built with
-[Dioxus](https://dioxuslabs.com) 0.7 for macOS, Windows and Linux. It follows the iPhone client
-(`apps/ios`): same eight language modules, teaching prompts, learning engine, recall bars and
-backup format. Backups exported here import on iPhone and Android, and the other way round.
+A port of [Chuloo/mural](https://github.com/Chuloo/mural), built with
+[Dioxus](https://dioxuslabs.com) 0.7, for macOS, Windows and Linux, and as an app for iPhone and
+Android. It follows the original iPhone client (`apps/ios`): same eight language modules, teaching
+prompts, learning engine, recall bars and backup format. Backups exported on a computer import on
+the original iPhone and Android apps, and the other way round.
 
-![Four screens of Mural: a conversation in progress with its scenario beats, a scenario brief, the
-phrase list, and a scored repeat](docs/images/features.png)
+![Mural in use: choosing a bakery situation and starting it, a Spanish conversation typed in as it is
+said while its tasks tick off, a Shadow phrase heard and repeated with its score, and a flash card
+answered](docs/images/mural.gif)
+
+Mural teaches **Norwegian (Bokmål), Spanish, English, French, German, Italian, Brazilian Portuguese
+and Mandarin Chinese**. Each language has its own phrases and situations, written for the country
+rather than translated: in Spain you register on the padrón, in Brazil you pay by Pix, in Norway
+you sign in with BankID, and in China you book trains on 12306.
 
 ## The four tabs
 
@@ -19,17 +26,20 @@ mistake you keep making, bring back a word that is due, introduce something new,
 from what the last turn actually showed. The conversation scrolls in the window, with word lookup
 and meanings on every line.
 
-**Shadow** — 1500 everyday German phrases, 300 in each band from A1 to C1. Mural says one in its
+**Shadow** — 1500 everyday phrases per language, 300 in each band from A1 to C1. Mural says one in its
 on-device voice, slowly if you ask; you hold the microphone and say it back; the on-device
 recogniser scores the attempt and marks the words that did not come through. Due phrases come
 first and a tick marks what you have said.
 
-**Dialog** — everyday situations played out: where you are, who Mural plays, what you want, and
-the beats to pass through. The beats tick off as the conversation reaches them, and near the end
-Mural is told to land the exchange rather than open new ground.
+**Dialog** — 237 everyday situations per language, at least 30 at each level: where you are, who
+Mural plays, what you want, and the 12 (A1) to 25 (C1) tasks to get through. The tasks tick off as
+the conversation reaches them, in any order, and near the end Mural is told to land the exchange
+rather than open new ground.
 
 **Words** — the vocabulary Mural noticed you using, with recall bars that grow as you use a word
-again on other days and in other contexts.
+again on other days and in other contexts. Every word is also a flash card, scheduled the way Anki
+does it (Again, Hard, Good, Easy), and you can add words by hand. Tap any word Mural shows you, in
+any tab, for a short meaning and keep it.
 
 ## Teachers
 
@@ -38,8 +48,7 @@ again on other days and in other contexts.
 - **Ollama** — a model on this computer, or Ollama Cloud with a free key. Conversations use the
   on-device voice below and need no OpenAI key.
 
-Shadow and Dialog are German-only for now: each catalogue is one file per language, and the tabs
-hide themselves for languages without one. Dialog ships 193 of a planned 365 scenarios.
+Chinese phrases, tasks and replies show their pinyin underneath (macOS and iOS).
 
 ## Download
 
@@ -75,14 +84,17 @@ renews it over Wi-Fi; with Sideloadly, install it again), and up to 3 such apps 
 
 ### Platform differences
 
-| | macOS | Windows | Linux |
-| --- | --- | --- | --- |
-| API key storage | Login Keychain | Credential Manager | Secret Service (GNOME Keyring, KWallet) |
-| Data directory | `~/Library/Application Support/Mural` | `%APPDATA%\Mural` | `~/.local/share/Mural` |
-| Mandarin pinyin, off-language detection | Yes | Not yet | Not yet |
+| | macOS | Windows | Linux | iPhone | Android |
+| --- | --- | --- | --- | --- | --- |
+| API key storage | Login Keychain | Credential Manager | Secret Service (GNOME Keyring, KWallet) | Keychain | Owner-only file in the app's folder |
+| Mandarin pinyin, off-language detection | Yes | Not yet | Not yet | Yes | Not yet |
+| Learning backups (export, import) | Yes | Yes | Yes | Not yet | Not yet |
 
-Pinyin uses the same system dictionary as the iPhone app (`CFStringTokenizer`), and off-language
-detection uses Apple's NaturalLanguage framework, hence macOS only for now.
+On a computer, the data directory is `~/Library/Application Support/Mural` (macOS), `%APPDATA%\Mural`
+(Windows) or `~/.local/share/Mural` (Linux); on a phone, the app's own private folder.
+
+Pinyin uses the same system dictionary as the original iPhone app (`CFStringTokenizer`), and
+off-language detection uses Apple's NaturalLanguage framework, hence Apple platforms only for now.
 
 ## Voice
 
@@ -192,11 +204,12 @@ not conversation evidence.
 Not ported: managed accounts, hosted minutes and purchases (disabled in the iPhone build too), and
 simulator-only verification harnesses.
 
-## A note on the German content
+## A note on the content
 
-The 1500 phrases and the scenarios were written for this port and have **not been reviewed by a
-native speaker**. Structure is machine-checked — every phrase is unique, banded, short enough to
-shadow — but idiom is not. The B2 and C1 material is where that matters most. Corrections welcome.
+The phrases and scenarios in every language were written for this port and have **not been
+reviewed by native speakers**. Structure is machine-checked — every phrase is unique, banded, short
+enough to shadow, and every language has the same scenarios and tasks as German — but idiom is not.
+The B2 and C1 material is where that matters most. Corrections welcome.
 
 ## Debugging
 
